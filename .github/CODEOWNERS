@@ -8,3 +8,7 @@
 /docs/adr/           @tadecode
 /docs/security/      @tadecode
 /docs/requirements/scope.md @tadecode
+/backend/            @tadecode
+/lib/                @tadecode
+/android/            @tadecode
+firestore.rules      @tadecode
