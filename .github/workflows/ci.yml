@@ -124,7 +124,7 @@ jobs:
         if: steps.detect.outputs.backend == 'true'
         working-directory: backend/functions
         run: npx vitest run
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         if: steps.detect.outputs.backend == 'true'
         with:
           distribution: temurin
