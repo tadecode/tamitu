@@ -48,12 +48,12 @@ flowchart LR
 
 Granice zaufania (zgodnie z `threat-model.md`): G-A urządzenie, G-B Auth, G-C aplikacja→pośrednik (wejście niezaufane), G-D pośrednik→model (odpowiedź niezaufana), G-E link Maps.
 
-## 3. Moduły aplikacji Flutter (`app/lib/`)
+## 3. Moduły aplikacji Flutter (`lib/`, korzeń repozytorium; ADR-0009)
 Podział „feature-first"; w każdej funkcji warstwy `presentation` (widgety, kontrolery Riverpod), `domain` (modele, reguły, interfejsy), `data` (implementacje: Drift, funkcje chmurowe). Zależności tylko do wewnątrz (presentation → domain ← data).
 
 | Moduł | Odpowiada za | Historyjki | Zależności zewnętrzne |
 |---|---|---|---|
-| `app/` | start aplikacji, motyw, router (`go_router`) i strażnicy tras (zgody → logowanie → ekran główny), flavory | wszystkie | – |
+| `lib/app/` | start aplikacji, motyw, router (`go_router`) i strażnicy tras (zgody → logowanie → ekran główny), flavory | wszystkie | – |
 | `core/config` | środowisko dev/prod, stałe limitów walidacji (zgodne z `docs/api/`) | US-004, US-011 | – |
 | `core/l10n` | ARB PL/EN, wybór języka, formaty | US-003..011 | `intl` |
 | `core/errors` | mapowanie kodów błędów serwera i sieci na komunikaty (klucze l10n) | US-011 | – |

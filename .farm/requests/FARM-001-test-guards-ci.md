@@ -26,4 +26,5 @@ więc wymaga przeglądu właściciela. Koszty: brak. Bezpieczeństwo: poprawka d
 tylko sposobu uruchamiania samotestu, nie granic ról.
 
 ## Odpowiedź
-(oczekuje na orchestratora)
+2026-11-15 orchestrator: diagnoza wiarygodna. Funkcja `Run` w `.farm/hooks/test-guards.ps1` (linia 13) woła hook z `2>&1`; w Actions stderr natywnego polecenia przy `$ErrorActionPreference = 'Stop'` przerywa skrypt. Proponowana minimalna poprawka: w `Run` ustawić lokalnie `$ErrorActionPreference = 'Continue'` przed wywołaniem i oceniać wyłącznie `$LASTEXITCODE` (kody oczekiwane 0/2 bez zmian), bez zmiany hooków i asercji.
+Orchestrator NIE wprowadza poprawki: `.farm/hooks/` jest chroniony hookiem i CODEOWNERS (@tadecode), a brief fazy 1 zakazuje jego zmiany. Czeka na zgodę właściciela: kto wykonuje poprawkę (osobny PR, przegląd właściciela).

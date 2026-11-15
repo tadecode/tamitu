@@ -6,6 +6,8 @@
 - Zadanie: P2-06 (vision: Flutter, Android; T16)
 - Odpowiedzi właściciela uwzględnione: Q7 (SQLCipher w stosie), Q8 (minSdk 26), Q1 (`geolocator` pozostaje w stosie do decyzji po teście C). Uwagi Security 8-1..8-5: „Aneks A" na końcu.
 
+> Nota (2026-11-15): zmieniony przez ADR-0009 w zakresie układu repozytorium (Flutter w korzeniu zamiast `app/`; `backend/` bez zmian). Pozostała treść ADR bez zmian; w tekście poniżej `app/` czytaj jako korzeń repozytorium.
+
 ## Kontekst
 Narzucone: Flutter, Android, pakiet `pl.tadecode.tamitu`, Firebase/Google Cloud w UE. Wymagana prostota, minimalna liczba zależności (T16), testowalność, brak SDK analityki/reklam w MVP (D12).
 
