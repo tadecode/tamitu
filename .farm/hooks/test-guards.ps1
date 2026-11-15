@@ -10,8 +10,16 @@ $ballow = Join-Path $here 'guard-bash-allow.ps1'
 $fail = 0
 
 function Run([string]$script, [string]$json, [string[]]$extra) {
-    $null = $json | & powershell -NoProfile -ExecutionPolicy Bypass -File $script @extra 2>&1
-    return $LASTEXITCODE
+    # stderr hooka (komunikat blokady) nie może przerywać samotestu (CI: NativeCommandError);
+    # oceniamy wyłącznie kod wyjścia hooka.
+    $prev = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $null = $json | & powershell -NoProfile -ExecutionPolicy Bypass -File $script @extra 2>&1
+        $code = $LASTEXITCODE
+    }
+    finally { $ErrorActionPreference = $prev }
+    return $code
 }
 function Check([string]$name, [int]$expected, [int]$actual) {
     if ($expected -eq $actual) { Write-Host "PASS  $name" }
