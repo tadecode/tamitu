@@ -2,7 +2,7 @@
 
 - Zgłasza (rola): właściciel (decyzja w rozmowie, 2026-11-15) · Data: 2026-11-15 · Powiązane zadanie/PR: brak
 - Typ: ci-change / dependabot
-- Status: approved  (ustawia Steward)
+- Status: done  (ustawia Steward)
 
 ## Potrzeba
 Właściciel zatwierdza ręcznie każdy PR Dependabota. Zatwierdzanie ma przejąć deterministyczna reguła
@@ -36,4 +36,5 @@ Do sprawdzenia przez Stewarda po wdrożeniu: czy ochrona `main` liczy zatwierdze
 ## Odpowiedź Stewarda
 2026-11-15 Steward: prośba zgodna z polityką (zatwierdza bot regułą, Steward nadal nie zatwierdza). Treść workflow zweryfikowana: tylko `GITHUB_TOKEN`, brak checkoutu i zewnętrznych akcji, tytuł/pliki tylko porównywane regexem, `github-actions` poza regułą. Ochrona `main` wymaga 1 zatwierdzenia + code owner; pliki zależności nie są w CODEOWNERS, więc zatwierdzenie bota powinno wystarczyć (do weryfikacji na realnym PR Dependabota).
 Kroki: (1) PR `chore/ci-dependabot-approve` z workflow i aktualizacją `dependabot-policy.md` - czeka na zatwierdzenie właściciela; (2) ustawienie „Allow GitHub Actions to create and approve pull requests" (obecnie `false`) - dopiero za zgodą właściciela w czacie, bez niego workflow nie zatwierdzi; (3) test na następnym PR `pub`/`npm`.
-Status: approved (w toku).
+2026-11-15 Steward (aktualizacja): PR #10 zmergowany przez właściciela (`a97bdc3`), zwolniony z raportów recenzenta i QA. Za zgodą właściciela włączono „Allow GitHub Actions to create and approve pull requests" (`gh api repos/tadecode/tamitu/actions/permissions/workflow`), zweryfikowano: `can_approve_pull_request_reviews: true`, `default_workflow_permissions: read`. Zostaje test na pierwszym PR Dependabota `pub`/`npm` (czy zatwierdzenie bota liczy się do ochrony `main`).
+Status: done (test funkcjonalny odnotuję w logu przy pierwszym PR).
