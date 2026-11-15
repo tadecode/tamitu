@@ -15,3 +15,4 @@
 | 2026-11-15 | PR #1 | `gh pr update-branch 1 --rebase`; `gh pr merge 1 --squash --delete-branch` (po 4 zielonych kontrolach i zatwierdzeniu właściciela) | OK, `d14e6b1`: `gitleaks-action` 2→3 |
 | 2026-11-15 | PR #2 | `gh pr update-branch 2 --rebase` (dwukrotnie, po merge #1); `gh pr merge 2 --squash --delete-branch` | OK, `ca04e7e`: `actions/checkout` 4→7 |
 | 2026-11-15 | decyzja właściciela | stałe zwolnienie PR-ów Dependabota z raportów recenzenta i QA; zapis w `docs/github-ops/dependabot-policy.md` (PR `chore/ci-dependabot-policy`) | otwarty |
+| 2026-11-15 | GH-003 | PR `chore/ci-dependabot-approve`: workflow `dependabot-approve.yml` + sekcja „Auto-zatwierdzenie" w polityce Dependabota | PR otwarty, czeka na zatwierdzenie właściciela; ustawienie repo (create/approve PRs) jeszcze niezmienione |

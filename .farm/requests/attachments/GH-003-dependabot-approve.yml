@@ -1,0 +1,74 @@
+name: dependabot-approve
+
+# Zatwierdza WYLACZNIE waskie klasy PR-ow Dependabota (patch i minor, tylko pliki zaleznosci).
+# Dziala jako github-actions[bot] (GITHUB_TOKEN), czyli inna tozsamosc niz wlasciciel i Steward.
+# Regula deterministyczna: bez modelu, bez zewnetrznych akcji, bez checkoutu kodu z PR.
+# Merge nadal robi Steward po 4 zielonych kontrolach (docs/github-ops/dependabot-policy.md).
+# Wymaga ustawienia repo: Actions > "Allow GitHub Actions to create and approve pull requests".
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: dependabot-approve-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  approve:
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ocena PR i zatwierdzenie (albo pominiecie)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          deny() { echo "Bez auto-zatwierdzenia: $1"; exit 0; }
+
+          # 1. Tylko commity Dependabota (nikt inny nie dopisal zmian).
+          authors=$(gh api "repos/$GH_REPO/pulls/$PR/commits" --paginate --jq '.[].author.login' | sort -u)
+          [ "$authors" = "dependabot[bot]" ] || deny "w PR sa commity innego autora"
+
+          # 2. Tylko pliki zaleznosci (nic w .github, .claude, .farm, docs, kodzie aplikacji).
+          files=$(gh api "repos/$GH_REPO/pulls/$PR/files" --paginate --jq '.[].filename')
+          [ -n "$files" ] || deny "brak zmienionych plikow"
+          allowed='^(pubspec\.(yaml|lock)|android/(build\.gradle(\.kts)?|settings\.gradle(\.kts)?|gradle\.properties|app/build\.gradle(\.kts)?|gradle/libs\.versions\.toml)|backend/functions/(package\.json|package-lock\.json))$'
+          while IFS= read -r f; do
+            [[ "$f" =~ $allowed ]] || deny "zmieniony plik poza lista zaleznosci: $f"
+          done <<< "$files"
+
+          # 3. Wersje z tytulu: tylko patch i minor (dla 0.x tylko patch). Cokolwiek niejasne = bez zatwierdzenia.
+          title=$(gh pr view "$PR" --json title --jq .title)
+          [[ "$title" =~ from\ ([^\ ]+)\ to\ ([^\ ]+) ]] || deny "nie rozpoznano wersji w tytule"
+          parse() {
+            [[ "$1" =~ ^v?([0-9]+)(\.([0-9]+))?(\.([0-9]+))? ]] || return 1
+            echo "${BASH_REMATCH[1]} ${BASH_REMATCH[3]:-0} ${BASH_REMATCH[5]:-0}"
+          }
+          fv=$(parse "${BASH_REMATCH[1]}") || deny "nie rozpoznano wersji zrodlowej"
+          tv=$(parse "${BASH_REMATCH[2]}") || deny "nie rozpoznano wersji docelowej"
+          read -r fM fm fp <<< "$fv"
+          read -r tM tm tp <<< "$tv"
+          [ "$fM" -eq "$tM" ] || deny "skok wersji glownej ($fM -> $tM)"
+          if [ "$fM" -eq 0 ]; then
+            [ "$fm" -eq "$tm" ] || deny "wersja 0.x: zmiana minor traktowana jak glowna"
+          fi
+          if [ "$tm" -lt "$fm" ] || { [ "$tm" -eq "$fm" ] && [ "$tp" -le "$fp" ]; }; then
+            deny "to nie jest podniesienie wersji"
+          fi
+
+          # 4. Zatwierdzenie zwiazane z konkretnym commitem, ktory ocenilismy.
+          gh api -X POST "repos/$GH_REPO/pulls/$PR/reviews" \
+            -f event=APPROVE \
+            -f commit_id="$HEAD_SHA" \
+            -f body="Auto-zatwierdzenie (regula, bez modelu): Dependabot, patch/minor, tylko pliki zaleznosci. Merge robi Steward po 4 zielonych kontrolach."
+          echo "Zatwierdzono PR #$PR ($title) na commicie $HEAD_SHA"
