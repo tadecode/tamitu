@@ -37,7 +37,7 @@ Zadanie przykładowe T-001 (szkielet Flutter) powstanie w fazie 3 po G2.
 ## Propozycje fazy 3 (planowanie; start po G2)
 | ID | Zadanie | Rola | Status |
 |---|---|---|---|
-| P3-01 | Szkielet `app/` (flavory dev/prod, pakiet `pl.tadecode.tamitu`, manifest minimalny, l10n PL/EN, testy manifestu i tłumaczeń) | mobile-dev | todo |
+| P3-01 | Szkielet Flutter w korzeniu repozytorium (ADR-0009; flavory dev/prod, pakiet `pl.tadecode.tamitu`, manifest minimalny, l10n PL/EN, testy manifestu i tłumaczeń) | mobile-dev | todo |
 | P3-02 | Szkielet `backend/` (Functions TS, reguły `deny all`, emulator, testy) | mobile-dev | todo |
 | P3-03 | Projekty Firebase dev/prod, region, kubełek logów 30 dni, budżety, konta usług (prośba do Stewarda + właściciel) | steward/owner | todo |
 | P3-04 | Logowanie Google + zgody + `recordConsent` (US-001..003) | mobile-dev | todo |
