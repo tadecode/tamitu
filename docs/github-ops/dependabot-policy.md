@@ -6,8 +6,8 @@ Decyzja właściciela z 2026-11-15. Prowadzi GitHub Steward.
 - **Alerts i security updates:** włączone w ustawieniach repozytorium; alert w zakładce Security,
   PR z poprawką bezpieczeństwa otwierany od razu.
 - **Version updates:** `.github/dependabot.yml`, cotygodniowo, ekosystemy `pub` (`/`),
-  `gradle` (`/android`) i `github-actions` (`/`), etykieta `dependencies`.
-  Dla `pub` i `gradle` PR-y pojawią się dopiero po powstaniu projektu Flutter.
+  `gradle` (`/android`), `npm` (`/backend/functions`) i `github-actions` (`/`), etykieta `dependencies`.
+  Dla `pub` i `gradle` PR-y pojawią się dopiero po powstaniu projektu Flutter, dla `npm` po powstaniu backendu.
 - Gałęzie mają prefiks `dependabot/`. Kontrola `conventions` je dopuszcza (PR #5).
 - Dependabot niczego sam nie merguje.
 
