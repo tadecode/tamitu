@@ -14,3 +14,4 @@
 | 2026-11-15 | inicjatywa Stewarda, zgoda właściciela | PR `chore/ci-allow-dependabot`: regex `conventions` dopuszcza `dependabot/...` | PR #5 zmergowany przez właściciela (`f10ee24`), zwolniony z raportów; `conventions` zielone na gałęziach `dependabot/...` |
 | 2026-11-15 | PR #1 | `gh pr update-branch 1 --rebase`; `gh pr merge 1 --squash --delete-branch` (po 4 zielonych kontrolach i zatwierdzeniu właściciela) | OK, `d14e6b1`: `gitleaks-action` 2→3 |
 | 2026-11-15 | PR #2 | `gh pr update-branch 2 --rebase` (dwukrotnie, po merge #1); `gh pr merge 2 --squash --delete-branch` | OK, `ca04e7e`: `actions/checkout` 4→7 |
+| 2026-11-15 | decyzja właściciela | stałe zwolnienie PR-ów Dependabota z raportów recenzenta i QA; zapis w `docs/github-ops/dependabot-policy.md` (PR `chore/ci-dependabot-policy`) | otwarty |
