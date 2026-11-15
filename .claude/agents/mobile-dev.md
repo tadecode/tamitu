@@ -7,7 +7,7 @@ hooks:
     - matcher: "Write|Edit"
       hooks:
         - type: command
-          command: 'powershell -NoProfile -ExecutionPolicy Bypass -File "$CLAUDE_PROJECT_DIR/.farm/hooks/guard-paths.ps1" -Role mobile-dev -Allow "lib,test,integration_test,android,assets,pubspec.yaml,pubspec.lock,analysis_options.yaml,docs/backlog.md,docs/open-questions.md,.farm/log"'
+          command: 'powershell -NoProfile -ExecutionPolicy Bypass -File "$CLAUDE_PROJECT_DIR/.farm/hooks/guard-paths.ps1" -Role mobile-dev -Allow "lib,test,integration_test,android,assets,pubspec.yaml,pubspec.lock,analysis_options.yaml,backend,docs/backlog.md,docs/open-questions.md,.farm/log"'
 ---
 
 # Mobile Developer
