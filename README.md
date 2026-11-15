@@ -54,6 +54,8 @@ izolację dają dopiero ochrona gałęzi i CI na GitHubie oraz sandbox.
 | `docs/_templates/` | Szablony: user story, ADR, rejestr danych osobowych |
 | `docs/backlog.md` | Lista zadań ze statusami |
 | `.github/` | CI, CODEOWNERS, szablony PR i zadań, Dependabot |
+| `.farm/new-worktree.ps1` | Zakłada osobny worktree na zadanie (zasada 12: jedna sesja = jeden katalog) |
+| `.farm/test-lock.ps1` | Kolejka na emulator, urządzenie i emulatory Firebase (testy równoległych sesji) |
 | `.farm/steward/` | GitHub Steward: kontrakt roli i skrypt startowy osobnej sesji (admin GitHuba) |
 | `.farm/requests/` | Kolejka próśb do Stewarda (tworzenie repo, CI, sekrety, merge) |
 | `docs/github-ops/` | Dziennik operacji Stewarda |

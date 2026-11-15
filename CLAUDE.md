@@ -40,3 +40,11 @@ wąską rolę (`.claude/agents/`). Człowiek jest właścicielem produktu.
     wykonuje wyłącznie agent GitHub Steward na podstawie prośby w
     `.farm/requests/`. Pozostali pushują gałęzie i otwierają PR-y; nie
     używają tokenów ani nie omijają blokad.
+12. **Osobny worktree na zadanie.** Główny katalog repozytorium zostaje na
+    `main` i służy tylko do odczytu. Każda sesja i każde zadanie pracuje we
+    własnym worktree (`.farm/new-worktree.ps1 <zadanie>`, katalog
+    `<repo>-wt\<zadanie>`) i nie przełącza gałęzi w cudzym katalogu. Pliki
+    wspólne (`docs/backlog.md`, dziennik) edytuj małymi, osobnymi wpisami,
+    żeby równoległe PR-y nie kolidowały. Testy na emulatorze, urządzeniu lub
+    emulatorach Firebase uruchamiaj przez `.farm/test-lock.ps1` (kolejka na
+    zasoby wspólne); zwykłe testy bez urządzenia nie potrzebują blokady.
