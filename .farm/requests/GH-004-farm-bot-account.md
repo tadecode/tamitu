@@ -27,3 +27,4 @@ RODO: adres e-mail konta bota nie jest danymi użytkowników aplikacji. Ryzyko: 
 ## Odpowiedź Stewarda
 2026-11-15 Steward: prośba zgodna z polityką. Przygotowano dokument i prośbę (PR `chore/ci-farm-bot-account`).
 Wykonanie zaproszenia dopiero po podaniu loginu przez właściciela.
+2026-11-15 Steward (aktualizacja): kroki 1-2 wykonane. Konto `tadecode-farm` zaproszone z rolą Write, zaproszenie zaakceptowane (zweryfikowane `gh api`: write, admin=false). Właściciel utworzył token i zalogował bota w osobnej konfiguracji `gh`. Krok 4 (test): PR z konta bota, zatwierdzenie przez `tadecode`, merge bez bypassu. Kroki 3 i 5 czekają.
