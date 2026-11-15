@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "tamitu/generate-plan.request.v1",
+  "title": "generatePlan request (v1) - sketch, no UID/e-mail/location/flight number",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "requestId", "planLanguage", "trip", "preferences"],
+  "properties": {
+    "apiVersion": { "const": 1 },
+    "requestId": { "type": "string", "format": "uuid" },
+    "planLanguage": { "enum": ["pl", "en"] },
+    "trip": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["destination", "lodging", "days", "arrival"],
+      "properties": {
+        "destination": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "lodging": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "days": { "type": "integer", "minimum": 1, "maximum": 14 },
+        "arrival": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "date", "time"],
+          "properties": {
+            "mode": { "enum": ["flight", "car"] },
+            "date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+            "time": { "type": "string", "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$" },
+            "airport": { "type": "string", "minLength": 1, "maxLength": 60 }
+          },
+          "if": { "properties": { "mode": { "const": "flight" } } },
+          "then": { "required": ["airport"] },
+          "else": { "not": { "required": ["airport"] } }
+        }
+      }
+    },
+    "preferences": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "interests": {
+          "type": "array",
+          "maxItems": 5,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "monuments_history", "architecture", "art_museums", "nature_parks",
+              "beaches_water", "local_food", "active_sport", "family_attractions",
+              "shopping", "nightlife", "relaxation"
+            ]
+          }
+        },
+        "budget": { "enum": ["low", "medium", "high"], "default": "medium" },
+        "pace": { "enum": ["relaxed", "moderate", "intense"], "default": "moderate" },
+        "partySize": { "type": "integer", "minimum": 1, "maximum": 10, "default": 2 }
+      }
+    },
+    "testData": { "type": "boolean" }
+  }
+}

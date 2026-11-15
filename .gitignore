@@ -1,0 +1,30 @@
+# Sekrety i klucze
+.env
+.env.*
+*.jks
+*.keystore
+key.properties
+**/google-services.json.local
+
+# Lokalne ustawienia Claude Code
+.claude/settings.local.json
+
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+*.iml
+.idea/
+
+# Android
+android/.gradle/
+android/local.properties
+android/app/debug/
+android/app/profile/
+android/app/release/
+
+# System
+.DS_Store
+Thumbs.db

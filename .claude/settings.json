@@ -1,0 +1,43 @@
+{
+  "permissions": {
+    "ask": [
+      "Bash(gh repo create:*)",
+      "Bash(gh secret:*)",
+      "Bash(gh variable:*)",
+      "Bash(gh ruleset:*)",
+      "Bash(gh workflow:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(gh release:*)"
+    ],
+    "deny": [
+      "Read(~/.config/gh-steward/**)",
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./**/*.jks)",
+      "Read(./**/*.keystore)",
+      "Read(./**/key.properties)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"$CLAUDE_PROJECT_DIR/.farm/hooks/guard-paths.ps1\""
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"$CLAUDE_PROJECT_DIR/.farm/hooks/guard-bash.ps1\""
+          }
+        ]
+      }
+    ]
+  }
+}

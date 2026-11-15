@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  farm-guards:
+    name: farm-guards
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Skrypty .ps1 mają BOM (inaczej psują polskie znaki)
+        shell: powershell
+        run: |
+          $bad = @()
+          Get-ChildItem -Recurse -Filter *.ps1 -File | ForEach-Object {
+            $b = [IO.File]::ReadAllBytes($_.FullName)
+            if ($b.Length -lt 3 -or $b[0] -ne 0xEF -or $b[1] -ne 0xBB -or $b[2] -ne 0xBF) { $bad += $_.FullName }
+          }
+          if ($bad) { $bad | ForEach-Object { Write-Error "Brak BOM: $_" }; exit 1 }
+      - name: Samotest hooków (granice agentów)
+        shell: powershell
+        run: .farm/hooks/test-guards.ps1
+
+  conventions:
+    name: conventions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Nazwa gałęzi (feat|fix|docs|chore)/<id>
+        if: github.event_name == 'pull_request'
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          if ! echo "$HEAD_REF" | grep -Eq '^(feat|fix|docs|chore)/[A-Za-z0-9._-]+$'; then
+            echo "::error::Nazwa gałęzi '$HEAD_REF' nie pasuje do wzorca (feat|fix|docs|chore)/<id-zadania>"
+            exit 1
+          fi
+
+  secrets:
+    name: secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  flutter:
+    name: flutter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Czy to projekt Flutter?
+        id: detect
+        run: |
+          if [ -f pubspec.yaml ]; then echo "flutter=true" >> "$GITHUB_OUTPUT"; else echo "Brak pubspec.yaml - krok pominięty (szkielet jeszcze nie powstał)."; fi
+      - uses: subosito/flutter-action@v2
+        if: steps.detect.outputs.flutter == 'true'
+        with:
+          channel: stable
+          cache: true
+      - name: Zależności
+        if: steps.detect.outputs.flutter == 'true'
+        run: flutter pub get
+      - name: Format kodu (sprawdzenie, bez zmian)
+        if: steps.detect.outputs.flutter == 'true'
+        run: dart format --output=none --set-exit-if-changed .
+      - name: Analiza statyczna
+        if: steps.detect.outputs.flutter == 'true'
+        run: flutter analyze
+      - name: Testy
+        if: steps.detect.outputs.flutter == 'true'
+        run: flutter test
+      - name: Build APK (debug) - czy się składa
+        if: steps.detect.outputs.flutter == 'true'
+        run: flutter build apk --debug

@@ -1,0 +1,10 @@
+# Zmiany tych plików wymagają zatwierdzenia właściciela produktu.
+/.claude/            @tadecode
+/.farm/hooks/        @tadecode
+/.github/            @tadecode
+/.farm/review/       @tadecode
+/.farm/steward/      @tadecode
+/CLAUDE.md           @tadecode
+/docs/adr/           @tadecode
+/docs/security/      @tadecode
+/docs/requirements/scope.md @tadecode
