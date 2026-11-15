@@ -106,7 +106,7 @@ jobs:
         id: detect
         run: |
           if [ -f backend/functions/package.json ]; then echo "backend=true" >> "$GITHUB_OUTPUT"; else echo "Brak backend/functions/package.json - kroki pominięte (backend jeszcze nie powstał)."; fi
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         if: steps.detect.outputs.backend == 'true'
         with:
           node-version: 22
