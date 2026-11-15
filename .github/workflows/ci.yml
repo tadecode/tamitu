@@ -62,10 +62,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Czy to projekt Flutter?
+        with:
+          fetch-depth: 0
+      - name: Czy to projekt Flutter i czy zmiana go dotyczy?
         id: detect
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          if [ -f pubspec.yaml ]; then echo "flutter=true" >> "$GITHUB_OUTPUT"; else echo "Brak pubspec.yaml - krok pominięty (szkielet jeszcze nie powstał)."; fi
+          if [ ! -f pubspec.yaml ]; then
+            echo "Brak pubspec.yaml - krok pominięty (szkielet jeszcze nie powstał)."
+          elif [ -n "$BASE_SHA" ] && ! git diff --name-only "$BASE_SHA" HEAD | grep -qv '^backend/'; then
+            echo "PR zmienia tylko backend/ - testy Fluttera pominięte (kontrola nadal zgłasza sukces)."
+          else
+            echo "flutter=true" >> "$GITHUB_OUTPUT"
+          fi
       - uses: subosito/flutter-action@v2
         if: steps.detect.outputs.flutter == 'true'
         with:
@@ -86,3 +96,46 @@ jobs:
       - name: Build APK (debug) - czy się składa
         if: steps.detect.outputs.flutter == 'true'
         run: flutter build apk --debug
+
+  backend:
+    name: backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Czy istnieje backend?
+        id: detect
+        run: |
+          if [ -f backend/functions/package.json ]; then echo "backend=true" >> "$GITHUB_OUTPUT"; else echo "Brak backend/functions/package.json - kroki pominięte (backend jeszcze nie powstał)."; fi
+      - uses: actions/setup-node@v4
+        if: steps.detect.outputs.backend == 'true'
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/functions/package-lock.json
+      - name: Zależności
+        if: steps.detect.outputs.backend == 'true'
+        working-directory: backend/functions
+        run: npm ci
+      - name: Lint
+        if: steps.detect.outputs.backend == 'true'
+        working-directory: backend/functions
+        run: npm run lint
+      - name: Testy jednostkowe (vitest)
+        if: steps.detect.outputs.backend == 'true'
+        working-directory: backend/functions
+        run: npx vitest run
+      - uses: actions/setup-java@v4
+        if: steps.detect.outputs.backend == 'true'
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Testy reguł Firestore w emulatorze
+        if: steps.detect.outputs.backend == 'true'
+        working-directory: backend/functions
+        run: |
+          # Wymaga skryptu `test:rules` i lokalnego `firebase-tools` (devDependency); bez skryptu krok jest pomijany.
+          if npm pkg get scripts.test:rules | grep -q '"'; then
+            npx --no-install firebase emulators:exec --config ../firebase.json --only firestore "npm run test:rules"
+          else
+            echo "Brak skryptu test:rules - pominięto."
+          fi
