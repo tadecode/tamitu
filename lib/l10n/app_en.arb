@@ -1,0 +1,9 @@
+{
+  "@@locale": "en",
+  "appTitle": "Tamitu",
+  "@appTitle": {"description": "Application name"},
+  "homeTitle": "Travel planner",
+  "@homeTitle": {"description": "Title of the start screen"},
+  "homeSubtitle": "Plan your trip with AI.",
+  "@homeSubtitle": {"description": "Short line below the title on the start screen"}
+}
