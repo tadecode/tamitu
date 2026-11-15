@@ -41,8 +41,8 @@ jobs:
         env:
           HEAD_REF: ${{ github.head_ref }}
         run: |
-          if ! echo "$HEAD_REF" | grep -Eq '^(feat|fix|docs|chore)/[A-Za-z0-9._-]+$'; then
-            echo "::error::Nazwa gałęzi '$HEAD_REF' nie pasuje do wzorca (feat|fix|docs|chore)/<id-zadania>"
+          if ! echo "$HEAD_REF" | grep -Eq '^((feat|fix|docs|chore)/[A-Za-z0-9._-]+|dependabot/[A-Za-z0-9._/-]+)$'; then
+            echo "::error::Nazwa gałęzi '$HEAD_REF' nie pasuje do wzorca (feat|fix|docs|chore)/<id-zadania> ani dependabot/<...>"
             exit 1
           fi
 
