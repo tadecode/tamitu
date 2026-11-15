@@ -37,6 +37,11 @@ skok wersji głównej, PR-y grupowe, PR z commitem kogoś innego, zmiany dotykaj
 lub uwierzytelniania. Zatwierdzenie nie omija 4 wymaganych kontroli; merge nadal robi Steward.
 Wymaga ustawienia repo „Allow GitHub Actions to create and approve pull requests".
 
+## Ignorowane aktualizacje (npm, /backend/functions)
+- `typescript` >= 6.1.0: `typescript-eslint` 8.x wymaga `typescript <6.1` (PR #24 zamknięty, `ERESOLVE`). Zdjąć ignorowanie po wydaniu `typescript-eslint` ze wsparciem TS 7.
+- `@types/node`, skoki wersji głównej: typy mają odpowiadać runtime Node (`engines.node` = 22; PR #23 podniósł do 26 przed zmianą ignorowania). Skok dopiero razem ze zmianą wersji Node w CI i `package.json`.
+Zmiana listy: tylko PR do `.github/dependabot.yml` (zatwierdza właściciel).
+
 ## Ocena Stewarda przed merge
 Steward ocenia każdy taki PR pod kątem kosztów i bezpieczeństwa: zakres zmiany, wielkość skoku
 wersji, notatki wydania, wpływ na sekrety i uprawnienia workflow. Wpis w `docs/github-ops/log.md`.

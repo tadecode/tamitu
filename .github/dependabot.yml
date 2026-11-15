@@ -18,6 +18,13 @@ updates:
       interval: "weekly"
     open-pull-requests-limit: 5
     labels: ["dependencies"]
+    ignore:
+      # typescript-eslint wymaga typescript <6.1 (PR #24: ERESOLVE przy 7.0.2); zdejmij po wsparciu TS 7.
+      - dependency-name: "typescript"
+        versions: [">=6.1.0"]
+      # @types/node ma byc zgodne z runtime Node (engines: 22); skok glowny tylko razem ze zmiana Node.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
