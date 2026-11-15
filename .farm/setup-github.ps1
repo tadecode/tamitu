@@ -15,7 +15,7 @@ param(
 $protection = [ordered]@{
     required_status_checks = [ordered]@{
         strict   = $true
-        contexts = @('farm-guards', 'conventions', 'secrets', 'flutter')
+        contexts = @('farm-guards', 'conventions', 'secrets', 'flutter', 'backend')
     }
     enforce_admins = $false
     required_pull_request_reviews = [ordered]@{

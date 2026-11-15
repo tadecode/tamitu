@@ -5,6 +5,16 @@
 *.keystore
 key.properties
 **/google-services.json.local
+**/google-services.json
+**/GoogleService-Info.plist
+
+# Firebase / backend (repozytorium jest publiczne: bez konfiguracji klienta i logów emulatora)
+.firebase/
+**/.firebase/
+backend/functions/node_modules/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
 
 # Lokalne ustawienia Claude Code
 .claude/settings.local.json

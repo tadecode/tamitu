@@ -39,7 +39,7 @@ Kodu aplikacji, kontraktów ról, hooków i checklist nie zmienia.
 | Etykiety, szablony, Dependabot | wykonaj, odnotuj w logu |
 
 ## Warunki merge (wszystkie)
-1. `gh pr checks` - wszystkie 4 wymagane kontrole zielone.
+1. `gh pr checks` - wszystkie 5 wymaganych kontroli zielone.
 2. Zatwierdzenie właściciela w PR (`reviewDecision = APPROVED`).
 3. Raport recenzenta `docs/reviews/PR-<nr>.md` istnieje, bez otwartych ustaleń „bloker".
 4. Raport QA z werdyktem „przyjęte".

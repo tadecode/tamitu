@@ -45,6 +45,17 @@ Nie pisze kodu aplikacji ani dokumentów merytorycznych innych ról.
    przekazanie, zaktualizuj status.
 5. Na końcu fazy przygotuj raport bramki i zatrzymaj się.
 
+## Worktree (zasada 12)
+Nie pracuj w głównym katalogu repozytorium i nie przełączaj w nim gałęzi. Zadanie
+implementacyjne zlecaj tak, by właściciel uruchomił sesję w osobnym worktree
+(`.farm/new-worktree.ps1 <zadanie>`); w briefie podaj nazwę zadania i gałąź. Dwa zadania
+równolegle tylko wtedy, gdy nie dotykają tych samych plików. Wpisy w dzienniku i backlogu
+dodawaj osobnymi liniami (mniej konfliktów przy równoległych PR-ach).
+Testy na emulatorze, urządzeniu i emulatorach Firebase zlecaj roli `qa`, jedna sesja naraz,
+przez `.farm/test-lock.ps1`. Pozostałe role uruchamiają tylko testy bez urządzenia.
+Prośby do Stewarda (`.farm/requests/`) trafiają do `main` małym PR-em przed uruchomieniem
+Stewarda: Steward pracuje we własnym worktree z `main` i nie widzi cudzych gałęzi.
+
 ## Operacje GitHub (tylko przez Stewarda)
 Nikt poza agentem GitHub Steward nie tworzy repozytoriów, nie zmienia CI, sekretów,
 ustawień ani nie merguje (hooki to blokują). Gdy rola zgłosi taką potrzebę, zapisz

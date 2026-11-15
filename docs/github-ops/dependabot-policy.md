@@ -16,7 +16,7 @@ PR-y Dependabota (gałąź `dependabot/...`) są **zawsze zwolnione** z raportu 
 (`docs/reviews/PR-<nr>.md`) i raportu QA. Właściciel nie musi tego potwierdzać za każdym razem.
 
 ## Warunki merge, które nadal obowiązują
-1. Wszystkie 4 wymagane kontrole CI zielone (`farm-guards`, `conventions`, `secrets`, `flutter`).
+1. Wszystkie 5 wymaganych kontroli CI zielone (`farm-guards`, `conventions`, `secrets`, `flutter`, `backend`).
 2. Zatwierdzenie w PR (`reviewDecision = APPROVED`): właściciela albo, w wąskiej klasie opisanej
    w sekcji „Auto-zatwierdzenie", `github-actions[bot]`. Steward nie zatwierdza za właściciela.
 3. Gałąź aktualna względem `main` (`gh pr update-branch <nr> --rebase` lub `@dependabot rebase`).

@@ -29,7 +29,7 @@ Numer zadania w backlogu (`T-001`) = numer w nazwie gałęzi = powiązany issue.
 
 ## Ochrona gałęzi `main` (skrypt `.farm/setup-github.ps1`)
 
-- Zmiany tylko przez PR, wymagane 4 kontrole CI i aktualna gałąź.
+- Zmiany tylko przez PR, wymagane 5 kontroli CI i aktualna gałąź.
 - Wymagane zatwierdzenie (domyślnie 1) i przegląd właściciela dla plików
   z `.github/CODEOWNERS` (kontrakty ról, hooki, CI, ADR, security, zakres).
 - Zakaz force push i usuwania `main`, liniowa historia (squash merge),
