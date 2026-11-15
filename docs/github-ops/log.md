@@ -11,4 +11,6 @@
 | 2026-11-15 | GH-001 / PR #3 | merge PR #3 wykonał właściciel (squash `33b36dc`); właściciel zwolnił PR #3 z raportu recenzenta i QA (PR tylko z logami) | OK |
 | 2026-11-15 | FARM-001 | poprawka `test-guards.ps1` na main (PR #4); `gh pr update-branch 3 --rebase` | OK, `farm-guards` zielony |
 | 2026-11-15 | PR #1, #2 | `gh pr comment 1/2 "@dependabot rebase"`; właściciel zwolnił #1 i #2 z raportu recenzenta i QA | rebase OK; `conventions` czerwony (nazwa gałęzi `dependabot/...`) |
-| 2026-11-15 | inicjatywa Stewarda, zgoda właściciela | PR `chore/ci-allow-dependabot`: regex `conventions` dopuszcza `dependabot/...` | otwarty |
+| 2026-11-15 | inicjatywa Stewarda, zgoda właściciela | PR `chore/ci-allow-dependabot`: regex `conventions` dopuszcza `dependabot/...` | PR #5 zmergowany przez właściciela (`f10ee24`), zwolniony z raportów; `conventions` zielone na gałęziach `dependabot/...` |
+| 2026-11-15 | PR #1 | `gh pr update-branch 1 --rebase`; `gh pr merge 1 --squash --delete-branch` (po 4 zielonych kontrolach i zatwierdzeniu właściciela) | OK, `d14e6b1`: `gitleaks-action` 2→3 |
+| 2026-11-15 | PR #2 | `gh pr update-branch 2 --rebase` (dwukrotnie, po merge #1); `gh pr merge 2 --squash --delete-branch` | OK, `ca04e7e`: `actions/checkout` 4→7 |
