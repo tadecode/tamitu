@@ -1,0 +1,16 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "consents",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "type", "order": "ASCENDING" },
+        { "fieldPath": "receivedAt", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": [
+    { "collectionGroup": "usage", "fieldPath": "updatedAt", "ttl": true, "indexes": [] },
+    { "collectionGroup": "usage_global", "fieldPath": "expireAt", "ttl": true, "indexes": [] }
+  ]
+}
