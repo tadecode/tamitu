@@ -47,7 +47,7 @@ klucze **wspólne**; klucze ekranowe powstaną w `screens/` (krok 2).
 
 | Ekran | Komponenty |
 |---|---|
-| EK-01 Start | systemowy ekran powitalny, CMP-17, CMP-18 (U12) |
+| EK-01 Start | systemowy ekran powitalny, CMP-17, CMP-15 (dane wyczyszczone), CMP-18 (przerwane usuwanie konta) |
 | EK-02 Ekran startowy | CMP-07 (język), CMP-13, CMP-09, CMP-02 |
 | EK-03 Ponowna akceptacja | CMP-01, CMP-09, CMP-02 |
 | EK-04 Lista planów | CMP-01, CMP-12, CMP-03, CMP-13, CMP-17 (szkielet), CMP-18, CMP-14 |
@@ -58,7 +58,7 @@ klucze **wspólne**; klucze ekranowe powstaną w `screens/` (krok 2).
 | EK-09 Trasa | CMP-16, CMP-10, CMP-07, CMP-13, CMP-02 |
 | EK-10 Lokalizacja | CMP-15 (dialog nad arkuszem EK-09 – arkusze nie są zagnieżdżane), CMP-02 |
 | EK-11 Usunięcie planu | CMP-15, CMP-14 |
-| EK-12 Ustawienia | CMP-01, CMP-11, CMP-16/CMP-10 (język) |
+| EK-12 Ustawienia | CMP-01, CMP-11, CMP-16/CMP-10 (język); ekran licencji – systemowy Fluttera |
 | EK-13 Prywatność | CMP-01, CMP-11, CMP-13, CMP-02 |
 | EK-14 Wylogowanie | CMP-15 |
 | EK-15 Usunięcie konta | CMP-01, CMP-13, CMP-02, CMP-17 |
