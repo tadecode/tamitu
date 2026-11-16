@@ -135,3 +135,13 @@ Szczegóły: `docs/architecture/przeglad-ekranow-p3-14c.md`. Odpowiedzi na U3, U
 | Q10 | Właściciel zakłada konto rozliczeniowe/Blaze i projekty przed fazą 3; nazwy tamitu-dev-… / tamitu-prod-… zaakceptowane | zadanie właściciela |
 | Q11 | Właściciel potwierdza warunki dostawcy AI; do tego czasu `ALLOW_REAL_DATA=false` | SEC-15 |
 | Q12 | Slot limitu nie wraca po anulowaniu, jeśli model już ruszył | zgodne |
+
+## Przegląd security ekranów (P3-14c), security, 2026-11-16
+Szczegóły: `docs/security/reviews/2026-11-16-p3-14c-ekrany.md`. Do czasu odpowiedzi obowiązuje propozycja domyślna.
+
+| # | Pytanie | Zadaje | Status | Propozycja domyślna | Skutek |
+|---|---|---|---|---|---|
+| S15 | Czy treść zgody na AI (EK-06) ma wskazywać administratora (TadeCode + kontakt), czy wystarczy link do polityki? | security → owner, [PRAWNIK] | otwarte | Dodać jedno zdanie o administratorze i kontakcie (tamitu@tadecode.pl) | EK-06, SEC-30 |
+| S16 | Brzmienie akceptacji polityki (CMP-09, EK-02, EK-03): „Zapoznaję się…” (EK-02) vs „Zapoznałem(-am) się…” (CMP-09) | security → owner, [PRAWNIK] | otwarte | Jeden tekst: „Potwierdzam zapoznanie się z {polityką prywatności} i akceptuję ją” / „I confirm I have read and accept the {Privacy Policy}”; etykieta TalkBack = tekst widoczny | CMP-09, EK-02, EK-03, UX6 |
+| S17 | Czy serwer egzekwuje aktualną wersję polityki przy `generatePlan` (dziś `consent_required` dotyczy tylko zgody AI; EK-01 pomija sprawdzenie offline)? | security → architect | otwarte | Tak: `consent_required` z `consentType=privacy_policy`, klient → EK-03; EK-01 sprawdza wersję przy pierwszej akcji sieciowej w sesji | SEC-26, US-003, EK-01, EK-16 (blokuje ich `ux-ready`) |
+| S18 | Co dzieje się z planami na innym urządzeniu, na którym użytkownik był zalogowany, po usunięciu konta (sesja wygasa, plik bazy zostaje)? | security → architect | otwarte | Przy `unauthenticated`/`user-not-found` po usunięciu konta aplikacja usuwa plik bazy tego konta i informuje użytkownika; tekst EK-15 wspomina o innych urządzeniach | EK-15, EK-01, US-010, ADR-0004/0005 |
