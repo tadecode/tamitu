@@ -1,6 +1,6 @@
 # ADR-0011: Doprecyzowania po przeglądzie ekranów – wersja polityki, sieć, data przylotu, usuwanie konta, środowisko `dev` (SEC-24)
 
-- Status: proponowany (do zatwierdzenia przez właściciela; P3-14c)
+- Status: zatwierdzony (właściciel produktu, 2026-11-16: „zatwierdzam ADR-0010 i ADR-0011”)
 - Data: 2026-11-16
 - Autor (rola): architect
 - Zadanie: P3-14c (przegląd EK-01..EK-16), SEC-24, U3, U6, U12
@@ -41,4 +41,4 @@ Przegląd ekranów (P3-14c) wykazał miejsca, w których ekrany zakładają dane
 **Negatywne / ryzyka:** nowa polityka dociera tylko z aktualizacją aplikacji (akceptowalne – tekst i tak jest w aplikacji); reaktywne wykrywanie sieci oznacza, że użytkownik dowiaduje się o braku sieci po dotknięciu przycisku (akceptowalne w MVP); szersza tolerancja daty (−2 dni) – bez wpływu na koszt i bezpieczeństwo (to tylko kontekst promptu).
 **Koszty (CLAUDE.md pkt 10):** brak wzrostu. Brak nowych wywołań AI; dodatkowe `recordConsent` (dosłanie, nowe rekordy po utracie bazy) i `reload()` – w darmowych pulach Firestore/Auth. Szacunki `docs/architecture/costs.md` bez zmian.
 **Dane osobowe:** brak nowych rodzajów danych. `consentId` w `shared_preferences` to identyfikator techniczny rekordu D3 (bez UID); `testUids` projektu `dev` – jak w `prod` (dostęp tylko właściciel, ADR-0002 Aneks A pkt 7). Do wpisu Security w rejestrze: brak zmian kategorii.
-**Do wykonania po zatwierdzeniu:** aktualizacja `docs/api/posrednik-api.md` do wersji 0.3 (projekt zmian jest już w pkt 7 tego dokumentu) i `docs/data/model-danych.md` pkt 2.1; zadania mobile-dev i ux z raportu przeglądu.
+**Po zatwierdzeniu (2026-11-16):** `docs/api/posrednik-api.md` zaktualizowany do v0.3, `docs/data/model-danych.md` do v0.3 (`consentId`). Pozostają zadania mobile-dev (backend i aplikacja) i ux z raportu przeglądu, pkt 5.

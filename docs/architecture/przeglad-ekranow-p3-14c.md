@@ -3,7 +3,7 @@
 - Data: 2026-11-16 · Autor (rola): architect · Wersja: 1.0
 - Zakres: `docs/ux/screens/ek-01..16.md`, `docs/ux/design-system.md` (pkt 8, 8.1), `components/`, `patterns.md`, `flows.md` względem ADR-0001..0009, `docs/api/`, `docs/data/`, `docs/architecture/`.
 - Poza zakresem: ocena zgód i prywatności (równoległy przegląd security), treść prawna [PRAWNIK], kolorystyka (UX16).
-- Wynik w ADR: **ADR-0010** (ikony Hugeicons, proponowany), **ADR-0011** (doprecyzowania po przeglądzie, w tym SEC-24, proponowany). Zatwierdzone ADR-0001..0009 bez zmian.
+- Wynik w ADR: **ADR-0010** (ikony Hugeicons) i **ADR-0011** (doprecyzowania po przeglądzie, w tym SEC-24) – **zatwierdzone przez właściciela 2026-11-16**; kontrakt `posrednik-api.md` i model danych w wersji 0.3. Zatwierdzone ADR-0001..0009 bez zmian.
 
 ## 1. Werdykt zbiorczy
 **Ekrany są wykonalne na obecnej architekturze. Żaden nie wymaga nowej funkcji serwera, nowego magazynu danych ani nowego uprawnienia; żaden nie zwiększa kosztów.** Wymagane:
@@ -169,3 +169,5 @@ Mapowanie kodów zgodne z kontraktem. Dodać/doprecyzować:
 2. **Zatwierdzić ADR-0011** (w tym SEC-24: `dev` tylko dane testowe; `deleteAccount` bez wymogu dostawcy i wersji; tolerancja daty − 2 dni; reaktywne wykrywanie sieci).
 3. Potwierdzić, że EK-01 (U12) i EK-13 (wycofanie offline) idą **za zatwierdzonymi ADR** (rekomendacja), a nie zmieniają ADR.
 4. UX9 (dialog) i UX12 (bez e-maila) – rekomendacje architekta; zmiana = ponowne zatwierdzenie ekranu.
+
+**Stan decyzji (2026-11-16):** właściciel zatwierdził ADR-0010 i ADR-0011 („zatwierdzam ADR-0010 i ADR-0011”) – pkt 1, 2 (z SEC-24) zamknięte. Otwarte: pkt 3 (A4 – EK-01 i EK-13 wg zatwierdzonych ADR) i pkt 4 (UX9, UX12).

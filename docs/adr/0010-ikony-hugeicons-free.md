@@ -1,6 +1,6 @@
 # ADR-0010: Ikony – Hugeicons Free (pakiet `hugeicons` + `flutter_svg`) za własnym widgetem `AppIcon`
 
-- Status: proponowany (do zatwierdzenia przez właściciela; P3-14c)
+- Status: zatwierdzony (właściciel produktu, 2026-11-16: „zatwierdzam ADR-0010 i ADR-0011”)
 - Data: 2026-11-16
 - Autor (rola): architect
 - Zadanie: P3-14c (UX14, UX15; `docs/ux/design-system.md` pkt 8 i 8.1)

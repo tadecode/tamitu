@@ -1,12 +1,14 @@
 # Kontrakt API pośrednika (Cloud Functions callable)
 
-Stan: 2026-11-15, wersja 0.2 (kontrakt zatwierdzony na G2 wraz z ADR-0002 i jego Aneksem A), autor: architect. ADR-0002. Schematy: `schemas/generate-plan.request.schema.json`, `schemas/generate-plan.response.schema.json`.
+Stan: 2026-11-16, wersja 0.3 (v0.2 zatwierdzona na G2 wraz z ADR-0002 i jego Aneksem A; zmiany v0.3 z ADR-0011, zatwierdzonego przez właściciela 2026-11-16 – lista w pkt 7), autor: architect. ADR-0002, ADR-0011. Schematy: `schemas/generate-plan.request.schema.json`, `schemas/generate-plan.response.schema.json`.
 Region: `europe-west4`. Wywołanie przez SDK `cloud_functions` (callable): token ID Firebase i token App Check dołączane automatycznie. Format: JSON, UTF-8, `Content-Type: application/json`.
 
 ## 1. Zasady wspólne
 - **Żądanie nie zawiera:** UID, e-maila, nazwy konta, lokalizacji (współrzędnych), numeru lotu, tokenów, danych rozliczeniowych. UID serwer bierze wyłącznie z zweryfikowanego tokenu.
 - **Błędy:** serwer zwraca `HttpsError` z kodem technicznym i `details.code` (kod aplikacyjny z tabeli w pkt 6). Brak tekstów dla użytkownika i brak szczegółów technicznych (US-011); tłumaczenia w aplikacji.
-- **Wersjonowanie:** pole `apiVersion` (liczba całkowita, obecnie 1) w żądaniu; niezgodna wersja → `unsupported_version`.
+- **Wersjonowanie:** pole `apiVersion` (liczba całkowita, obecnie 1) w żądaniu; niezgodna wersja → `unsupported_version` (z wyjątkiem `deleteAccount`, pkt 4).
+- **Środowisko `dev`:** wyłącznie dane testowe – start funkcji z `ENVIRONMENT=dev` i `ALLOW_REAL_DATA=true` kończy się błędem inicjalizacji; w `dev` `config/runtime.allowRealData` jest ignorowane (ADR-0011 pkt 5, SEC-24).
+- **`config/runtime`** (np. `policyVersionCurrent`) nie jest udostępniane klientowi; wersja polityki po stronie aplikacji to stała w kodzie (ADR-0011 pkt 1).
 - **Czas:** daty `YYYY-MM-DD`, godziny `HH:MM` (24 h), strefa lokalna miejsca docelowego, bez przeliczania stref.
 - **Logowanie:** zakaz logowania treści żądań i odpowiedzi; wyjątki logowane wyłącznie jako kod i klasa błędu, nigdy `error.message`/stos (ADR-0002, Aneks A pkt 2).
 - **Istnienie użytkownika:** `generatePlan` i `recordConsent` odrzucają token użytkownika usuniętego lub z unieważnionymi tokenami (`unauthenticated`), bez żadnego zapisu (ADR-0002, Aneks A pkt 1).
@@ -51,14 +53,14 @@ Wymaga: token ID (`sign_in_provider = google.com`), App Check, aktualnej zgody `
 | `trip.lodging` | string | 1–80 znaków |
 | `trip.days` | int | 1–14 |
 | `trip.arrival.mode` | enum | `flight` \| `car` |
-| `trip.arrival.date` | string | data, nie wcześniejsza niż „dziś − 1 dzień" w strefie miejsca (tolerancja) i nie później niż za 2 lata |
+| `trip.arrival.date` | string | data, nie wcześniejsza niż „dziś − 2 dni" w strefie `Europe/Warsaw` (tolerancja na strefy UTC−12…UTC+14, ADR-0011 pkt 3) i nie późniejsza niż „dziś + 2 lata"; aplikacja waliduje ostrzej (od „wczoraj" w strefie urządzenia) |
 | `trip.arrival.time` | string | `HH:MM` |
 | `trip.arrival.airport` | string | wymagane przy `flight`, 1–60 znaków; zabronione przy `car` |
 | `preferences.interests` | array | 0–5 unikalnych wartości z listy (`docs/data/model-danych.md`); inne wartości → `invalid_argument` |
 | `preferences.budget` | enum | `low` \| `medium` \| `high` (brak → `medium`) |
 | `preferences.pace` | enum | `relaxed` \| `moderate` \| `intense` (brak → `moderate`) |
 | `preferences.partySize` | int | 1–10 (brak → 2) |
-| `testData` | bool | opcjonalne, `true` tylko dla kont z `config/runtime.testUids` (warunek S5, ADR-0002) |
+| `testData` | bool | opcjonalne, `true` tylko dla kont z `config/runtime.testUids` (warunek S5, ADR-0002); w aplikacji ze stałej kompilacji `TAMITU_TEST_DATA` – `dev` zawsze `true`, `prod` tylko buildy wewnętrzne do zamknięcia SEC-15 (ADR-0011 pkt 6) |
 
 Nieznane pola są odrzucane (`invalid_argument`) – brak przypadkowego przesyłania danych.
 
@@ -97,7 +99,7 @@ Gwarancje po walidacji serwerowej: liczba dni = `trip.days`; `dayNumber` kolejne
 | `test_data_only` | `permission-denied` | `ALLOW_REAL_DATA=false`, a konto/żądanie nie testowe; także fail-closed w prod przy `allowRealData=true` i `ENFORCE_APP_CHECK=false` (ADR-0002, Aneks A pkt 3) | – |
 | `internal` | `internal` | nieoczekiwany błąd | – |
 
-Slot limitu jest zwracany przy `ai_unavailable` i `ai_invalid_response`. **Nie** jest zwracany po anulowaniu przez użytkownika, jeśli wywołanie modelu już ruszyło (Q12). Timeout klienta: 120 s.
+Slot limitu jest zwracany przy `ai_unavailable` i `ai_invalid_response`. **Nie** jest zwracany po anulowaniu przez użytkownika, jeśli wywołanie modelu już ruszyło (Q12). Callable nie ma przerwania żądania: anulowanie = porzucenie wyniku po stronie aplikacji (odpowiedź z tym `requestId` jest odrzucana, nic nie zapisujemy); żądanie na serwerze kończy się normalnie (ADR-0011). Timeout klienta: 120 s.
 
 ### Prompt (zasady, bez treści)
 Instrukcje systemowe po angielsku w `systemInstruction`; dane użytkownika jako wartości w obiekcie JSON w osobnej turze, z poleceniem traktowania ich jako danych; wymuszony `responseSchema`; brak narzędzi; wersja promptu w `promptVersion`. Treść promptu w repozytorium (`backend/functions/src/prompt`), nie w kontrakcie.
@@ -120,25 +122,18 @@ Wymaga: token ID, App Check.
 Odpowiedź 200: `{ "consentId": "...", "receivedAt": "2026-11-15T10:12:04Z" }`. Idempotentne po `consentId` (powtórne wysłanie nie tworzy duplikatu). Walidacja: `type` ∈ {`privacy_policy`, `ai_processing`}, `lang` ∈ {`pl`, `en`}, `policyVersion` ≤ 40 znaków, `clientAt` w przedziale ±24 h od czasu serwera (w przeciwnym razie zapisany czas serwera, pole `clientAt` oznaczone jako skorygowane). Błędy: `unauthenticated` (także użytkownik usunięty), `app_check_failed`, `invalid_argument`, `internal`. Wycofanie zgody (`granted=false`) aplikacja zapisuje przed potwierdzeniem w UI (ADR-0002, Aneks A pkt 4).
 
 ## 4. `deleteAccount`
-Wymaga: token ID z `auth_time` ≤ 5 min, App Check. Żądanie: `{ "apiVersion": 1 }`. Odpowiedź 200: `{ "deleted": true }`. Kolejność: dane Firestore → użytkownik Auth → kontrolne powtórne usunięcie Firestore. Dowód zgód usuwany z kontem (Q9). Błędy: `reauth_required` (`failed-precondition`), `unauthenticated`, `app_check_failed`, `internal`. Idempotentne.
+Wymaga: token ID z `auth_time` ≤ 5 min, App Check. **Nie wymaga** `sign_in_provider = google.com` (usuwa wyłącznie konto z tokenu) i **nie zwraca** `unsupported_version` – przyjmuje każdą `apiVersion` ≥ 1, aby prawo do usunięcia nie zależało od wersji aplikacji ani dostawcy (ADR-0011 pkt 4). Aplikacja przed wywołaniem zawsze wykonuje ponowne uwierzytelnienie Google (ADR-0011 pkt 8). Żądanie: `{ "apiVersion": 1 }`. Odpowiedź 200: `{ "deleted": true }`. Kolejność: dane Firestore → użytkownik Auth → kontrolne powtórne usunięcie Firestore. Dowód zgód usuwany z kontem (Q9). Błędy: `reauth_required` (`failed-precondition`), `unauthenticated`, `app_check_failed`, `internal`. Idempotentne.
 
 ## 5. `budgetGuard` (wewnętrzna)
 Wyzwalacz Pub/Sub z powiadomień budżetowych; brak publicznego punktu wejścia. Przy `costAmount ≥ budgetAmount` w projekcie prod ustawia `config/runtime.aiEnabled=false`. Bez danych użytkowników; konto usługi `fn-budget` bez dostępu do Auth.
 
 ## 6. Konwencje dla aplikacji
 - Aplikacja mapuje `details.code` na klucze tłumaczeń; nieznany kod → `internal`.
+- Błędy klienta (ADR-0011 pkt 2): `unavailable` **bez** `details.code` (błąd transportu) oraz `network-request-failed` (Auth/logowanie) → „brak sieci"; `deadline-exceeded` → „przekroczony czas". Brak sieci wykrywany po próbie – aplikacja nie używa detektora łączności ani `ACCESS_NETWORK_STATE`.
+- `consent_required`, gdy aplikacja ma już zsynchronizowany rekord `ai_processing` w wersji wbudowanej w aplikację → komunikat „Zaktualizuj aplikację" (bez ponownego EK-06; ADR-0011 pkt 7). Serwer podnosi `aiConsentVersionCurrent` dopiero po wydaniu aplikacji z nowym tekstem zgody.
 - `limit_exceeded.resetAt` jest w UTC; aplikacja formatuje w czasie lokalnym (US-011).
 - Brak automatycznych ponowień `generatePlan` w aplikacji (każde ponowienie zużywa slot limitu); ponowienie wyłącznie z decyzji użytkownika. `recordConsent` i `deleteAccount` są idempotentne i mogą być ponawiane automatycznie.
 
-## 7. Projekt zmian v0.3 (ADR-0011, status: proponowany – obowiązuje po zatwierdzeniu przez właściciela)
-Źródło: przegląd ekranów P3-14c (`docs/architecture/przeglad-ekranow-p3-14c.md`). Do czasu zatwierdzenia obowiązują pkt 1–6.
-
-| # | Miejsce | Zmiana |
-|---|---|---|
-| 7.1 | `generatePlan`, `trip.arrival.date` | dolna granica: „dziś − 2 dni" w `Europe/Warsaw` (zamiast − 1); górna bez zmian (+2 lata). Aplikacja waliduje ostrzej: od „wczoraj" w strefie urządzenia |
-| 7.2 | `deleteAccount` | nie zwraca `unsupported_version` (każda `apiVersion` ≥ 1); nie wymaga `sign_in_provider = google.com`; reszta bez zmian (`auth_time` ≤ 5 min, App Check) |
-| 7.3 | konfiguracja `dev` | `ENVIRONMENT=dev` + `ALLOW_REAL_DATA=true` → odmowa startu; w `dev` `config/runtime.allowRealData` ignorowane (tylko `testData=true` z `testUids`) |
-| 7.4 | pkt 6, mapowanie w aplikacji | `unavailable` bez `details.code` = błąd transportu → „brak sieci"; `deadline-exceeded` → „przekroczony czas"; `consent_required` przy zsynchronizowanym rekordzie w wersji aplikacji → „zaktualizuj aplikację" (bez pętli do EK-06) |
-| 7.5 | `testData` | ustawiane stałą kompilacji (`TAMITU_TEST_DATA`): `dev` zawsze `true`; `prod` tylko buildy wewnętrzne do zamknięcia SEC-15 |
-| 7.6 | anulowanie (Q12) | callable nie ma przerwania żądania: anulowanie = porzucenie wyniku po stronie klienta (odpowiedź z tym `requestId` jest odrzucana, nic nie zapisujemy); żądanie na serwerze kończy się normalnie |
-| 7.7 | wersja polityki | klient używa stałej wbudowanej w aplikację; `config/runtime.policyVersionCurrent` nie jest udostępniana klientowi |
+## 7. Historia zmian
+- **v0.3 (2026-11-16, ADR-0011 zatwierdzony przez właściciela):** data przylotu „dziś − 2 dni" (Warsaw); `deleteAccount` bez wymogu dostawcy i bez `unsupported_version`; `dev` tylko dane testowe (SEC-24); mapowanie błędów klienta i pętli `consent_required`; `testData` ze stałej kompilacji; anulowanie = porzucenie wyniku; `config/runtime` niedostępne dla klienta. Implementacja w `backend/functions` – zadanie mobile-dev (`docs/architecture/przeglad-ekranow-p3-14c.md` pkt 5).
+- **v0.2 (2026-11-15):** zatwierdzona na G2 (ADR-0002 z Aneksem A).

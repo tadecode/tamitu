@@ -1,6 +1,6 @@
 # Model danych – Tamitu (MVP)
 
-Stan: 2026-11-15, wersja 0.2 (po G2; ADR zatwierdzone), autor: architect (przegląd Security: `docs/security/przeglad-adr.md`). Powiązane: ADR-0005, `docs/security/personal-data-register.md` (kody D1..D16), `przechowywanie-i-retencja.md`, `docs/api/posrednik-api.md`.
+Stan: 2026-11-16, wersja 0.3 (ADR-0011: `consentId` w tymczasowym wpisie zgody); wcześniej 0.2 (po G2; ADR zatwierdzone), autor: architect (przegląd Security: `docs/security/przeglad-adr.md`). Powiązane: ADR-0005, `docs/security/personal-data-register.md` (kody D1..D16), `przechowywanie-i-retencja.md`, `docs/api/posrednik-api.md`.
 Zasada: dane podróży tylko lokalnie; po stronie chmury wyłącznie zgody (D3), licznik (D10), konfiguracja (bez danych osobowych) i konto Auth (D1).
 
 ## 1. Wartości wyliczeniowe (wspólne dla aplikacji i serwera)
@@ -25,7 +25,7 @@ Pola tekstowe (po oczyszczeniu: normalizacja Unicode NFC, usunięcie znaków ste
 |---|---|---|---|
 | Baza konta `tamitu_<sha256(uid)[0..16]>.db` (Drift + SQLCipher) | plany, dane podróży, preferencje, zgody lokalne | tak, AES-256, klucz w Keystore | wyłączona (`allowBackup=false`, `dataExtractionRules`) |
 | `flutter_secure_storage` | klucz bazy; znacznik „usuwanie w toku" (skrót UID) | Keystore | wyłączona |
-| `shared_preferences` | `uiLanguage` (`pl`/`en`/system), tymczasowa zgoda na politykę przed logowaniem (`version`, `lang`, `acceptedAt`; **proponowane w ADR-0011 pkt 10: także `consentId`** dla idempotentnych ponowień), flagi UI | nie (brak danych podróży) | wyłączona |
+| `shared_preferences` | `uiLanguage` (`pl`/`en`/system), tymczasowa zgoda na politykę przed logowaniem (`version`, `lang`, `acceptedAt`, `consentId` – UUID dla idempotentnych ponowień `recordConsent`, ADR-0011 pkt 10), flagi UI | nie (brak danych podróży) | wyłączona |
 | Firebase SDK (Auth) | token odświeżający, stan sesji (D2) | wg SDK | wyłączona |
 | **Nigdzie** | lokalizacja, współrzędne, URL trasy ze współrzędnymi, prompty/odpowiedzi surowe | – | – |
 
