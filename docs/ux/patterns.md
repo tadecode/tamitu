@@ -51,8 +51,8 @@
 
 - **Kiedy:** funkcja wymaga sieci (logowanie, zgody, generowanie, usunięcie konta, Google Maps, link do polityki).
 - **Kiedy nie:** ekrany działające offline (EK-04, EK-08, EK-11, EK-12, język) – **bez** komunikatu o braku sieci, dopóki użytkownik nie spróbuje akcji sieciowej.
-- **Składniki:** CMP-13 „Ostrzeżenie" z `wifi-off-01` w miejscu akcji (formularz EK-05: nad przyciskiem „Generuj plan" – sprawdzenie przed wysłaniem, bez zużycia limitu, U6); CMP-18 „Brak sieci" dla ekranów, które bez sieci nie mają treści; CMP-14 dla akcji jednorazowej (otwarcie map).
-- **Zasady:** jednolity tekst (EK-16), zawsze „Spróbuj ponownie" lub powrót; komunikat znika sam po powrocie sieci.
+- **Składniki:** CMP-13 „Ostrzeżenie" z `wifi-off-01` w miejscu akcji (formularz EK-05: nad przyciskiem „Generuj plan" – po nieudanej próbie; połączenie, które nie dotarło do serwera, nie zużywa limitu, ADR-0011 pkt 2); CMP-18 „Brak sieci" dla ekranów, które bez sieci nie mają treści; CMP-14 dla akcji jednorazowej (otwarcie map).
+- **Zasady:** **brak sieci to wynik nieudanej próby, nie stały komunikat** – aplikacja nie ma detektora sieci (ADR-0011 pkt 2: bez pakietu łączności i bez `ACCESS_NETWORK_STATE`); jednolity tekst (EK-16); zawsze „Spróbuj ponownie" lub powrót; komunikat znika przy kolejnej udanej próbie lub po opuszczeniu ekranu. Wyjątek: otwarcie Google Maps nie jest blokowane (EK-09).
 
 ## 7. Potwierdzenie działania destrukcyjnego
 

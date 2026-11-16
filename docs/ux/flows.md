@@ -51,16 +51,21 @@ flowchart TD
 
 Zgoda na AI **nie** jest pytana w P1 (privacy-checklist pkt 2). Informacja o pełnoletności na EK-02 [U2, PRAWNIK].
 
-## P2. Powrót zalogowanego użytkownika (US-001, US-003, US-010)
+## P2. Powrót zalogowanego użytkownika (US-001, US-003, US-010; ADR-0005 Aneks A pkt 2, ADR-0011 pkt 1, 8, 9)
 
 ```mermaid
 flowchart TD
   A["EK-01 (systemowy ekran powitalny, bez migotania)"] --> B{"Stan"}
   B -->|sesja ważna, także offline| C["EK-04"]
-  B -->|nowa wersja polityki| D["EK-03 blokujący: Akceptuję / Wyloguj / Usuń konto [U2]"]
+  B -->|wersja polityki w aplikacji nowsza niż akceptacja (offline)| D["EK-03 blokujący: Akceptuję / Wyloguj / Usuń konto [U2]"]
   D -->|Akceptuję, wymaga sieci| C
-  B -->|przerwane usuwanie konta| E["Dokończenie czyszczenia + komunikat o wyniku"] --> F["EK-02"]
-  B -->|baza konta niedostępna [U12]| G["Stan blokujący: Dane na tym urządzeniu są niedostępne – Wyloguj / Usuń konto"]
+  B -->|znacznik: usuwanie w toku| R{"Konto na serwerze? (reload)"}
+  R -->|usunięte| E["Czyszczenie lokalne"] --> F["EK-02 + komunikat"]
+  R -->|istnieje| K["Dokończ usuwanie / Anuluj usuwanie"]
+  K -->|Dokończ| Q["EK-15 (ponowne logowanie)"]
+  K -->|Anuluj| C
+  R -->|brak sieci| N["Połącz się, aby dokończyć + Spróbuj ponownie"]
+  B -->|baza nieczytelna: utrata klucza| G["Usunięcie pliku, pusta baza, jednorazowy dialog"] --> H["EK-03 wariant: dane wyczyszczone"] --> I["EK-04 pusty"]
 ```
 
 ## P3. Tworzenie planu (US-004, US-005, US-006, US-011) – wzorce: formularz, zgody, ładowanie, błąd z ponowieniem
