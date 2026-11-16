@@ -2,7 +2,8 @@
 
 - Zgłasza (rola): orchestrator · Data: 2026-11-16 · Powiązane: P3-14b
 - Typ: zmiana kontraktu farmy (`.claude/agents/`, chronione; wykonuje właściciel z `FARM_MAINTENANCE=1`)
-- Status: propozycja
+- Status: **zastąpiona** rolą `ux` z szablonu farmy (pakiet FARM-004). Nie dodawać `designer.md`: byłby duplikatem.
+  Katalog roboczy to `docs/ux/` (nie `docs/design/`); ograniczenia z wymagań Tamitu (niżej) ux czyta z `docs/requirements/`.
 
 ## Problem
 Właściciel zdecydował, że przed implementacją ekranów powstaje mockup, po nim przegląd architekta.

@@ -30,6 +30,28 @@ function B([string]$c) { (@{ tool_input = @{ command = $c } } | ConvertTo-Json -
 
 $analyst = @('-Role', 'analyst', '-Allow', 'docs/requirements,docs/open-questions.md,.farm/log')
 $dev = @('-Role', 'mobile-dev', '-Allow', 'lib,test,docs/backlog.md,.farm/log')
+$ux = @('-Role', 'ux', '-Allow', 'docs/ux,docs/open-questions.md,.farm/log')
+
+Check 'ux: zapis w docs/ux dozwolony' 0 (Run $paths (W 'docs/ux/screens/home.md') $ux)
+Check 'ux: zapis w lib/ zablokowany' 2 (Run $paths (W 'lib/ui/home.dart') $ux)
+Check 'ux: zapis w assets/ zablokowany' 2 (Run $paths (W 'assets/logo.png') $ux)
+Check 'ux: zapis w docs/api zablokowany' 2 (Run $paths (W 'docs/api/openapi.md') $ux)
+Check 'ux: zapis w docs/adr zablokowany' 2 (Run $paths (W 'docs/adr/0001-x.md') $ux)
+Check 'ux: pokrewna nazwa docs/ux-old zablokowana' 2 (Run $paths (W 'docs/ux-old/a.md') $ux)
+Check 'ux: biblioteka komponentow docs/ux/components dozwolona' 0 (Run $paths (W 'docs/ux/components/button.md') $ux)
+Check 'ux: makieta docs/ux/mockups dozwolona' 0 (Run $paths (W 'docs/ux/mockups/home.html') $ux)
+Check 'ux: kod makiety w lib/ zablokowany' 2 (Run $paths (W 'lib/mockups/home.html') $ux)
+
+$dba = @('-Role', 'dba', '-Allow', 'docs/data/schema,docs/data/queries,docs/data/migrations,docs/open-questions.md,.farm/log')
+$da = @('-Role', 'data-analyst', '-Allow', 'docs/analytics,docs/open-questions.md,.farm/log')
+Check 'dba: zapis w docs/data/schema dozwolony' 0 (Run $paths (W 'docs/data/schema/local.md') $dba)
+Check 'dba: zapis w docs/data/migrations dozwolony' 0 (Run $paths (W 'docs/data/migrations/0002-x.md') $dba)
+Check 'dba: model architekta (docs/data/model-danych.md) zablokowany' 2 (Run $paths (W 'docs/data/model-danych.md') $dba)
+Check 'dba: zapis w lib/ zablokowany' 2 (Run $paths (W 'lib/data/db.dart') $dba)
+Check 'dba: zapis w docs/adr zablokowany' 2 (Run $paths (W 'docs/adr/0001-x.md') $dba)
+Check 'data-analyst: zapis w docs/analytics dozwolony' 0 (Run $paths (W 'docs/analytics/measurement-plan.md') $da)
+Check 'data-analyst: zapis w lib/ zablokowany' 2 (Run $paths (W 'lib/analytics.dart') $da)
+Check 'data-analyst: zapis w docs/security zablokowany' 2 (Run $paths (W 'docs/security/register.md') $da)
 
 Check 'analyst: zapis w docs/requirements dozwolony' 0 (Run $paths (W 'docs/requirements/us-001.md') $analyst)
 Check 'analyst: zapis w lib/ zablokowany' 2 (Run $paths (W 'lib/main.dart') $analyst)
