@@ -41,6 +41,29 @@ Status „odpowiedziane" = decyzja właściciela zapisana; dokumenty faz muszą 
 |---|---|---|---|---|---|
 | N11 | Doprecyzowanie po N1 i pyt. 7: (a) czy pola preferencji są obowiązkowe; (b) formaty: zainteresowania (lista predefiniowana czy tekst), budżet i tempo (np. 3 poziomy), liczba osób (zakres); (c) czy język planu wybiera się osobno od języka interfejsu | analyst | otwarte | (a) opcjonalne, z wartościami domyślnymi; (b) lista predefiniowana zainteresowań (minimalizacja danych, ochrona przed danymi wrażliwymi), budżet i tempo – 3 poziomy, liczba osób 1–10 (zakres do potwierdzenia); (c) język planu domyślnie = język interfejsu, z możliwością zmiany w formularzu | US-004, US-005; do czasu odpowiedzi obowiązuje propozycja |
 
+## Przegląd wymagań pod ekrany (P3-14a), analityk, 2026-11-16
+Szczegóły i wpływ na ekrany: `docs/requirements/screens-and-flows.md` pkt 5. Do czasu odpowiedzi obowiązuje propozycja domyślna.
+
+| # | Pytanie | Zadaje | Status | Propozycja domyślna | Skutek |
+|---|---|---|---|---|---|
+| U1 | Czy język interfejsu można zmienić już na ekranie startowym (przed logowaniem)? | analyst | otwarte | Tak: domyślnie język urządzenia (PL/EN, inaczej EN), przełącznik na ekranie startowym i w Ustawieniach | EK-02, EK-12 |
+| U2 | Co po odmowie akceptacji polityki lub niezaakceptowaniu zmienionej wersji; czy ponowna akceptacja wymaga sieci; sformułowanie wymogu dorosłości (N8) | analyst, [PRAWNIK] | otwarte | Bez akceptacji brak dostępu; ekran ponownej akceptacji blokujący (opcje: Akceptuję, Wyloguj, Usuń konto), wymaga sieci; jedno zdanie o pełnoletności na ekranie startowym | US-003, EK-02, EK-03 |
+| U3 | Komunikaty: wymagana aktualizacja aplikacji (`unsupported_version`); „AI niedostępne dla tego konta" (`test_data_only`, do zamknięcia SEC-15) | architect, owner | otwarte | „Zaktualizuj aplikację" z linkiem do sklepu; „funkcja chwilowo niedostępna" | EK-16 |
+| U4 | Czy pokazywać liczbę pozostałych generowań (odpowiedź serwera zawiera `remainingToday` dopiero po generowaniu) | analyst, architect | otwarte | Pokazywać tylko po udanym generowaniu i w komunikacie limitu, bez dodatkowego wywołania | US-011, EK-07, EK-08 |
+| U5 | Czy zachowywać szkic formularza po zabiciu aplikacji | analyst, security | otwarte | Nie (tylko w pamięci ekranu; minimalizacja danych) | EK-05 |
+| U6 | Generowanie w tle (aplikacja zminimalizowana) i sprawdzenie sieci przed „Generuj" | architect | otwarte | Trwa do limitu 120 s, po powrocie wynik lub błąd; po zabiciu procesu nic nie zapisano, limit może być zużyty; sprawdzenie sieci przed wysłaniem bez zużycia limitu | EK-05, EK-07 |
+| U7 | Wzorcowy komunikat z ADR-0004 mówi „usuń je w Ustawieniach", a funkcji „usuń wszystkie plany" nie ma | analyst, architect, security | otwarte | Nie dodawać funkcji; treść komunikatu: usuwanie pojedynczych planów lub konta (już w US-002) | US-002, EK-14 |
+| U8 | Wylogowanie podczas generowania i bez sieci | analyst, architect | otwarte | Niedostępne w trakcie generowania; działa bez sieci (operacja lokalna) | US-002, EK-14 |
+| U9 | Czy informować, że plany są tylko na urządzeniu (R13, S4) | analyst, owner | otwarte | Tak, krótka informacja w stanie pustym listy i w Ustawieniach/Prywatność | EK-04, EK-13 |
+| U10 | Zakres daty przylotu w formularzu | analyst, owner | otwarte | Od wczoraj do +2 lat (jak API); dodane do US-004 jako propozycja | US-004, EK-05 |
+| U11 | Wpływ Q1 na mockup: wariant A (z ekranem prośby o lokalizację) i C (bez) | analyst, architect | otwarte | Mockup dla A z adnotacją o wariancie C | EK-09, EK-10 |
+| U12 | Komunikat przy niedostępnej lokalnej bazie konta (np. utrata klucza) | architect | otwarte | „Dane na tym urządzeniu są niedostępne"; opcje: wyloguj, usuń konto | EK-01 |
+| U13 | Limit liczby zapisanych planów lokalnych, wyszukiwanie na liście | analyst, owner | otwarte | Brak limitu i wyszukiwania w MVP | EK-04 |
+| U14 | Dokładność trasy z „bazy noclegowej" przy etykiecie „nazwa obiektu lub dzielnica" | analyst, owner | otwarte | Akceptowalne; informacja o przybliżonym punkcie startu; dokładny start = „moja lokalizacja" | US-007, EK-09 |
+| U15 | Czy zgodę na politykę można wycofać w Ustawieniach | analyst, [PRAWNIK] | otwarte | Nie (polityka to informacja); wycofanie = usunięcie konta; zgodę na AI – można | EK-13 |
+
+Rozstrzygnięte w tym przeglądzie (bez nowych pytań): US-010 zgodne z Q9 (dowód zgód usuwany z kontem; ewentualna zmiana po poradzie prawnika = nowy ADR); anulowanie generowania wg Q12 odzwierciedlone w US-005/US-011.
+
 ## Nadal do wykonania przez właściciela
 - Odpowiedź na N11 (może zostać przyjęta propozycja domyślna).
 - Dane administratora (nazwa, adres, NIP) do polityki prywatności (S1).

@@ -2,6 +2,8 @@
 
 Stan: po bramce G1 (zatwierdzona). Źródło: `docs/vision.md`. Pytania 1–8 oraz N1–N10 (i S1–S12) zostały odpowiedziane przez właściciela – patrz `docs/open-questions.md`; zakres poniżej odzwierciedla te decyzje. Potwierdzone wartości: maks. 14 dni podróży (N2), limit 5 generowań na konto na dobę (N4), bufor 3 h po lądowaniu / 0 przy aucie (N6). Nowe pytania doprecyzowujące: N11 (w `docs/open-questions.md`).
 
+Ekrany, przepływy i stany brzegowe MVP (wejście do mockupu UI, P3-14a): `docs/requirements/screens-and-flows.md`. Zakres MVP nie uległ zmianie.
+
 ## MVP (apka testowa na Androida, `pl.tadecode.tamitu`)
 - Logowanie przez Google (Firebase Auth), wylogowanie; bez trybu gościa.
 - Informacja o prywatności i zgody (w tym osobna zgoda na przekazanie danych do AI).
