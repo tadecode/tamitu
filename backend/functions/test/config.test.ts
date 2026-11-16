@@ -36,10 +36,14 @@ describe("startup rule (Aneks A pkt 3 i)", () => {
   it("refuses prod + App Check off + real data", () => {
     expect(() => assertStartupConfig(cfg({ enforceAppCheck: false, allowRealData: true }))).toThrow();
   });
+  it("refuses dev + ALLOW_REAL_DATA=true (ADR-0011 pkt 5, SEC-24)", () => {
+    expect(() => assertStartupConfig(cfg({ environment: "dev", allowRealData: true }))).toThrow("invalid_config_dev_real_data");
+    expect(() => assertStartupConfig(cfg({ environment: "dev", enforceAppCheck: false, allowRealData: true }))).toThrow();
+  });
   it.each([
     ["prod, App Check off, no real data", cfg({ enforceAppCheck: false })],
     ["prod, App Check on, real data", cfg({ allowRealData: true })],
-    ["dev, App Check off, real data flag", cfg({ environment: "dev", enforceAppCheck: false, allowRealData: true })],
+    ["dev, no real data", cfg({ environment: "dev", enforceAppCheck: false })],
   ])("allows %s", (_n, c) => {
     expect(() => assertStartupConfig(c)).not.toThrow();
   });
@@ -68,6 +72,13 @@ describe("data policy (S5)", () => {
     expect(() => assertDataPolicy(cfg({ allowRealData: true }), runtime({ allowRealData: true }), "u", undefined)).not.toThrow();
     expect(() => assertDataPolicy(cfg({ allowRealData: true }), runtime(), "u", undefined)).toThrow();
     expect(() => assertDataPolicy(cfg(), runtime({ allowRealData: true }), "u", undefined)).toThrow();
+  });
+  it("dev ignores runtime.allowRealData: only testData=true from testUids (SEC-24)", () => {
+    const dev = cfg({ environment: "dev", allowRealData: true });
+    const r = runtime({ allowRealData: true, testUids: ["owner"] });
+    expect(() => assertDataPolicy(dev, r, "u", undefined)).toThrow();
+    expect(() => assertDataPolicy(cfg({ environment: "dev" }), r, "u", undefined)).toThrow();
+    expect(() => assertDataPolicy(dev, r, "owner", true)).not.toThrow();
   });
   it("test data only from listed test accounts", () => {
     const r = runtime({ testUids: ["owner"] });

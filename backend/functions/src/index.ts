@@ -11,6 +11,7 @@ import {
   SAFE_RUNTIME_DEFAULTS,
   type RuntimeConfig,
 } from "./config.js";
+import type { ConsentType, LatestConsent, LatestConsents } from "./consents.js";
 import { budgetGuardCore, deleteAccountCore, generatePlanCore, recordConsentCore, type Deps } from "./endpoints.js";
 import { runGuarded } from "./handler.js";
 
@@ -33,7 +34,29 @@ async function loadRuntime(): Promise<RuntimeConfig> {
     testUids: Array.isArray(d["testUids"]) ? d["testUids"].filter((x): x is string => typeof x === "string") : [],
     perUserDailyLimit: Number.isInteger(d["perUserDailyLimit"]) ? d["perUserDailyLimit"] : 5,
     globalDailyLimit: Number.isInteger(d["globalDailyLimit"]) ? d["globalDailyLimit"] : 50,
+    // Raw strings; format checked fail-closed in consents.currentVersionNumbers (ADR-0012 pkt 4).
+    policyVersionCurrent: typeof d["policyVersionCurrent"] === "string" ? d["policyVersionCurrent"] : undefined,
+    aiConsentVersionCurrent: typeof d["aiConsentVersionCurrent"] === "string" ? d["aiConsentVersionCurrent"] : undefined,
   };
+}
+
+/** Latest record of one type; uses the existing index (type ASC, receivedAt DESC). ADR-0012 pkt 3. */
+async function latestConsent(uid: string, type: ConsentType): Promise<LatestConsent | undefined> {
+  const snap = await getFirestore()
+    .collection(`users/${uid}/consents`)
+    .where("type", "==", type)
+    .orderBy("receivedAt", "desc")
+    .limit(1)
+    .get();
+  const d = snap.docs[0]?.data();
+  if (!d || typeof d["granted"] !== "boolean" || typeof d["policyVersion"] !== "string") return undefined;
+  return { granted: d["granted"], policyVersion: d["policyVersion"] };
+}
+
+async function loadLatestConsents(uid: string): Promise<LatestConsents> {
+  const privacy = await latestConsent(uid, "privacy_policy");
+  const ai = await latestConsent(uid, "ai_processing");
+  return { privacy, ai };
 }
 
 function deps(): Deps {
@@ -41,6 +64,7 @@ function deps(): Deps {
     verifier: getAuth(),
     config: staticConfig,
     loadRuntime,
+    loadLatestConsents,
     pepper: UID_PEPPER.value(),
     now: () => new Date(),
     model: stubModel,

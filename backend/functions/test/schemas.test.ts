@@ -95,8 +95,8 @@ describe("generatePlan request", () => {
       r.trip.arrival.date = date;
       return parseGeneratePlan(r, NOW);
     };
-    expect(at("2026-11-14")).not.toThrow(); // today - 1 tolerated
-    expect(at("2026-11-13")).toThrow();
+    expect(at("2026-11-13")).not.toThrow(); // today - 2 tolerated (ADR-0011 pkt 3)
+    expect(at("2026-11-12")).toThrow();
     expect(at("2028-11-15")).not.toThrow(); // within 2 years
     expect(at("2028-12-30")).toThrow();
     expect(at("2027-02-30")).toThrow();
@@ -129,12 +129,24 @@ describe("recordConsent request", () => {
     expect(() => parseRecordConsent({ ...ok, clientAt: "yesterday" })).toThrow();
     expect(() => parseRecordConsent({ ...ok, extra: 1 })).toThrow();
   });
+  it.each(["ai-consent-v2", "privacy-v1", "ai-consent-v01", "ai-consent-v0", "AI-consent-v1", "ai-consent-v10000"])(
+    "rejects unknown / malformed / foreign-prefix version %s (ADR-0012, SEC-21)",
+    (v) => {
+      expect(errOf(() => parseRecordConsent({ ...ok, policyVersion: v })).details["field"]).toBe("policyVersion");
+    },
+  );
+  it("accepts known privacy version for privacy_policy", () => {
+    expect(parseRecordConsent({ ...ok, type: "privacy_policy", policyVersion: "privacy-v1" }).type).toBe("privacy_policy");
+  });
 });
 
 describe("deleteAccount request", () => {
-  it("accepts only {apiVersion: 1}", () => {
+  it("accepts any apiVersion >= 1 and never unsupported_version (ADR-0011 pkt 4)", () => {
     expect(() => parseDeleteAccount({ apiVersion: 1 })).not.toThrow();
+    expect(() => parseDeleteAccount({ apiVersion: 2 })).not.toThrow();
+    expect(() => parseDeleteAccount({ apiVersion: 99, future: true })).not.toThrow();
     expect(() => parseDeleteAccount({ apiVersion: 1, x: 1 })).toThrow();
     expect(() => parseDeleteAccount({})).toThrow();
+    for (const v of [0, 1.5, "2"]) expect(errOf(() => parseDeleteAccount({ apiVersion: v })).appCode).toBe("invalid_argument");
   });
 });
