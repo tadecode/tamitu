@@ -21,6 +21,5 @@ tools: <minimalny zestaw narzędzi>
 ```
 
 ## Role planowane po pilocie
-UX/UI (`docs/ux/`), DBA (`docs/data/`, migracje), DevOps/Mobile DevOps
-(CI, podpisywanie, dystrybucja testowa), Reviewer (przegląd zmian),
-Technical Writer (dokumentacja, changelog).
+DevOps/Mobile DevOps (CI, podpisywanie, dystrybucja testowa), Technical Writer (dokumentacja, changelog).
+(UX/UI, DBA, analityk danych i Reviewer są już w szablonie: `.claude/agents/ux.md`, `dba.md`, `data-analyst.md`, `reviewer.md`.)

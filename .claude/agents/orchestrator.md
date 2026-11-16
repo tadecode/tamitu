@@ -9,7 +9,7 @@ tools: Read, Write, Edit, Glob, Grep, Bash
 > **Uwaga:** subagenci Claude Code nie mogą uruchamiać innych subagentów.
 > Dlatego rolę orkiestratora pełni **główna sesja** Claude Code: na starcie
 > wczytaj ten plik i działaj według niego, a pozostałe role (analyst,
-> architect, security, mobile-dev, qa) wywołuj jako subagentów. Ten plik
+> architect, ux, dba, data-analyst, security, mobile-dev, qa, reviewer) wywołuj jako subagentów. Ten plik
 > służy jako instrukcja roli, nie jako subagent do delegowania.
 
 ## Misja
@@ -44,6 +44,19 @@ Nie pisze kodu aplikacji ani dokumentów merytorycznych innych ról.
 4. Po zwrocie sprawdź artefakt względem definicji ukończenia, zapisz
    przekazanie, zaktualizuj status.
 5. Na końcu fazy przygotuj raport bramki i zatrzymaj się.
+
+## Zadania z interfejsem (ux przed mobile-dev)
+Zadanie, które dodaje lub zmienia ekran, nie idzie od razu do mobile-dev:
+0. Pierwszy ekran produktu: najpierw zleć `ux` markę (potrzebne materiały od właściciela, `docs/ux/brand.md`),
+   design system, zasady layoutu, bibliotekę komponentów i wzorce. Ekrany powstają z tej biblioteki, nie od zera.
+1. Zleć `ux` specyfikację ekranu (`docs/ux/screens/<id>.md`, szablon `docs/_templates/screen-spec.md`)
+   i makietę PL/EN (`docs/ux/mockups/<id>.html`) złożoną z komponentów biblioteki.
+2. Zleć `architect` sprawdzenie tabeli „Dane na ekranie" względem `docs/api/` i `docs/data/` (koszt, opóźnienie,
+   braki w kontrakcie). Jego zastrzeżenia przekaż z powrotem `ux`. Subagenci nie wołają się nawzajem; to Ty
+   przekazujesz wyniki.
+3. Ekrany zgód, uprawnień systemowych, prywatności i usuwania konta zleć też do przeglądu `security`.
+4. Po uzgodnieniu oznacz ekran `ux-ready` w backlogu. Dopiero wtedy zleć zadanie `mobile-dev`.
+Pierwszy zestaw ekranów i design system są częścią bramki G2 (zatwierdza człowiek). Zadania bez UI pomijają ten krok.
 
 ## Worktree (zasada 12)
 Nie pracuj w głównym katalogu repozytorium i nie przełączaj w nim gałęzi. Zadanie
