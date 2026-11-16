@@ -56,9 +56,9 @@ Zadanie przykładowe T-001 (szkielet Flutter) powstanie w fazie 3 po G2.
 | P3-09 | `budgetGuard` i wyłącznik kosztowy (SEC-09) | mobile-dev/owner | todo |
 | P3-10 | Weryfikacja cen modeli i kursu w cenniku Google (costs.md) – przed implementacją `generatePlan` | owner/security | todo |
 | P3-11 | Test wariantu C lokalizacji (link bez `origin`) na urządzeniu; ewentualny nowy ADR zastępujący (Q1) | mobile-dev/architect | todo (w ramach P3-07) |
-| P3-12 | Poprawki wymagań UI: etykieta noclegu bez pełnego adresu, komunikat przy wylogowaniu, US-010 vs Q9 (dowód zgód usuwany z kontem), US-011 anulowanie | analyst | todo |
+| P3-12 | Poprawki wymagań UI: etykieta noclegu bez pełnego adresu, komunikat przy wylogowaniu, US-010 vs Q9 (dowód zgód usuwany z kontem), US-011 anulowanie | analyst | review | zrobione w P3-14a (PR #31); decyzje właściciela: U1-U15 |
 | P3-13 | Rejestr danych: szyfrowanie bazy, T11/T12/D7 po Q1 = A | security | todo |
-| P3-14a | Przegląd wymagań pod kątem ekranów: lista ekranów, przepływy, stany brzegowe (brak sieci, limit, wylogowanie, usunięcie konta, anulowanie), poprawki z P3-12 | analyst | todo |
+| P3-14a | Przegląd wymagań pod kątem ekranów: lista ekranów, przepływy, stany brzegowe (brak sieci, limit, wylogowanie, usunięcie konta, anulowanie), poprawki z P3-12 | analyst | review | PR #31 zmergowany; czeka na odpowiedzi U1-U15 i przegląd security (komunikaty wylogowania i usunięcia konta) |
 | P3-14b | Mockup UI PL/EN (klikalny prototyp, nie kod aplikacji) na podstawie P3-14a | designer (brak roli: propozycja FARM-003) | blocked |
 | P3-14c | Przegląd mockupu przez architekta: zgodność z ADR, API, modelem danych, kosztami; lista zmian i ewentualne nowe ADR | architect | blocked |
 | P3-14d | Akceptacja mockupu przez właściciela (wpis w `.farm/log/` i `docs/open-questions.md`) | owner | blocked |
