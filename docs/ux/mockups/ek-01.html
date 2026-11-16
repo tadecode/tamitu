@@ -364,7 +364,7 @@ body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:colu
 <header class="pg-head"><h1>EK-01 Start aplikacji (bramka sesji)</h1><span class="meta">US-001, US-002, US-003, US-010 · spec: <a href="../screens/ek-01.md">screens/ek-01.md</a></span></header>
 <main class="pg-main">
 <nav class="pg-nav"></nav>
-<p class="pg-note">Makieta do akceptacji. Komponenty: systemowy ekran powitalny, CMP-17, CMP-18, CMP-02, CMP-14. Sukces = przejście do EK-02 / EK-03 / EK-04 bez migotania.</p>
+<p class="pg-note">Makieta do akceptacji (v0.2 po przeglądzie architekta P3-14c). Komponenty: systemowy ekran powitalny, CMP-17, CMP-15, CMP-18, CMP-02, CMP-14. Wersja polityki sprawdzana lokalnie (stała aplikacji), działa offline. Sukces = przejście do EK-02 / EK-03 / EK-04 bez migotania.</p>
 <div class="states">
 
 <figure class="state"><div class="phone">
@@ -390,17 +390,42 @@ body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:colu
 
 <figure class="state"><div class="phone">
   <div class="sysbar"><span>9:41</span><span>100%</span></div>
+  <div class="scroll pad"></div>
+  <div class="scrim"><div class="dialog" role="dialog">
+    <div class="dic"><i-c n="info"></i-c></div>
+    <p class="dt"><t-x pl="Zapisane plany zostały usunięte" en="Your saved trips were removed"></t-x></p>
+    <div class="dc"><p><t-x pl="Nie mogliśmy odczytać danych zapisanych na tym urządzeniu (np. po zmianie blokady ekranu lub aktualizacji systemu), więc je usunęliśmy. Twoje konto działa – możesz tworzyć nowe plany." en="We couldn't read the data saved on this device (for example after a screen lock change or a system update), so we removed it. Your account still works – you can create new trips."></t-x></p></div>
+    <div class="btn-row"><span class="btn text"><t-x pl="Dalej" en="Continue"></t-x></span></div>
+  </div></div>
+  <div class="navbar"></div>
+</div><figcaption><b><t-x pl="Dane wyczyszczone (utrata klucza)" en="Data cleared (key lost)"></t-x></b> – jednorazowy dialog (ADR-0005 Aneks A pkt 2); „Dalej” → EK-03 wariant → EK-04 pusty.</figcaption></figure>
+
+<figure class="state"><div class="phone">
+  <div class="sysbar"><span>9:41</span><span>100%</span></div>
   <div class="scroll pad">
     <div class="sv" style="padding-top:120px">
       <i-c n="error" s="48"></i-c>
-      <h2 class="headline-s"><t-x pl="Dane na tym urządzeniu są niedostępne" en="Data on this device is unavailable"></t-x></h2>
-      <p class="body-m"><t-x pl="Nie możemy otworzyć zapisanych planów (np. po przywróceniu telefonu z kopii). Możesz się wylogować albo usunąć konto i zacząć od nowa." en="We can't open your saved trips (for example after restoring your phone from a backup). You can sign out or delete your account and start over."></t-x></p>
-      <span class="btn filled"><t-x pl="Wyloguj" en="Sign out"></t-x></span>
-      <span class="btn text err"><t-x pl="Usuń konto" en="Delete account"></t-x></span>
+      <h2 class="headline-s"><t-x pl="Usuwanie konta nie zostało dokończone" en="Account deletion wasn't finished"></t-x></h2>
+      <p class="body-m"><t-x pl="Aplikacja zamknęła się w trakcie usuwania konta. Twoje konto i plany są nienaruszone. Możesz dokończyć usuwanie albo z niego zrezygnować." en="The app closed while deleting your account. Your account and trips are intact. You can finish deleting it or cancel."></t-x></p>
+      <span class="btn danger"><i-c n="delete"></i-c><t-x pl="Dokończ usuwanie" en="Finish deleting"></t-x></span>
+      <span class="btn text"><t-x pl="Anuluj usuwanie" en="Cancel deletion"></t-x></span>
     </div>
   </div>
   <div class="navbar"></div>
-</div><figcaption><b><t-x pl="Błąd: baza niedostępna (U12)" en="Error: data unavailable (U12)"></t-x></b> – stan blokujący, bez dostępu do planów.</figcaption></figure>
+</div><figcaption><b><t-x pl="Przerwane usuwanie – konto istnieje" en="Interrupted deletion – account exists"></t-x></b> – po <code>reload()</code> (ADR-0011 pkt 8); „Dokończ” → EK-15.</figcaption></figure>
+
+<figure class="state"><div class="phone">
+  <div class="sysbar"><span>9:41</span><span>100%</span></div>
+  <div class="scroll pad">
+    <div class="sv" style="padding-top:120px">
+      <i-c n="wifioff" s="48"></i-c>
+      <h2 class="headline-s"><t-x pl="Połącz się, aby dokończyć" en="Connect to finish"></t-x></h2>
+      <p class="body-m"><t-x pl="Aplikacja zamknęła się w trakcie usuwania konta. Aby sprawdzić, czy konto zostało usunięte, potrzebny jest internet. Dane na tym urządzeniu są nienaruszone." en="The app closed while deleting your account. To check whether it was deleted, we need an internet connection. Data on this device is intact."></t-x></p>
+      <span class="btn tonal"><t-x pl="Spróbuj ponownie" en="Try again"></t-x></span>
+    </div>
+  </div>
+  <div class="navbar"></div>
+</div><figcaption><b><t-x pl="Przerwane usuwanie – brak sieci" en="Interrupted deletion – offline"></t-x></b> – stan blokujący z ponowieniem; dane lokalne nietknięte.</figcaption></figure>
 
 </div>
 </main>
