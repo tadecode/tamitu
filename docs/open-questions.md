@@ -78,6 +78,10 @@ Szczegóły: `docs/ux/brand.md`, `docs/ux/design-system.md`, podgląd `docs/ux/m
 | UX7 | Ilustracje w stanach pustych i błędach: same ikony Material czy ilustracje (koszt grafika)? | ux → owner | otwarte | Same ikony 48 dp w MVP | CMP-18 |
 | UX8 | Konwencja kluczy l10n (lowerCamelCase z prefiksem obszaru, np. `planListEmptyTitle`) – zgodna z planem mobile-dev? | ux → mobile-dev | otwarte | Jak w `docs/ux/components/index.md` | ARB, wszystkie ekrany |
 | UX9 | Usunięcie planu: dialog potwierdzenia (wymaganie US-009) czy natychmiastowe usunięcie z „Cofnij" w snackbarze (zalecenie M3; usunięcie odroczone o ok. 10 s)? | ux → owner, architect | otwarte | Dialog w MVP (zgodnie z US-009 i „trwałym usunięciem"); „Cofnij" do rozważenia później | EK-11, US-009 |
+| UX10 | Wyjście z wypełnionego formularza (EK-05) wstecz: pytać „Odrzucić dane?" czy nie? | ux → owner | otwarte | Nie pytać w MVP (formularz krótki, szkicu nie zapisujemy – U5) | EK-05 |
+| UX11 | Domyślny tryb trasy w EK-09 | ux → owner | otwarte | Komunikacja (zwiedzanie w mieście, bez założenia auta); wybór nie jest zapamiętywany | EK-09 |
+| UX12 | Czy pokazywać w Ustawieniach, na jakie konto Google jest się zalogowanym (e-mail)? | ux → architect, security | otwarte | Nie – aplikacja nie zapisuje e-maila (model danych, minimalizacja); ewentualnie odczyt z SDK bez zapisu – decyzja architekta/security | EK-12 |
+| UX13 | Usunięcie konta: czy oprócz pełnego ekranu ostrzeżenia i ponownego logowania wymagać dodatkowego potwierdzenia (pole wyboru / wpisanie słowa)? | ux → security, owner | otwarte | Nie – wystarczy ekran ostrzeżenia z przyciskiem „Usuń konto na zawsze" i ponowne uwierzytelnienie Google | EK-15 |
 
 ## Nadal do wykonania przez właściciela
 - Odpowiedź na N11 (może zostać przyjęta propozycja domyślna).
