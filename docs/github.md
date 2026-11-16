@@ -45,9 +45,14 @@ GitHub nie pozwala zatwierdzić własnego PR, więc konta są dwa:
 | Agenci ról (analyst, architect, security, mobile-dev, reviewer, qa, orchestrator) | **bot farmy**, zwykła konfiguracja `gh` | rola write w jednym repozytorium: push gałęzi, PR, komentarze. Token fine-grained ograniczony do tego repo (contents, pull requests, issues), **bez** Administration i **bez** Workflows |
 | **GitHub Steward** | konto właściciela, **osobna** konfiguracja `gh` (`~/.config/gh-steward`) | tworzenie repo (prywatnych), CI, sekrety, ochrona `main`, merge |
 
-Konto bota farmy TadeCode: login `tadecode-farm-bot` (ID 356700762). Adres commitów:
-`356700762+tadecode-farm-bot@users.noreply.github.com`. Przykład konfiguracji gita w nowej farmie:
-`.farm/setup-local-git.ps1 -BotName "TadeCode Farm Bot" -BotEmail "356700762+tadecode-farm-bot@users.noreply.github.com"`.
+Konto bota farmy Tamitu: login `tadecode-farm` (GH-004; wcześniejszy zapis `tadecode-farm-bot` i ID 356700762
+był błędny dla tego repozytorium). Adres e-mail commitów to adres przypisany do konta bota (alias skrzynki
+współdzielonej, wg `docs/github-ops/log.md`) albo adres noreply z profilu konta; podaje go właściciel,
+nie zgadujemy ID. Konfiguracja gita:
+`.farm/setup-local-git.ps1 -BotName "TadeCode Farm Bot" -BotEmail "<adres e-mail konta bota>"`.
+Po zalogowaniu bota sprawdź `gh auth status`: aktywne konto ma być botem (`tadecode-farm`), a `gh api user --jq .login`
+w sesji farmy ma zwracać `tadecode-farm`. Token bota: fine-grained, tylko to repo (Contents i Pull requests); token
+OAuth z zakresem `repo` jest szerszy niż trzeba i do zawężenia.
 
 Steward działa w osobnej sesji uruchamianej przez Ciebie:
 `.farm/steward/start-steward.ps1`. Skrypt loguje konto właściciela na starcie sesji
