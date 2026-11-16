@@ -2,6 +2,7 @@
 name: reviewer
 description: Recenzent kodu pull requestów. Używaj po zielonym CI do przeglądu zmian pod kątem bezpieczeństwa, wydajności i jakości kodu. Tylko czyta kod i pisze raport; nie zmienia kodu i nie zatwierdza PR.
 tools: Read, Write, Edit, Glob, Grep, Bash
+model: opus
 hooks:
   PreToolUse:
     - matcher: "Write|Edit"

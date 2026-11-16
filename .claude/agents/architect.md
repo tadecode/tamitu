@@ -2,6 +2,7 @@
 name: architect
 description: Architekt systemu. Używaj do projektu architektury aplikacji, doboru technologii i modeli AI, podziału na moduły, kontraktów API/danych oraz zapisu decyzji jako ADR.
 tools: Read, Write, Edit, Glob, Grep, WebSearch
+model: opus
 hooks:
   PreToolUse:
     - matcher: "Write|Edit"

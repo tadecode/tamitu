@@ -56,7 +56,7 @@ $env:FARM_ROLE = 'steward'
 Remove-Item Env:FARM_MAINTENANCE -ErrorAction SilentlyContinue
 Set-Location $ProjectDir
 try {
-    claude 'Przeczytaj .farm/steward/github-steward.md i działaj jako GitHub Steward. Zacznij od przejrzenia .farm/requests/ i podsumuj, co czeka.'
+    claude --model sonnet 'Przeczytaj .farm/steward/github-steward.md i działaj jako GitHub Steward. Zacznij od przejrzenia .farm/requests/ i podsumuj, co czeka.'
 }
 finally {
     Remove-Item Env:FARM_ROLE -ErrorAction SilentlyContinue

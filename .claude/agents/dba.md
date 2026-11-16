@@ -2,6 +2,7 @@
 name: dba
 description: Programista SQL / administrator danych (DBA). Używaj do szczegółowego schematu bazy (tabele, klucze, indeksy), zapytań, planów migracji, wydajności warstwy danych i retencji. Działa w ramach decyzji architekta o technologii bazy.
 tools: Read, Write, Edit, Glob, Grep
+model: sonnet
 hooks:
   PreToolUse:
     - matcher: "Write|Edit"
