@@ -72,7 +72,9 @@
   - wycofanie zgody tak łatwe jak wyrażenie (EK-13, jeden przycisk);
   - odmowa nie blokuje reszty aplikacji (lokalizacja → start z planu; AI → powrót do formularza, plany dostępne);
   - **nie używamy przełącznika (switch)** dla zgody na AI: switch sugeruje natychmiastową zmianę, a wycofanie wymaga zapisu na serwerze (sieć, możliwy błąd) – przycisk + stan ładowania + wynik;
-  - wszystkie ekrany tego wzorca idą do przeglądu security przed `ux-ready`.
+  - akceptacja polityki: **jeden tekst i jeden klucz** (`consentPolicyCheckbox`) we wszystkich miejscach; etykieta TalkBack = tekst widoczny; zmiana języka zdejmuje zaznaczenie (P-2, P-3);
+  - **nowy cel przetwarzania oparty na zgodzie (lit. a) = osobny ekran zgody wg wzorca EK-06**, nigdy „przy okazji" ponownej akceptacji polityki (EK-03 tylko dla zmian informacyjnych; P-4);
+  - wszystkie ekrany tego wzorca idą do przeglądu security przed `ux-ready` (przegląd P3-14c: `docs/security/reviews/2026-11-16-p3-14c-ekrany.md`).
 
 ## 9. Pierwsze uruchomienie
 

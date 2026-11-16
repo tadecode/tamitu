@@ -364,7 +364,7 @@ body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:colu
 <header class="pg-head"><h1>EK-06 Zgoda na AI</h1><span class="meta">US-003, US-005 · spec: <a href="../screens/ek-06.md">screens/ek-06.md</a> · <span class="pg-anno">przegląd security + [PRAWNIK]</span></span></header>
 <main class="pg-main">
 <nav class="pg-nav"></nav>
-<p class="pg-note">Dwa równorzędne przyciski (ten sam styl outlined, ta sama szerokość), bez checkboxa. Treść zgody to projekt (<code>ai-consent-v1</code>) – PL i EN zatwierdzane razem. Najdłuższy tekst ekranu: sprawdź „Tekst 200%”.</p>
+<p class="pg-note">Dwa równorzędne przyciski (ten sam styl outlined, ta sama szerokość), bez checkboxa. Treść zgody to <b>wersja robocza <code>ai-consent-v0-draft</code></b> – PL i EN zatwierdzane razem ([PRAWNIK] S15/S16); zdanie o odbiorcy (Vertex AI, UE) warunkowe do SEC-15; każda zmiana PL lub EN = nowa wersja. Najdłuższy tekst ekranu: sprawdź „Tekst 200%”.</p>
 <div class="states">
 
 <figure class="state"><div class="phone">
@@ -382,6 +382,7 @@ body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:colu
     <div class="gap-16"></div>
     <div class="notice"><i-c n="warning"></i-c><div class="body"><p><t-x pl="Nie wpisuj w formularzu pełnego adresu prywatnego, danych wrażliwych ani danych innych osób." en="Don't enter a full private address, sensitive data or other people's data in the form."></t-x></p></div></div>
     <p class="body-m"><t-x pl="Zgodę możesz w każdej chwili wycofać w Ustawieniach → Prywatność (wymaga internetu). Bez zgody nie ułożymy nowych planów; zapisane plany pozostaną." en="You can withdraw consent at any time in Settings → Privacy (requires internet). Without consent we can't create new plans; saved plans remain."></t-x></p>
+    <p class="body-m" style="margin-top:8px"><t-x pl="Administratorem Twoich danych jest TadeCode (kontakt: tamitu@tadecode.pl)." en="The controller of your data is TadeCode (contact: tamitu@tadecode.pl)."></t-x></p>
     <p class="body-m" style="margin-top:8px"><span class="l" lang="pl">Szczegóły w <span class="link">polityce prywatności</span>.</span><span class="l" lang="en">Details in the <span class="link">Privacy Policy</span>.</span></p>
   </div>
   <div class="bottom" style="border-top:1px solid var(--outline-v)">
@@ -419,6 +420,21 @@ body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:colu
   </div>
   <div class="navbar"></div>
 </div><figcaption><b><t-x pl="Brak sieci / błąd zapisu" en="Offline / save error"></t-x></b> – (w aplikacji jeden z dwóch komunikatów); dane nie trafiają do AI.</figcaption></figure>
+
+<figure class="state"><div class="phone">
+  <div class="sysbar"><span>9:41</span><span>100%</span></div>
+  <div class="appbar"><span class="icbtn"><i-c n="back"></i-c></span><span class="title"><t-x pl="Zgoda na użycie AI" en="Consent to use AI"></t-x></span></div>
+  <div class="scroll pad">
+    <div class="notice"><i-c n="info"></i-c><div class="body"><p><t-x pl="Zmieniliśmy treść zgody na użycie AI. Przeczytaj ją i zdecyduj ponownie – do tego czasu nie ułożymy nowych planów." en="We've updated the AI consent. Please read it and decide again – until then we can't create new plans."></t-x></p></div></div>
+    <p class="body-l"><t-x pl="Plan układa model sztucznej inteligencji. Aby to zrobić, musimy wysłać do niego dane Twojej podróży." en="Plans are created by an artificial intelligence model. To do this, we need to send it your trip details."></t-x></p>
+    <p class="body-m muted" style="margin-top:16px">… <t-x pl="(dalej pełna treść jak w stanie domyślnym)" en="(full text continues as in the default state)"></t-x></p>
+  </div>
+  <div class="bottom" style="border-top:1px solid var(--outline-v)">
+    <span class="btn outlined block"><t-x pl="Zgadzam się" en="I agree"></t-x></span>
+    <span class="btn outlined block"><t-x pl="Nie zgadzam się" en="I don't agree"></t-x></span>
+  </div>
+  <div class="navbar"></div>
+</div><figcaption><b><t-x pl="Nowa wersja zgody" en="Updated consent"></t-x></b> – wejście z <code>consent_required</code> (ai_processing); wstęp nad treścią.</figcaption></figure>
 
 </div>
 </main>
