@@ -31,6 +31,14 @@ Faza 2 zakończona (G2 zatwierdzona 2026-11-15). Faza 3: zadania P3-01..09 gotow
 | SEC-15 | Potwierdzenie warunków dostawcy AI (DPA, UE, bez trenowania) zapisane w ADR przed realnymi danymi | architect/owner | blocked | S5, T13, P2-01 | warunek wstępny; lista rozszerzona o poz. 7-12 (przeglad-adr pkt 1) |
 | SEC-16 | Procedura przełączenia `ALLOW_REAL_DATA` i zmian `config/runtime`; dostęp do konsoli; tokeny debug App Check | owner/security/architect | blocked | T27, ADR-0001/0002 | przed SEC-15; wejście z P2-08 |
 | SEC-17 | Role kont usług per funkcja, ograniczenie WIF (repo/gałąź), przegląd IAM | steward/devops | blocked | T28, ADR-0002/0003 | przy P3-03 |
+| SEC-18 | `consumeAppCheckToken` dla `generatePlan` i `enforceAppCheck` w opcjach SDK; sprawdzić w emulatorze, czy SDK loguje własne ostrzeżenia App Check poza wrapperem | mobile-dev/security | todo | T3, T27, ADR-0002 | przegląd 2026-11-16 P-1; przed P3-05 |
+| SEC-19 | `classifyError`: lista dozwolonych wzorców dla `errorCode`/`errorClass` (inaczej `unknown`) + test | mobile-dev | todo | T7, T25 | przegląd 2026-11-16 P-2; `errors.ts:53-59`; przed P3-05 |
+| SEC-20 | Zakaz wdrożenia bez kont usług per funkcja (`serviceAccount` w opcjach funkcji; `fn-ai`, `fn-consent`, `fn-account`, `fn-budget`) | mobile-dev/steward | todo | T28, ADR-0002 Aneks A pkt 6 | przegląd 2026-11-16 P-3; razem z P3-03/SEC-17; `index.ts:50-56` |
+| SEC-21 | Walidacja tekstów: NFC i odrzucenie Unicode Cc/Cf/Zl/Zp w `text()`; `policyVersion` wzorzec i lista znanych wersji; testy | mobile-dev | todo | T4, przeglad-adr 6-3 | przegląd 2026-11-16 P-4; `schemas.ts:26-35,76`; powiązane z SEC-06 |
+| SEC-22 | Granice `perUserDailyLimit`/`globalDailyLimit` (poza zakresem -> domyślne) i wydzielenie `loadRuntime` parsowania z `index.ts` do `config.ts` z testami | mobile-dev | todo | T3, T26 | przegląd 2026-11-16 P-5; `index.ts:26-37` |
+| SEC-23 | Test ciągu kontrolnego w emulatorze/projekcie dev (grep logów, `_Default` vs kubełek UE, Error Reporting); wzmocnić asercję braku UID w logach (`endpoints.test.ts:191`) | security/qa | todo | T7, T25, przeglad-adr 2-2, 3-1 | przegląd 2026-11-16 U-1; część SEC-04 |
+| SEC-24 | Decyzja architekta: odmowa startu także dla `dev` + `ALLOW_REAL_DATA=true`; ujednolicić `requireGoogleProvider` w `deleteAccount` (`endpoints.ts:69-78`) | architect/mobile-dev | todo | T27, ADR-0002 Aneks A pkt 3 | przegląd 2026-11-16 U-2, U-3; zmiana semantyki = aneks/nowy ADR |
+| SEC-25 | CI: `npm audit --omit=dev --audit-level=high` jako bramka (całość informacyjnie); opis ustawiania parametrów `ENVIRONMENT`/`ENFORCE_APP_CHECK`/`ALLOW_REAL_DATA` per środowisko (`.env.*` ignorowane); rozbieżność publiczne/prywatne repo w `.gitignore` | steward/architect | todo | T16, T27 | przegląd 2026-11-16 U-5, U-6; dev: 7 moderate (minimatch, GHSA-g3hv-75wg-m249) |
 
 Zadanie przykładowe T-001 (szkielet Flutter) powstanie w fazie 3 po G2.
 
