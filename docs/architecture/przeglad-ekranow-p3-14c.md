@@ -170,4 +170,4 @@ Mapowanie kodów zgodne z kontraktem. Dodać/doprecyzować:
 3. Potwierdzić, że EK-01 (U12) i EK-13 (wycofanie offline) idą **za zatwierdzonymi ADR** (rekomendacja), a nie zmieniają ADR.
 4. UX9 (dialog) i UX12 (bez e-maila) – rekomendacje architekta; zmiana = ponowne zatwierdzenie ekranu.
 
-**Stan decyzji (2026-11-16):** właściciel zatwierdził ADR-0010 i ADR-0011 („zatwierdzam ADR-0010 i ADR-0011”) – pkt 1, 2 (z SEC-24) zamknięte. Otwarte: pkt 3 (A4 – EK-01 i EK-13 wg zatwierdzonych ADR) i pkt 4 (UX9, UX12).
+**Stan decyzji (2026-11-16):** właściciel zatwierdził ADR-0010 i ADR-0011 („zatwierdzam ADR-0010 i ADR-0011”) – pkt 1, 2 (z SEC-24) zamknięte. Pkt 3 i 4 zamknięte tego samego dnia: A4 – tak (EK-01, EK-03, EK-06, EK-13 poprawiane w UX zgodnie z ADR-0005 Aneks A pkt 2 i ADR-0002 Aneks A pkt 4), UX9 – dialog, UX12 – bez e-maila. Wszystkie decyzje właściciela z pkt 6 podjęte.
