@@ -2,6 +2,7 @@
 name: analyst
 description: Analityk biznesowy. Używaj do zebrania i uporządkowania wymagań - user stories, kryteria akceptacji, zakres MVP, ryzyka, otwarte pytania.
 tools: Read, Write, Edit, Glob, Grep
+model: sonnet
 hooks:
   PreToolUse:
     - matcher: "Write|Edit"

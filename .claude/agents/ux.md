@@ -2,6 +2,7 @@
 name: ux
 description: Projektant UX/UI. Używaj przed implementacją każdego ekranu - przepływy użytkownika, biblioteka komponentów, zasady layoutu, wzorce projektowe, specyfikacje i makiety ekranów (PL/EN, jasny i ciemny motyw), design system i dostępność. Pracuje z architektem (dane i możliwości techniczne) i security (zgody, prywatność).
 tools: Read, Write, Edit, Glob, Grep
+model: sonnet
 hooks:
   PreToolUse:
     - matcher: "Write|Edit"
