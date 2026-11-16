@@ -6,7 +6,7 @@
 
 ## Problem
 Projekt zakłada (`docs/github.md`): role farmy używają **zwykłej (domyślnej) konfiguracji `gh`**, w której
-zalogowany jest **bot farmy** (`tadecode-farm-bot`), a git pushuje przez `!gh auth git-credential`
+zalogowany jest **bot farmy** (`tadecode-farm`), a git pushuje przez `!gh auth git-credential`
 (`.farm/setup-local-git.ps1`). Steward ma osobną konfigurację (`~/.config/gh-steward`).
 
 W praktyce PR-y #10-#29 mają autora `tadecode`. Commity są podpisane „TadeCode Farm Bot" (`user.name`
@@ -27,10 +27,10 @@ Wybierz jedną z dwóch dróg:
 ```powershell
 # w zwykłej konfiguracji gh (bez GH_CONFIG_DIR)
 gh auth login --hostname github.com --git-protocol https --with-token   # wklej token bota; tokena nie pokazuj w czacie
-gh auth switch --hostname github.com --user tadecode-farm-bot            # bot musi być kontem AKTYWNYM
-gh auth status                                                           # sprawdź: Active account: tadecode-farm-bot
+gh auth switch --hostname github.com --user tadecode-farm            # bot musi być kontem AKTYWNYM
+gh auth status                                                           # sprawdź: Active account: tadecode-farm
 gh auth setup-git                                                        # git push używa aktywnego konta gh
-.farm/setup-local-git.ps1 -BotName "TadeCode Farm Bot" -BotEmail "356700762+tadecode-farm-bot@users.noreply.github.com"
+.farm/setup-local-git.ps1 -BotName "TadeCode Farm Bot" -BotEmail "<adres e-mail konta bota>"
 ```
 Konto `tadecode` w domyślnej konfiguracji: usunąć (`gh auth logout --user tadecode`) albo zostawić
 nieaktywne. Własne operacje właściciela (zatwierdzanie PR w przeglądarce) nie wymagają `gh`.
@@ -42,14 +42,17 @@ z `GH_CONFIG_DIR` wskazującym katalog bota, także sesje z aplikacji desktopowe
 Po wykonaniu **zrestartuj sesję orkiestratora**, bo nowe konto aktywuje się dla nowych procesów.
 
 ## Weryfikacja (właściciel)
-1. W nowej sesji farmy poproś o PR testowy: autor ma być `tadecode-farm-bot`.
+1. W nowej sesji farmy poproś o PR testowy: autor ma być `tadecode-farm`.
 2. Zatwierdź go z `tadecode` i zmerguj bez admin bypassu (GH-004 krok 4).
 3. Dopiero potem rozważyć `enforce_admins=true` (GH-004 krok 5). Uwaga z `docs/github.md`: wcześniej upewnić się,
    że PR-y Stewarda (autor = właściciel) da się zatwierdzić; patrz wariant A w `docs/github-ops/farm-bot-account.md`.
 
 ## Zmiany w dokumentacji (osobny krok, po wyborze wariantu)
-- `docs/github-ops/farm-bot-account.md` i GH-004: ujednolicić login bota (`tadecode-farm-bot` vs `tadecode-farm`)
-  i miejsce konfiguracji (domyślna vs osobna).
+- Login bota ustalony: `tadecode-farm` (`docs/github.md` poprawiony). `docs/github-ops/farm-bot-account.md`
+  (zakres Stewarda) ma już poprawny login; ujednolicić tylko miejsce konfiguracji (domyślna vs osobna, GH-004).
+- Obserwacja z 2026-11-16: w terminalu właściciela `gh auth status` pokazuje aktywne konto `tadecode-farm`,
+  a w sesji orkiestratora `gh api user` zwracało `tadecode` (to samo `APPDATA\GitHub CLI`, brak `GH_TOKEN`).
+  Po restarcie sesji sprawdzić autora nowego PR-a; jeśli nadal `tadecode`, źródłem jest środowisko aplikacji.
 - `docs/github.md`: dopisać krok „po zalogowaniu bota sprawdź `gh auth status`: aktywne konto = bot".
 - Opcjonalnie nowy hook przed `gh pr create`/`git push`, odmawiający gdy aktywne konto to `tadecode`
   (zmiana chronionych plików; tylko właściciel).
