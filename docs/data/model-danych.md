@@ -74,10 +74,12 @@ consents_local
   policy_version TEXT NOT NULL
   lang           TEXT NOT NULL
   client_at      INTEGER NOT NULL
+  received_at    INTEGER NULL        -- epoch ms UTC z odpowiedzi recordConsent (receivedAt); NULL do synchronizacji (UX17)
   synced         INTEGER NOT NULL DEFAULT 0
 
 schema_meta(version INTEGER)
 ```
+Daty zgód w UI (EK-13, UX17): rekord zsynchronizowany → `received_at` (czas serwera, ten sam co dowód w Firestore); rekord oczekujący (`synced=0`, np. wycofanie offline) → `client_at` ze stanem „oczekuje na połączenie". Nowa kolumna nie jest nową kategorią danych (to samo pole D3 co `receivedAt` w Firestore).
 Zapis planu: jedna transakcja (trip + dni + punkty); częściowy plan nie jest zapisywany (US-005). Usunięcie planu: `DELETE trips` (kaskada, US-009). Lista: `ORDER BY created_at DESC`. Migracje wersjonowane i testowane.
 
 Mapowanie na rejestr: D4/D5 → `trips` (cel, daty, nocleg, lot), D9 → `plan_*`, D15 → `interests`, `budget`, `pace`, `party_size`, D16 → `plan_language`, D3 (lokalnie) → `consents_local`.
