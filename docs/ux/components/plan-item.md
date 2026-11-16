@@ -36,7 +36,7 @@ Treść punktu (nazwa, opis) w **języku planu** – może różnić się od ję
 ## Dostępność
 - Etykieta dla TalkBack: „Około 15:00. Oceanarium, Lizbona. {opis}. Przycisk: Trasa do Oceanarium"; język treści planu oznaczony (TalkBack przeczyta z właściwą wymową).
 - Cel dotyku 48 dp.
-- Kontrast: onTertiaryContainer/tertiaryContainer ≥ 7,2:1; onSurfaceVariant/surface ≥ 8,8:1; oś – dekoracyjna.
+- Kontrast: onTertiaryContainer/tertiaryContainer ≥ 7,2:1; onSurfaceVariant/surface ≥ 7,8:1; oś – dekoracyjna.
 - Skalowanie do 200%: wszystko się zawija; znacznik godziny nad nazwą.
 
 ## Teksty

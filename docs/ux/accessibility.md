@@ -10,26 +10,26 @@ Współczynniki policzone wzorem WCAG (luminancja względna sRGB) dla tokenów z
 |---|---|---|---|---|
 | onPrimary / primary | przycisk wypełniony | 4,5 | 6,42 | 7,73 |
 | onPrimaryContainer / primaryContainer | FAB | 4,5 | 13,24 | 7,28 |
-| onSecondaryContainer / secondaryContainer | chip/segment wybrany, komunikat informacyjny | 4,5 | 13,31 | 7,25 |
+| onSecondaryContainer / secondaryContainer | chip/segment wybrany, komunikat informacyjny | 4,5 | 12,53 | 7,25 |
 | onTertiaryContainer / tertiaryContainer | znacznik godziny | 4,5 | 13,28 | 7,25 |
 | onErrorContainer / errorContainer | komunikat błędu | 4,5 | 13,26 | 7,24 |
 | onError / error | przycisk „Usuń konto na zawsze" | 4,5 | 6,46 | 7,72 |
-| onSurface / surface | tekst główny | 4,5 | 16,31 | 14,33 |
-| onSurfaceVariant / surface | tekst pomocniczy, ikony | 4,5 | 8,87 | 10,90 |
-| onSurface / surfaceContainerLow | tekst na karcie, w arkuszu | 4,5 | 15,48 | 13,26 |
-| onSurfaceVariant / surfaceContainerLow | opis na karcie, w arkuszu | 4,5 | 8,42 | 10,08 |
-| onSurfaceVariant / surfaceContainerHigh | treść dialogu | 4,5 | 7,57 | 8,48 |
-| primary / surface | przycisk tekstowy, link, zakładka aktywna | 4,5 | 6,12 | 10,90 |
-| primary / surfaceContainerHigh | przycisk tekstowy w dialogu | 4,5 | 5,23 | 8,49 |
-| error / surface | błąd pola, „Usuń konto" w liście | 4,5 | 6,16 | 10,89 |
-| error / surfaceContainerHigh | „Usuń" w dialogu | 4,5 | 5,26 | 8,48 |
-| tertiary / surfaceContainerLow | godzina przylotu na karcie | 4,5 | 5,83 | 10,08 |
+| onSurface / surface | tekst główny | 4,5 | 14,41 | 14,33 |
+| onSurfaceVariant / surface | tekst pomocniczy, ikony | 4,5 | 7,83 | 10,90 |
+| onSurface / surfaceContainerLow | tekst na karcie, w arkuszu | 4,5 | 13,51 | 13,26 |
+| onSurfaceVariant / surfaceContainerLow | opis na karcie, w arkuszu | 4,5 | 7,35 | 10,08 |
+| onSurfaceVariant / surfaceContainerHigh | treść dialogu | 4,5 | 6,68 | 8,48 |
+| primary / surface | przycisk tekstowy, link, zakładka aktywna | 4,5 | 5,41 | 10,90 |
+| primary / surfaceContainerHigh | przycisk tekstowy w dialogu | 4,5 | 4,61 | 8,49 |
+| error / surface | błąd pola, „Usuń konto" w liście | 4,5 | 5,44 | 10,89 |
+| error / surfaceContainerHigh | „Usuń" w dialogu | 4,5 | 4,64 | 8,48 |
+| tertiary / surfaceContainerLow | godzina przylotu na karcie | 4,5 | 5,09 | 10,08 |
 | onInverseSurface / inverseSurface | snackbar | 4,5 | 11,56 | 10,15 |
 | inversePrimary / inverseSurface | akcja snackbara | 4,5 | 7,73 | 4,98 |
-| outline / surface | obrys pola, checkboxa, segmentu | 3,0 | 4,27 | 5,84 |
-| primary / surfaceContainerHighest | pasek postępu na torze | 3,0 | 4,98 | 7,26 |
+| outline / surface | obrys pola, checkboxa, segmentu | 3,0 | 3,77 | 5,84 |
+| primary / surfaceContainerHighest | pasek postępu na torze | 3,0 | 4,35 | 7,26 |
 
-Wszystkie pary spełniają próg. `outlineVariant` (separatory, oś czasu, obrys niewybranego chipa) jest dekoracyjny – granicę elementu wyznacza tekst. Po implementacji: ponowna kontrola na zrzutach (Accessibility Scanner) – zadanie qa.
+Wszystkie pary spełniają próg (jasny motyw przyciemniony 2026-11-16: tła ok. tonu 93 zamiast 98; najsłabsze pary tekstu: `primary`/`error` na `surfaceContainerHigh` – 4,61 i 4,64). Na `surfaceContainerHighest` nie stawiamy tekstu w kolorze `primary`/`error` (4,35) – ten kontener służy tylko torom wskaźników i szkieletom. `outlineVariant` (separatory, oś czasu, obrys niewybranego chipa) jest dekoracyjny – granicę elementu wyznacza tekst. Po implementacji: ponowna kontrola na zrzutach (Accessibility Scanner) – zadanie qa.
 
 ## 2. Kolor nie jest jedynym nośnikiem znaczenia
 Wybór: ikona `tick-02` (chip, segment), wypełnione koło (radio), wskaźnik (zakładka). Błąd: ikona `alert-circle` + tekst. Stan zgody: tekst („Wyrażona", „Wycofana") + data. Działania destrukcyjne: tekst z czasownikiem i ikona `delete-02`.

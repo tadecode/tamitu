@@ -37,7 +37,7 @@ Daty wg lokalizacji interfejsu. Brak przeciągania/przesuwania kart w MVP (usuwa
 ## Dostępność
 - Etykieta dla TalkBack: jedna etykieta całej karty: „Lizbona, 4 dni, lot, utworzono 12 maja 2027, przycisk".
 - Cel dotyku: cała karta (≥ 72 dp).
-- Kontrast (najgorszy przypadek z 4 kombinacji wariant×motyw): onSurface/surfaceContainerLow ≥ 13,2:1; onSurfaceVariant/surfaceContainerLow ≥ 8,4:1; tertiary/surfaceContainerLow ≥ 5,8:1.
+- Kontrast (najgorszy przypadek, jasny i ciemny motyw wariantu A): onSurface/surfaceContainerLow ≥ 13,2:1; onSurfaceVariant/surfaceContainerLow ≥ 7,3:1; tertiary/surfaceContainerLow ≥ 5,0:1.
 - Skalowanie do 200%: karta rośnie, brak ucinania poza tytułem > 2 linii.
 
 ## Teksty

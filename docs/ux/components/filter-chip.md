@@ -36,7 +36,7 @@ Pusty wybór jest poprawny (= zwiedzanie ogólne) – podpowiedź: „Nie wybier
 ## Dostępność
 - Etykieta dla TalkBack: „Lokalne jedzenie, pole wyboru, zaznaczone"; nagłówek grupy z licznikiem.
 - Cel dotyku 48 dp.
-- Kontrast: onSecondaryContainer/secondaryContainer ≥ 7,2:1; onSurfaceVariant/surface ≥ 8,8:1. Obrys `outlineVariant` jest dekoracyjny – granicę celu wyznacza tekst (kryterium 1.4.11 spełnia tekst i ikona stanu).
+- Kontrast: onSecondaryContainer/secondaryContainer ≥ 7,2:1; onSurfaceVariant/surface ≥ 7,8:1. Obrys `outlineVariant` jest dekoracyjny – granicę celu wyznacza tekst (kryterium 1.4.11 spełnia tekst i ikona stanu).
 - Skalowanie do 200%: chipy zawijają tekst i wiersze.
 
 ## Teksty

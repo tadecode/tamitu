@@ -37,7 +37,7 @@ zapisywane, dopóki logowanie się nie uda (rekord lokalny tymczasowy wg privacy
 ## Dostępność
 - Etykieta dla TalkBack: „Zapoznałem się z polityką prywatności, pole wyboru, niezaznaczone"; link osobno: „Polityka prywatności, link, otwiera przeglądarkę".
 - Cel dotyku 48 dp dla wiersza i linku.
-- Kontrast: onSurface/surface ≥ 14:1; primary/surface ≥ 6,1:1; obrys pola onSurfaceVariant/surface ≥ 8,8:1.
+- Kontrast: onSurface/surface ≥ 14:1; primary/surface ≥ 5,4:1; obrys pola onSurfaceVariant/surface ≥ 7,8:1.
 - Skalowanie do 200%: tekst zawija się; pole wyrównane do pierwszej linii.
 
 ## Teksty

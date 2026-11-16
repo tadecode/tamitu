@@ -43,7 +43,7 @@ się** do 2 linii (wysokość rośnie), nie ucina się. Para przycisków poziomo
 ## Dostępność
 - Etykieta dla TalkBack: tekst przycisku; w stanie ładowania „<tekst>, trwa…" (np. „Logowanie, trwa…").
 - Cel dotyku 48 dp; odstęp 8 dp.
-- Kontrast: onPrimary/primary ≥ 6,4:1; onError/error ≥ 6,4:1; primary/surface ≥ 6,1:1 (tekstowy/outlined).
+- Kontrast: onPrimary/primary ≥ 6,4:1; onError/error ≥ 6,4:1; primary/surface ≥ 5,4:1 (tekstowy/outlined).
 - Skalowanie tekstu do 200%: zawijanie, brak ucinania.
 
 ## Teksty

@@ -41,7 +41,7 @@ Opis zawsze mówi: co się stało + co można zrobić. Przy skali 200% przewija 
 ## Dostępność
 - Etykieta dla TalkBack: tytuł jako nagłówek; ikona dekoracyjna; po pojawieniu się stanu fokus przechodzi na tytuł.
 - Cel dotyku przycisków 48 dp.
-- Kontrast: onSurface/surface ≥ 14:1; onSurfaceVariant/surface ≥ 8,8:1.
+- Kontrast: onSurface/surface ≥ 14:1; onSurfaceVariant/surface ≥ 7,8:1.
 - Skalowanie do 200%: przewijanie, bez ucinania.
 
 ## Teksty

@@ -39,7 +39,7 @@ Dotknięcie wiersza wybiera. Wybór w arkuszu dolnym (CMP-16) nie zamyka arkusza
 ## Dostępność
 - Etykieta dla TalkBack: „Moja lokalizacja, jednorazowo, wymaga zgody, przycisk opcji, niewybrany, 3 z 3".
 - Cel dotyku: cały wiersz.
-- Kontrast: onSurface/surface ≥ 14:1; onSurfaceVariant/surface ≥ 8,8:1.
+- Kontrast: onSurface/surface ≥ 14:1; onSurfaceVariant/surface ≥ 7,8:1.
 - Skalowanie do 200%: tytuł i opis zawijają się.
 
 ## Teksty

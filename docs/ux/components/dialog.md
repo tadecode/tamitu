@@ -39,7 +39,7 @@ Wejście medium2 (emphasized decelerate).
 ## Dostępność
 - Etykieta dla TalkBack: fokus na tytule po otwarciu; dialog jest modalny (reszta niedostępna); wstecz zamyka.
 - Cel dotyku przycisków 48 dp.
-- Kontrast (najgorszy przypadek z 4 kombinacji wariant×motyw): onSurface/surfaceContainerHigh ≥ 11,1:1; onSurfaceVariant/surfaceContainerHigh ≥ 7,5:1; primary/surfaceContainerHigh ≥ 5,2:1; error/surfaceContainerHigh ≥ 5,2:1.
+- Kontrast (najgorszy przypadek, jasny i ciemny motyw wariantu A): onSurface/surfaceContainerHigh ≥ 11,1:1; onSurfaceVariant/surfaceContainerHigh ≥ 6,6:1; primary/surfaceContainerHigh ≥ 4,6:1; error/surfaceContainerHigh ≥ 4,6:1.
 - Skalowanie do 200%: przyciski pionowo, treść przewijana.
 
 ## Teksty

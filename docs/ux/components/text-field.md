@@ -40,7 +40,7 @@ Treść zachowana po powrocie z EK-06/EK-07.
 ## Dostępność
 - Etykieta dla TalkBack: etykieta pola + „wymagane"/„opcjonalne" + podpowiedź; błąd ogłaszany po walidacji.
 - Cel dotyku = całe pole (≥ 56 dp); kolejność fokusu zgodna z kolejnością wizualną.
-- Kontrast: onSurface/surface ≥ 14:1; onSurfaceVariant/surface ≥ 8,8:1; error/surface ≥ 6,1:1; outline/surface ≥ 4,2:1.
+- Kontrast: onSurface/surface ≥ 14:1; onSurfaceVariant/surface ≥ 7,8:1; error/surface ≥ 5,4:1; outline/surface ≥ 3,7:1.
 - Skalowanie do 200%: etykieta i podpowiedź zawijają się; pole rośnie.
 
 ## Teksty

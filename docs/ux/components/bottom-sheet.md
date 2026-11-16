@@ -38,7 +38,7 @@ Nie zagnieżdżamy arkuszy w arkuszach. Wybór zapamiętany tylko na czas otwarc
 ## Dostępność
 - Etykieta dla TalkBack: fokus na tytule; uchwyt ma etykietę „Zamknij arkusz" i działanie zamknięcia (przeciąganie nie jest jedyną drogą).
 - Cel dotyku elementów 48 dp.
-- Kontrast: treść na `surfaceContainerLow` ≥ 8,4:1 (onSurfaceVariant), ≥ 13,2:1 (onSurface).
+- Kontrast: treść na `surfaceContainerLow` ≥ 7,3:1 (onSurfaceVariant), ≥ 13,2:1 (onSurface).
 - Skalowanie do 200%: arkusz rozwija się do 90% i przewija.
 
 ## Teksty

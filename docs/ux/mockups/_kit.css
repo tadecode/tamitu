@@ -6,11 +6,11 @@
 /* ---------- tokeny ---------- */
 body[data-theme="light"] .phone, body[data-theme="light"] .swatch-host {
   --primary:#006A6A; --on-primary:#FFFFFF; --primary-c:#9CF1F0; --on-primary-c:#002020;
-  --secondary:#4A6363; --secondary-c:#CCE8E7; --on-secondary-c:#051F1F;
+  --secondary:#4A6363; --secondary-c:#C4E2E1; --on-secondary-c:#051F1F;
   --tertiary:#8F4C38; --tertiary-c:#FFDBD1; --on-tertiary-c:#3A0B01;
   --error:#BA1A1A; --on-error:#FFFFFF; --error-c:#FFDAD6; --on-error-c:#410002;
-  --surface:#F4FBFA; --on-surface:#161D1D; --on-surface-v:#3F4948; --outline:#6F7979; --outline-v:#BEC9C8;
-  --sc-lowest:#FFFFFF; --sc-low:#EEF5F4; --sc:#E9EFEE; --sc-high:#E3E9E9; --sc-highest:#DDE4E3;
+  --surface:#E6EDEC; --on-surface:#161D1D; --on-surface-v:#3F4948; --outline:#6F7979; --outline-v:#BEC9C8;
+  --sc-lowest:#EEF4F3; --sc-low:#DFE6E5; --sc:#DAE1E0; --sc-high:#D5DCDB; --sc-highest:#CFD6D5;
   --inv-surface:#2B3231; --inv-on-surface:#ECF2F1; --inv-primary:#80D5D4; --scrim:rgba(0,0,0,.32);
 }
 body[data-theme="dark"] .phone, body[data-theme="dark"] .swatch-host {

@@ -39,7 +39,7 @@ dziennie") jako tekst pomocniczy pod komponentem dla wybranej opcji.
 ## Dostępność
 - Etykieta dla TalkBack: „Tempo, Umiarkowane, wybrane, 2 z 3".
 - Cel dotyku 48 dp; fokus po kolei przez segmenty.
-- Kontrast onSecondaryContainer/secondaryContainer ≥ 7,2:1; outline/surface ≥ 4,2:1.
+- Kontrast onSecondaryContainer/secondaryContainer ≥ 7,2:1; outline/surface ≥ 3,7:1.
 - Skalowanie do 200%: przejście na CMP-10.
 
 ## Teksty

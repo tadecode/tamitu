@@ -38,7 +38,7 @@ pokazuje na początku listy godzinę przylotu/przyjazdu (CMP-20 wariant „przyl
 ## Dostępność
 - Etykieta dla TalkBack: „Dzień 2, zakładka, 2 z 4, wybrana".
 - Cel dotyku 48 dp.
-- Kontrast: primary/surface ≥ 6,1:1; onSurfaceVariant/surface ≥ 8,8:1.
+- Kontrast: primary/surface ≥ 5,4:1; onSurfaceVariant/surface ≥ 7,8:1.
 - Skalowanie do 200%: zakładki rosną i przechodzą w tryb przewijalny.
 
 ## Teksty

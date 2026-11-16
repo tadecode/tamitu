@@ -39,7 +39,7 @@ wskaźnika 300 ms (krótkie operacje nie migoczą).
 ## Dostępność
 - Etykieta dla TalkBack: „Wczytywanie" / „Generowanie planu, trwa"; zmiana tekstu pomocniczego ogłaszana uprzejmie, nie częściej niż co 10 s; szkielet ukryty przed TalkBack (ogłaszane „Wczytywanie").
 - Cel dotyku n/d.
-- Kontrast: primary na torze surfaceContainerHighest ≥ 4,9:1 (próg 3:1 dla elementu interfejsu; najgorszy przypadek: A jasny 4,98).
+- Kontrast: primary na torze surfaceContainerHighest ≥ 4,3:1 (próg 3:1 dla elementu interfejsu; najgorszy przypadek: jasny 4,35).
 - Skalowanie do 200%: teksty zawijają się.
 
 ## Teksty

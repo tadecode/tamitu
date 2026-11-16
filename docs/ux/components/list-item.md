@@ -38,7 +38,7 @@ Cały wiersz jest celem dotyku. Długi tekst zawija się (maks. 3 linie, potem w
 ## Dostępność
 - Etykieta dla TalkBack: tytuł + drugi wiersz + rola („przycisk", „link, otwiera przeglądarkę"); nagłówki grup jako nagłówki.
 - Cel dotyku ≥ 56 dp.
-- Kontrast: onSurface/surface ≥ 14:1; onSurfaceVariant/surface ≥ 8,8:1; error/surface ≥ 6,1:1.
+- Kontrast: onSurface/surface ≥ 14:1; onSurfaceVariant/surface ≥ 7,8:1; error/surface ≥ 5,4:1.
 - Skalowanie do 200%: wiersz rośnie.
 
 ## Teksty

@@ -1,6 +1,7 @@
 # Design system Tamitu (Material 3)
 
 - Status: wariant marki wybrany przez właściciela 2026-11-16: **A „Lazur"** (UX1). Wersja 0.2 (ux, P3-14b krok 2); tokeny wariantu B usunięte (opis w `brand.md`, aneks).
+- Wersja 0.3 (2026-11-16): jasny motyw przyciemniony – tła z tonu ok. 98 na ok. 93 (uwaga właściciela: „jasna wersja jest za biala razi po oaczach za mocno”); `secondaryContainer` przyciemniony, by komunikaty odcinały się od tła. Ciemny motyw bez zmian.
   nigdy do wartości (hex, px). Zero wartości „na oko".
 
 ## 1. Fundament
@@ -21,12 +22,12 @@
 | Rola | Jasny | Ciemny |
 |---|---|---|
 | primary | `#006A6A` | `#80D5D4` |
-| onPrimary | `#FFFFFF` | `#003737` |
+| onPrimary | `#EEF4F3` | `#003737` |
 | primaryContainer | `#9CF1F0` | `#004F4F` |
 | onPrimaryContainer | `#002020` | `#9CF1F0` |
 | secondary | `#4A6363` | `#B0CCCB` |
 | onSecondary | `#FFFFFF` | `#1B3534` |
-| secondaryContainer | `#CCE8E7` | `#324B4B` |
+| secondaryContainer | `#C4E2E1` | `#324B4B` |
 | onSecondaryContainer | `#051F1F` | `#CCE8E7` |
 | tertiary | `#8F4C38` | `#FFB5A0` |
 | onTertiary | `#FFFFFF` | `#561F0F` |
@@ -36,13 +37,13 @@
 | onError | `#FFFFFF` | `#690005` |
 | errorContainer | `#FFDAD6` | `#93000A` |
 | onErrorContainer | `#410002` | `#FFDAD6` |
-| surface | `#F4FBFA` | `#0E1514` |
-| onSurface | `#161D1D` | `#DDE4E3` |
+| surface | `#E6EDEC` | `#0E1514` |
+| onSurface | `#161D1D` | `#CFD6D5` |
 | onSurfaceVariant | `#3F4948` | `#BEC9C8` |
 | surfaceContainerLowest | `#FFFFFF` | `#090F0F` |
-| surfaceContainerLow | `#EEF5F4` | `#161D1D` |
-| surfaceContainer | `#E9EFEE` | `#1A2121` |
-| surfaceContainerHigh | `#E3E9E9` | `#252B2B` |
+| surfaceContainerLow | `#DFE6E5` | `#161D1D` |
+| surfaceContainer | `#DAE1E0` | `#1A2121` |
+| surfaceContainerHigh | `#D5DCDB` | `#252B2B` |
 | surfaceContainerHighest | `#DDE4E3` | `#303636` |
 | outline | `#6F7979` | `#889392` |
 | outlineVariant | `#BEC9C8` | `#3F4948` |
@@ -150,7 +151,7 @@ M3 rozróżnia warstwy przede wszystkim **kolorem kontenera (tonal)**, cień tyl
 - **Zestaw: Hugeicons, darmowy zestaw „Stroke Rounded" (Free)** – decyzja właściciela 2026-11-16 (UX14: „tak zastapić odrazu”); zastępuje Material Symbols. Tylko zestaw darmowy, **bez Pro**.
 - **Warunek:** licencja zestawu Free i pakiet Flutter (`hugeicons`) są **niezweryfikowane** – potwierdza architekt (UX15, ADR-0008). Do potwierdzenia w repozytorium nie ma plików ani ścieżek SVG Hugeicons; makiety używają **własnych, uproszczonych odpowiedników** w tym stylu (kreska zaokrąglona), z adnotacją.
 - Styl: kreska 1,5 dp, zaokrąglone zakończenia i narożniki, bez wypełnienia; siatka 24 dp. Stan aktywny (np. wybrany segment) sygnalizuje kontener i znacznik `tick-02`, nie wypełniona wersja ikony (zestaw Free jej nie zapewnia w tym stylu).
-- Rozmiary: 24 dp (standard), 18 dp (wewnątrz przycisku/chipa), 48 dp (stan pusty/błędu). Przy 18 dp kreska 1,5 dp jest cienka – kontrast ikony liczony jak dla elementu interfejsu (≥ 3:1) jest spełniony kolorem (`onSurfaceVariant`/`surface` 8,9:1), ale qa sprawdza czytelność na urządzeniu.
+- Rozmiary: 24 dp (standard), 18 dp (wewnątrz przycisku/chipa), 48 dp (stan pusty/błędu). Przy 18 dp kreska 1,5 dp jest cienka – kontrast ikony liczony jak dla elementu interfejsu (≥ 3:1) jest spełniony kolorem (`onSurfaceVariant`/`surface` 7,8:1), ale qa sprawdza czytelność na urządzeniu.
 - Kolor: dziedziczy z roli treści (`onSurfaceVariant` w liście, `on…Container` w kontenerach).
 - Ikona nigdy nie jest jedynym nośnikiem znaczenia: obok jest tekst albo etykieta dla TalkBack.
 - Słownik ikon. **Znaczenie** (pierwsza kolumna) jest stałym identyfikatorem w specyfikacjach; nazwy Hugeicons to propozycja z katalogu Free – mobile-dev potwierdza dokładną nazwę (sufiks, np. `-01`/`-02`) w katalogu przy implementacji, bez zmiany znaczenia.

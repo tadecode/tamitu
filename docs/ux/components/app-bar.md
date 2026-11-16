@@ -41,7 +41,7 @@ Wstecz systemowe = ikona wstecz (wyjątki w `layout.md` pkt 3).
 ## Dostępność
 - Etykieta dla TalkBack: tytuł jako nagłówek (`header`); ikony z etykietami „Wstecz", „Ustawienia", „Więcej opcji".
 - Cel dotyku 48 dp; kolejność fokusu: wstecz → tytuł → działania.
-- Kontrast: onSurface/surface ≥ 14:1, onSurfaceVariant/surface ≥ 8,8:1 (oba warianty i motywy).
+- Kontrast: onSurface/surface ≥ 14:1, onSurfaceVariant/surface ≥ 7,8:1 (jasny i ciemny motyw).
 - Skalowanie tekstu do 200%: tytuł się nie ucina (dwie linie dozwolone przy 200%).
 
 ## Teksty
