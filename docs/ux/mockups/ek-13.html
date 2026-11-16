@@ -382,6 +382,10 @@ body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:colu
       <div class="notice"><i-c n="phone"></i-c><div class="body"><p><t-x pl="Plany są zapisane tylko na tym urządzeniu. Po odinstalowaniu aplikacji lub zmianie telefonu nie będą dostępne." en="Plans are stored only on this device. They won't be available after uninstalling the app or changing your phone."></t-x></p></div></div>
       <p class="body-m muted"><t-x pl="Plany usuniesz pojedynczo w widoku planu, a wszystkie dane – usuwając konto w Ustawieniach." en="Delete trips one by one in the trip view, or all data by deleting your account in Settings."></t-x></p>
       <div class="gap-8"></div>
+      <p class="body-m muted"><t-x pl="Dostęp do swoich danych i inne prawa (np. sprostowanie, sprzeciw) zrealizujemy na Twój wniosek wysłany e-mailem." en="We'll handle access to your data and your other rights (e.g. rectification, objection) at your request by email."></t-x></p>
+      <div class="gap-8"></div>
+      <p class="body-m muted"><t-x pl="Dostęp do lokalizacji zmienisz w ustawieniach telefonu." en="You can change location access in your phone settings."></t-x></p>
+      <div class="gap-8"></div>
       <p class="body-m muted"><t-x pl="Pytania o dane:" en="Questions about your data:"></t-x> <span class="link">tamitu@tadecode.pl</span></p>
     </div>
   </div>
@@ -408,15 +412,12 @@ body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:colu
   <div class="appbar"><span class="icbtn"><i-c n="back"></i-c></span><span class="title"><t-x pl="Prywatność i zgody" en="Privacy and consents"></t-x></span></div>
   <div class="scroll">
     <p class="group-h"><t-x pl="Zgoda na użycie AI" en="Consent to use AI"></t-x></p>
-    <div class="li info"><span class="lead"><i-c n="ai"></i-c></span><div class="txt"><p class="body-l"><t-x pl="Wyrażona 12.05.2027" en="Given on 5/12/2027"></t-x></p><p class="body-m muted"><t-x pl="Dane podróży z formularza wysyłamy do usługi AI tylko, gdy tworzysz plan." en="We send trip details to the AI service only when you create a plan."></t-x></p></div></div>
-    <div style="padding:0 16px 0 56px">
-      <span class="btn outlined"><t-x pl="Wycofaj zgodę" en="Withdraw consent"></t-x></span>
-      <div class="gap-8"></div>
-      <div class="notice err"><i-c n="wifioff"></i-c><div class="body"><p><t-x pl="Zmiana zgody wymaga internetu. Zgoda pozostaje bez zmian." en="Changing consent requires internet. Your consent is unchanged."></t-x></p></div></div>
-    </div>
+    <div class="li info"><span class="lead"><i-c n="schedule"></i-c></span><div class="txt"><p class="body-l"><t-x pl="Wycofanie oczekuje na połączenie (16.05.2027)" en="Withdrawal waiting for connection (5/16/2027)"></t-x></p><p class="body-m muted"><t-x pl="Nowych planów nie utworzysz. Wycofanie zapiszemy na naszym serwerze po odzyskaniu internetu." en="You can't create new plans. We'll record the withdrawal on our server once you're back online."></t-x></p></div></div>
+    <div style="padding:0 16px 0 56px"><span class="btn tonal"><t-x pl="Wyraź zgodę" en="Give consent"></t-x></span></div>
   </div>
+  <div class="snack"><span><t-x pl="Brak połączenia. Tworzenie planów zablokowaliśmy od razu, a wycofanie zapiszemy, gdy tylko będzie internet." en="No connection. We've blocked creating plans right away and will record the withdrawal as soon as you're online."></t-x></span></div>
   <div class="navbar"></div>
-</div><figcaption><b><t-x pl="Brak sieci / błąd" en="Offline / error"></t-x></b> – stan zgody się nie zmienia. Ładowanie: przycisk ze wskaźnikiem.</figcaption></figure>
+</div><figcaption><b><t-x pl="Wycofanie oczekuje na połączenie" en="Withdrawal pending"></t-x></b> – po „Wycofaj” bez sieci (wynik nieudanej próby): generowanie zablokowane od razu; „Wycofana” dopiero po potwierdzeniu serwera (ADR-0002 Aneks A pkt 4).</figcaption></figure>
 
 <figure class="state"><div class="phone">
   <div class="sysbar"><span>9:41</span><span>100%</span></div>

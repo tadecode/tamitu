@@ -7,7 +7,7 @@
 ## Cel
 Zastępuje treść ekranu, gdy nie ma czego pokazać: stan pusty (EK-04 bez planów), błąd wczytania (EK-04, EK-08),
 brak sieci przy ekranie wymagającym sieci, błędy generowania (EK-16 po powrocie do EK-05 – tam jako CMP-13,
-bo formularz zostaje), uszkodzona baza konta (EK-01, U12).
+bo formularz zostaje), przerwane usuwanie konta (EK-01).
 Nie służy do: błędów pojedynczych pól, chwilowych potwierdzeń.
 
 ## Warianty
@@ -17,7 +17,7 @@ Nie służy do: błędów pojedynczych pól, chwilowych potwierdzeń.
 | Błąd | nie udało się wczytać/wykonać | `alert-circle` | tonalne „Spróbuj ponownie" + ewentualnie tekstowe „Wróć" |
 | Brak sieci | ekran wymaga sieci | `wifi-off-01` | tonalne „Spróbuj ponownie" |
 | Limit | limit dzienny wyczerpany (gdy pokazujemy na całym ekranie) | `clock-01` | tekstowe „Wróć do planów" |
-| Blokujący | wymagana aktualizacja (U3), baza niedostępna (U12) | `reload` / `alert-circle` | wypełnione (np. „Zaktualizuj aplikację") + tekstowe alternatywy |
+| Blokujący | wymagana aktualizacja (U3), przerwane usuwanie konta (EK-01) | `reload` / `alert-circle` | wypełnione (np. „Zaktualizuj aplikację") + tekstowe alternatywy |
 
 ## Stany
 | Stan | Wygląd i zachowanie |
@@ -48,7 +48,7 @@ Opis zawsze mówi: co się stało + co można zrobić. Przy skali 200% przewija 
 | Klucz l10n | PL | EN |
 |---|---|---|
 | `errorGenericTitle` | Coś poszło nie tak | Something went wrong |
-| `errorGenericBody` | Spróbuj ponownie za chwilę. Twoje dane są bezpieczne. | Please try again in a moment. Your data is safe. |
+| `errorGenericBody` | Spróbuj ponownie za chwilę. Twoje plany na tym urządzeniu nie zostały zmienione. | Please try again in a moment. Your trips on this device haven't changed. |
 | `errorOfflineTitle` | Brak połączenia | You're offline |
 | `errorOfflineBody` | Sprawdź połączenie z internetem i spróbuj ponownie. | Check your internet connection and try again. |
 

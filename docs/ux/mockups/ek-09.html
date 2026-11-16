@@ -409,7 +409,7 @@ body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:colu
     </div>
   </div></div>
   <div class="navbar"></div>
-</div><figcaption><b><t-x pl="Ładowanie pozycji" en="Locating"></t-x></b> – uprawnienie przyznane; jednorazowy odczyt z możliwością rezygnacji.</figcaption></figure>
+</div><figcaption><b><t-x pl="Ładowanie pozycji" en="Locating"></t-x></b> – uprawnienie przyznane; jednorazowy odczyt (limit 10 s); „Anuluj” przerywa i odrzuca spóźniony wynik. Bez wstępnego sprawdzania sieci (ADR-0011 pkt 2).</figcaption></figure>
 
 <figure class="state"><div class="phone">
   <div class="sysbar"><span>9:41</span><span>100%</span></div>
@@ -446,13 +446,13 @@ body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:colu
       <div class="radio-row"><span class="radio on"></span><div><p class="body-l"><t-x pl="Nocleg" en="Your stay"></t-x></p><p class="body-m muted"><span lang="pl">Pensjonat Przykładowy, Alfama</span> · <t-x pl="punkt przybliżony" en="approximate point"></t-x></p></div></div>
       <div class="radio-row"><span class="radio"></span><div><p class="body-l"><t-x pl="Moja lokalizacja" en="My location"></t-x></p><p class="body-m muted"><t-x pl="Jednorazowo, tylko do tej trasy" en="One-time, just for this route"></t-x></p></div></div>
       <div class="seg"><div><i-c n="car"></i-c><t-x pl="Auto" en="Car"></t-x></div><div class="on"><i-c n="check"></i-c><t-x pl="Komunikacja" en="Transit"></t-x></div><div><i-c n="walk"></i-c><t-x pl="Pieszo" en="Walk"></t-x></div></div>
-      <div class="gap-16"></div>
-      <div class="notice err"><i-c n="wifioff"></i-c><div class="body"><p><t-x pl="Otwarcie map wymaga internetu." en="Opening maps requires internet."></t-x></p></div></div>
+      <div class="gap-24"></div>
       <span class="btn filled block"><i-c n="openinnew"></i-c><t-x pl="Otwórz w Google Maps" en="Open in Google Maps"></t-x></span>
     </div>
   </div></div>
+  <div class="snack" style="z-index:6"><span><t-x pl="Nie udało się otworzyć map. Spróbuj ponownie." en="Couldn't open maps. Please try again."></t-x></span></div>
   <div class="navbar"></div>
-</div><figcaption><b><t-x pl="Brak sieci" en="Offline"></t-x></b> – wybór działa offline; brak pozycji: komunikat „Nie udało się ustalić pozycji…”.</figcaption></figure>
+</div><figcaption><b><t-x pl="Błąd uruchomienia map" en="Maps launch error"></t-x></b> – aplikacja nie wykrywa sieci i nie blokuje otwarcia (ADR-0011 pkt 2); brak sieci obsługuje Google Maps. Brak pozycji: „Nie udało się ustalić pozycji…”.</figcaption></figure>
 
 <figure class="state"><div class="phone">
   <div class="sysbar"><span>9:41</span><span>100%</span></div>

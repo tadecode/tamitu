@@ -37,7 +37,7 @@ Wg wariantu; `titleSmall`, `bodyMedium`; kształt `shape-m`; elevation 0.
 ## Zachowanie
 Pozycja stała: pod paskiem górnym, nad treścią (przewija się z treścią). Komunikat o AI w EK-08 **nie da się
 zamknąć** (wymaganie). Komunikat „plany tylko na urządzeniu" w EK-04 można zamknąć („Rozumiem") – decyzja w kroku 2.
-Komunikat o braku sieci pojawia się/znika automatycznie wraz ze stanem sieci (animacja medium2), ogłaszany przez TalkBack.
+Komunikat o braku sieci pojawia się po nieudanej próbie akcji sieciowej i znika przy kolejnej udanej próbie (brak detektora sieci – ADR-0011 pkt 2); ogłaszany przez TalkBack.
 
 ## Dostępność
 - Etykieta dla TalkBack: tytuł + tekst; ikona dekoracyjna (pomijana), bo znaczenie niesie tekst; zmiana stanu sieci ogłaszana (live region, uprzejmie).

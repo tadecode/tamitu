@@ -51,8 +51,8 @@
 
 - **Kiedy:** funkcja wymaga sieci (logowanie, zgody, generowanie, usunięcie konta, Google Maps, link do polityki).
 - **Kiedy nie:** ekrany działające offline (EK-04, EK-08, EK-11, EK-12, język) – **bez** komunikatu o braku sieci, dopóki użytkownik nie spróbuje akcji sieciowej.
-- **Składniki:** CMP-13 „Ostrzeżenie" z `wifi-off-01` w miejscu akcji (formularz EK-05: nad przyciskiem „Generuj plan" – sprawdzenie przed wysłaniem, bez zużycia limitu, U6); CMP-18 „Brak sieci" dla ekranów, które bez sieci nie mają treści; CMP-14 dla akcji jednorazowej (otwarcie map).
-- **Zasady:** jednolity tekst (EK-16), zawsze „Spróbuj ponownie" lub powrót; komunikat znika sam po powrocie sieci.
+- **Składniki:** CMP-13 „Ostrzeżenie" z `wifi-off-01` w miejscu akcji (formularz EK-05: nad przyciskiem „Generuj plan" – po nieudanej próbie; połączenie, które nie dotarło do serwera, nie zużywa limitu, ADR-0011 pkt 2); CMP-18 „Brak sieci" dla ekranów, które bez sieci nie mają treści; CMP-14 dla akcji jednorazowej (otwarcie map).
+- **Zasady:** **brak sieci to wynik nieudanej próby, nie stały komunikat** – aplikacja nie ma detektora sieci (ADR-0011 pkt 2: bez pakietu łączności i bez `ACCESS_NETWORK_STATE`); jednolity tekst (EK-16); zawsze „Spróbuj ponownie" lub powrót; komunikat znika przy kolejnej udanej próbie lub po opuszczeniu ekranu. Wyjątek: otwarcie Google Maps nie jest blokowane (EK-09).
 
 ## 7. Potwierdzenie działania destrukcyjnego
 
@@ -72,7 +72,9 @@
   - wycofanie zgody tak łatwe jak wyrażenie (EK-13, jeden przycisk);
   - odmowa nie blokuje reszty aplikacji (lokalizacja → start z planu; AI → powrót do formularza, plany dostępne);
   - **nie używamy przełącznika (switch)** dla zgody na AI: switch sugeruje natychmiastową zmianę, a wycofanie wymaga zapisu na serwerze (sieć, możliwy błąd) – przycisk + stan ładowania + wynik;
-  - wszystkie ekrany tego wzorca idą do przeglądu security przed `ux-ready`.
+  - akceptacja polityki: **jeden tekst i jeden klucz** (`consentPolicyCheckbox`) we wszystkich miejscach; etykieta TalkBack = tekst widoczny; zmiana języka zdejmuje zaznaczenie (P-2, P-3);
+  - **nowy cel przetwarzania oparty na zgodzie (lit. a) = osobny ekran zgody wg wzorca EK-06**, nigdy „przy okazji" ponownej akceptacji polityki (EK-03 tylko dla zmian informacyjnych; P-4);
+  - wszystkie ekrany tego wzorca idą do przeglądu security przed `ux-ready` (przegląd P3-14c: `docs/security/reviews/2026-11-16-p3-14c-ekrany.md`).
 
 ## 9. Pierwsze uruchomienie
 
