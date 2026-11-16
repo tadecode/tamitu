@@ -1,6 +1,6 @@
 # ADR-0012: Egzekwowanie wersji polityki prywatności (i zgody AI) po stronie serwera w `generatePlan`
 
-- Status: proponowany (do zatwierdzenia przez właściciela; S17, SEC-26)
+- Status: zatwierdzony (właściciel produktu, 2026-11-16: „Approve ADR-0012”)
 - Data: 2026-11-16
 - Autor (rola): architect
 - Zadanie: S17 / SEC-26 (przegląd security ekranów, ustalenie blokujące B-1: `docs/security/reviews/2026-11-16-p3-14c-ekrany.md`); US-003, T30
@@ -46,4 +46,4 @@ Dodatkowy problem ujawniony przy projektowaniu: porównanie „wersja rekordu = 
 **Negatywne / ryzyka:** nowa wersja wymaga wdrożenia backendu przed wydaniem aplikacji (krok procedury – ryzyko pomyłki łagodzi test `recordConsent` z nieznaną wersją); użytkownicy starych wersji aplikacji tracą generowanie po kroku 3 procedury (zamierzone).
 **Koszty (CLAUDE.md pkt 10):** +1 odczyt Firestore na `generatePlan` (rekord `privacy_policy`), w darmowej puli (50 tys. odczytów/dobę); odrzucenie następuje przed rezerwacją limitu i wywołaniem modelu, więc koszt AI bez zmian. `docs/architecture/costs.md` bez zmian (pozycja Firestore „ok. 3 odczyty" → ok. 4, pomijalne).
 **Dane osobowe:** brak nowych kategorii; odczyt istniejących rekordów D3.
-**Do wykonania po zatwierdzeniu:** kontrakt `docs/api/posrednik-api.md` v0.4 (projekt w pkt 8), `docs/data/model-danych.md` (format wersji w `config/runtime`); mobile-dev – implementacja w P3-04/P3-05 (SEC-26, SEC-21); ux – EK-16: mapowanie `consentType` (EK-03 / EK-06) i komunikat aktualizacji dla obu typów.
+**Po zatwierdzeniu (2026-11-16):** kontrakt `docs/api/posrednik-api.md` podniesiony do v0.4, `docs/data/model-danych.md` – format wersji w `config/runtime`. Pozostaje: mobile-dev – implementacja w P3-04/P3-05 (SEC-26, SEC-21); ux – EK-16: mapowanie `consentType` (EK-03 / EK-06) i komunikat aktualizacji dla obu typów.
