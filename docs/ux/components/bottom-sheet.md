@@ -6,7 +6,7 @@
 
 ## Cel
 **Wybór** blisko kciuka, w kontekście bieżącego ekranu: wybór trasy do punktu (EK-09: punkt startowy +
-tryb + „Otwórz w Google Maps"), wybór języka (EK-12), ewentualnie wyjaśnienie przed prośbą o lokalizację (EK-10 – decyzja w kroku 2).
+tryb + „Otwórz w Google Maps"), wybór języka (EK-12).
 Nie służy do: treści głównej, długich tekstów, formularzy z wieloma polami.
 
 ## Warianty
@@ -47,4 +47,4 @@ Nie zagnieżdżamy arkuszy w arkuszach. Wybór zapamiętany tylko na czas otwarc
 | `commonCloseSheet` | Zamknij arkusz | Close sheet |
 
 ## Użycie
-EK-09, EK-10 (opcjonalnie), EK-12; wzorzec arkusz dolny do wyboru.
+EK-09, EK-12; wzorzec arkusz dolny do wyboru.

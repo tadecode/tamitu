@@ -43,7 +43,7 @@ klucze **wspólne**; klucze ekranowe powstaną w `screens/` (krok 2).
 | CMP-19 | [Zakładki dni](day-tabs.md) | Primary tabs (scrollable) / `TabBar` + `TabBarView` | EK-08 |
 | CMP-20 | [Punkt planu](plan-item.md) | złożony z M3 (`ListTile`-podobny, znacznik pory) | EK-08 |
 
-## Pokrycie ekranów (wstępne, do potwierdzenia w kroku 2)
+## Pokrycie ekranów (krok 2: specyfikacje w `../screens/`, makiety w `../mockups/`)
 
 | Ekran | Komponenty |
 |---|---|
@@ -56,7 +56,7 @@ klucze **wspólne**; klucze ekranowe powstaną w `screens/` (krok 2).
 | EK-07 Generowanie | CMP-17, CMP-02, CMP-15 |
 | EK-08 Widok planu | CMP-01, CMP-12, CMP-13, CMP-19, CMP-20, CMP-15, CMP-14 |
 | EK-09 Trasa | CMP-16, CMP-10, CMP-07, CMP-13, CMP-02 |
-| EK-10 Lokalizacja | CMP-16 lub CMP-15 (do decyzji w kroku 2), CMP-02 |
+| EK-10 Lokalizacja | CMP-15 (dialog nad arkuszem EK-09 – arkusze nie są zagnieżdżane), CMP-02 |
 | EK-11 Usunięcie planu | CMP-15, CMP-14 |
 | EK-12 Ustawienia | CMP-01, CMP-11, CMP-16/CMP-10 (język) |
 | EK-13 Prywatność | CMP-01, CMP-11, CMP-13, CMP-02 |
