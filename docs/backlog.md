@@ -71,6 +71,8 @@ Zadanie przykładowe T-001 (szkielet Flutter) powstanie w fazie 3 po G2.
 | P3-14f | Zmiany ekranów: EK-09 (zapamiętany tryb), EK-12 (motyw, język), EK-13/EK-12 („Usuń wszystkie plany" z potwierdzeniem), EK-04/EK-13 (informacja „plany tylko na tym urządzeniu"); potem ponowne zatwierdzenie właściciela | ux | todo (po P3-14e) |
 | P3-14g | Ustawienia lokalne (motyw, tryb trasy) i masowe usuwanie planów w modelu danych/ADR-0005 (bez nowych danych osobowych?) | architect | todo |
 
+**Zatwierdzenie ekranów 2026-11-16:** właściciel: „zatwierdzam ekrany EK-01, 02, 03, 06 i 16". EK-01, EK-02, EK-03, EK-06, EK-16 mają status `ux-ready` (EK-06 z tekstem roboczym `ai-consent-v1`; ostateczny `ai-consent-v2` po prawniku i SEC-15), więc P3-04 (logowanie Google, zgody, `recordConsent`) może ruszyć. EK-09, EK-12, EK-13 czekają na P3-14f.
+
 **Decyzja właściciela 2026-11-16:** przed implementacją ekranów (P3-04, P3-06, P3-07) przechodzimy P3-14a..d; każde zadanie wykonuje osobny agent z właściwą rolą. P3-04, P3-06, P3-07 wstrzymane do P3-14d. Prace bez UI (SEC-18/19/21 w backendzie, SEC-24, zadania właściciela) idą równolegle.
 
 Wejścia z Aneksów A ADR (do uwzględnienia przy realizacji): SEC-03, SEC-04, SEC-07, SEC-09, P3-03 (konta usług `fn-ai`, `fn-consent`, `fn-account`, `fn-budget`; sink logów; tokeny debug App Check jako sekrety); P3-01/02/06 (kryteria SQLCipher, lockfile, `flutter_secure_storage`; ADR-0008, ADR-0005). Warunek: `ALLOW_REAL_DATA=false` do zamknięcia SEC-15.
