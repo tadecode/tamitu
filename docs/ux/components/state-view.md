@@ -48,7 +48,7 @@ Opis zawsze mówi: co się stało + co można zrobić. Przy skali 200% przewija 
 | Klucz l10n | PL | EN |
 |---|---|---|
 | `errorGenericTitle` | Coś poszło nie tak | Something went wrong |
-| `errorGenericBody` | Spróbuj ponownie za chwilę. Twoje dane są bezpieczne. | Please try again in a moment. Your data is safe. |
+| `errorGenericBody` | Spróbuj ponownie za chwilę. Twoje plany na tym urządzeniu nie zostały zmienione. | Please try again in a moment. Your trips on this device haven't changed. |
 | `errorOfflineTitle` | Brak połączenia | You're offline |
 | `errorOfflineBody` | Sprawdź połączenie z internetem i spróbuj ponownie. | Check your internet connection and try again. |
 
