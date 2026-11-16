@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EK-12 Ustawienia – makieta Tamitu</title>
+<style data-kit>
+/* Tamitu – wspólne style makiet ekranów (P3-14b krok 2).
+   Dokumentacja, nie kod aplikacji. Tokeny 1:1 z docs/ux/design-system.md (wariant A „Lazur").
+   Rozmiary tekstu w em względem bazy telefonu 16px = 16 sp, aby przełącznik „Tekst" (100/150/200%) skalował treść
+   jak ustawienie systemowe; cele dotyku i odstępy w px = dp. */
+
+/* ---------- tokeny ---------- */
+body[data-theme="light"] .phone, body[data-theme="light"] .swatch-host {
+  --primary:#006A6A; --on-primary:#FFFFFF; --primary-c:#9CF1F0; --on-primary-c:#002020;
+  --secondary:#4A6363; --secondary-c:#C4E2E1; --on-secondary-c:#051F1F;
+  --tertiary:#8F4C38; --tertiary-c:#FFDBD1; --on-tertiary-c:#3A0B01;
+  --error:#BA1A1A; --on-error:#FFFFFF; --error-c:#FFDAD6; --on-error-c:#410002;
+  --surface:#E6EDEC; --on-surface:#161D1D; --on-surface-v:#3F4948; --outline:#6F7979; --outline-v:#BEC9C8;
+  --sc-lowest:#EEF4F3; --sc-low:#DFE6E5; --sc:#DAE1E0; --sc-high:#D5DCDB; --sc-highest:#CFD6D5;
+  --inv-surface:#2B3231; --inv-on-surface:#ECF2F1; --inv-primary:#80D5D4; --scrim:rgba(0,0,0,.32);
+}
+body[data-theme="dark"] .phone, body[data-theme="dark"] .swatch-host {
+  --primary:#80D5D4; --on-primary:#003737; --primary-c:#004F4F; --on-primary-c:#9CF1F0;
+  --secondary:#B0CCCB; --secondary-c:#324B4B; --on-secondary-c:#CCE8E7;
+  --tertiary:#FFB5A0; --tertiary-c:#723523; --on-tertiary-c:#FFDBD1;
+  --error:#FFB4AB; --on-error:#690005; --error-c:#93000A; --on-error-c:#FFDAD6;
+  --surface:#0E1514; --on-surface:#DDE4E3; --on-surface-v:#BEC9C8; --outline:#889392; --outline-v:#3F4948;
+  --sc-lowest:#090F0F; --sc-low:#161D1D; --sc:#1A2121; --sc-high:#252B2B; --sc-highest:#303636;
+  --inv-surface:#DDE4E3; --inv-on-surface:#2B3231; --inv-primary:#006A6A; --scrim:rgba(0,0,0,.32);
+}
+.phone { --r-xs:4px; --r-s:8px; --r-m:12px; --r-l:16px; --r-xl:28px; }
+
+/* ---------- strona dokumentu ---------- */
+:root { --pg-bg:#ECECEC; --pg-fg:#1B1B1B; --pg-muted:#555; --pg-card:#FFF; --pg-line:#CFCFCF; --pg-accent:#006A6A; }
+body[data-theme="dark"] { --pg-bg:#111; --pg-fg:#EDEDED; --pg-muted:#AAA; --pg-card:#1C1C1C; --pg-line:#383838; --pg-accent:#80D5D4; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--pg-bg); color:var(--pg-fg); font:15px/1.5 system-ui, "Segoe UI", Roboto, sans-serif; }
+.pg-head { position:sticky; top:0; z-index:20; background:var(--pg-card); border-bottom:1px solid var(--pg-line);
+  padding:10px 16px; display:flex; flex-wrap:wrap; gap:8px 20px; align-items:center; }
+.pg-head h1 { font-size:17px; margin:0; font-weight:600; }
+.pg-head .meta { color:var(--pg-muted); font-size:13px; }
+.pg-ctl { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+.pg-ctl span { color:var(--pg-muted); font-size:13px; }
+.pg-ctl button { font:inherit; font-size:13px; padding:5px 12px; min-height:34px; border-radius:999px; border:1px solid var(--pg-line);
+  background:transparent; color:var(--pg-fg); cursor:pointer; }
+.pg-ctl button[aria-pressed="true"] { background:var(--pg-fg); color:var(--pg-card); border-color:var(--pg-fg); }
+.pg-main { padding:16px; max-width:1600px; margin:0 auto; }
+.pg-note { max-width:980px; color:var(--pg-muted); font-size:14px; margin:0 0 12px; }
+.pg-note code { font-size:13px; }
+.pg-nav { display:flex; flex-wrap:wrap; gap:6px; margin:0 0 16px; font-size:13px; }
+.pg-nav a, .pg-head a, .pg-note a { color:var(--pg-accent); }
+.states { display:flex; flex-wrap:wrap; gap:24px; align-items:flex-start; }
+.state { margin:0; width:360px; flex:none; }
+.state > figcaption { font-size:13px; color:var(--pg-muted); margin:8px 4px 0; }
+.state > figcaption b { color:var(--pg-fg); }
+.pg-h2 { font-size:16px; margin:24px 0 12px; }
+
+/* ---------- język i widoczność ---------- */
+body[data-lang="pl"] .l[lang="en"], body[data-lang="en"] .l[lang="pl"] { display:none !important; }
+
+/* ---------- telefon ---------- */
+.phone { width:360px; height:760px; border-radius:24px; overflow:hidden; position:relative; display:flex; flex-direction:column;
+  background:var(--surface); color:var(--on-surface); font-family:Roboto, "Segoe UI", system-ui, sans-serif; font-size:16px;
+  box-shadow:0 0 0 6px #262626, 0 6px 24px rgba(0,0,0,.25); }
+body[data-scale="150"] .phone { font-size:24px; }
+body[data-scale="200"] .phone { font-size:32px; }
+.sysbar { height:24px; flex:none; padding:0 16px; display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--on-surface-v); }
+.navbar { height:24px; flex:none; display:flex; justify-content:center; align-items:center; }
+.navbar::before { content:""; width:108px; height:4px; border-radius:2px; background:var(--on-surface); opacity:.4; }
+.scroll { flex:1; overflow-y:auto; overflow-x:hidden; position:relative; }
+.pad { padding:0 16px 16px; }
+.bottom { flex:none; padding:8px 16px 16px; }
+
+/* typografia (em = sp) */
+.display-s { font-size:2.25em; line-height:1.222; font-weight:400; margin:0; }
+.headline-s { font-size:1.5em; line-height:1.333; font-weight:400; margin:0; }
+.title-l { font-size:1.375em; line-height:1.273; font-weight:400; margin:0; }
+.title-m { font-size:1em; line-height:1.5; font-weight:500; margin:0; }
+.title-s { font-size:.875em; line-height:1.43; font-weight:500; margin:0; }
+.body-l { font-size:1em; line-height:1.5; margin:0; }
+.body-m { font-size:.875em; line-height:1.43; margin:0; }
+.body-s { font-size:.75em; line-height:1.333; margin:0; }
+.label-l { font-size:.875em; line-height:1.43; font-weight:500; }
+.label-m { font-size:.75em; line-height:1.333; font-weight:500; }
+.muted { color:var(--on-surface-v); }
+.c-primary { color:var(--primary); }
+.c-error { color:var(--error); }
+.c-tertiary { color:var(--tertiary); font-weight:500; }
+.gap-4 { height:4px; } .gap-8 { height:8px; } .gap-12 { height:12px; } .gap-16 { height:16px; } .gap-24 { height:24px; } .gap-32 { height:32px; } .gap-48 { height:48px; }
+.center { text-align:center; }
+
+/* ikony */
+.ic { width:24px; height:24px; fill:currentColor; flex:none; display:inline-block; vertical-align:middle; }
+.ic.s18 { width:18px; height:18px; } .ic.s48 { width:48px; height:48px; } .ic.s16 { width:16px; height:16px; }
+
+/* CMP-01 pasek górny */
+.appbar { min-height:64px; flex:none; display:flex; align-items:center; padding:0 4px; gap:4px; background:var(--surface); }
+.appbar.scrolled { background:var(--sc); }
+.appbar .title { flex:1; margin:0 0 0 12px; font-size:1.375em; line-height:1.273; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.appbar .icbtn + .title { margin-left:4px; }
+.icbtn { width:48px; height:48px; display:grid; place-items:center; border-radius:50%; color:var(--on-surface-v); flex:none; }
+.icbtn.disabled { opacity:.38; }
+
+/* CMP-02 przyciski */
+.btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:40px; padding:10px 24px; margin:4px 0;
+  border-radius:999px; font-size:.875em; line-height:1.43; font-weight:500; text-align:center; border:0; }
+.btn .ic { width:18px; height:18px; }
+.btn.filled { background:var(--primary); color:var(--on-primary); }
+.btn.tonal { background:var(--secondary-c); color:var(--on-secondary-c); }
+.btn.outlined { color:var(--primary); box-shadow:inset 0 0 0 1px var(--outline); }
+.btn.text { color:var(--primary); padding:10px 12px; }
+.btn.text.err { color:var(--error); }
+.btn.danger { background:var(--error); color:var(--on-error); }
+.btn.danger-outlined { color:var(--error); box-shadow:inset 0 0 0 1px var(--outline); }
+.btn.disabled { background:color-mix(in srgb, var(--on-surface) 12%, transparent); color:color-mix(in srgb, var(--on-surface) 38%, transparent); box-shadow:none; }
+.btn.text.disabled, .btn.outlined.disabled { background:transparent; }
+.btn.block { display:flex; width:100%; }
+.btn-row { display:flex; justify-content:flex-end; flex-wrap:wrap; gap:0 8px; }
+.spinner { width:20px; height:20px; border-radius:50%; border:2.5px solid currentColor; border-right-color:transparent; display:inline-block; }
+
+/* CMP-03 FAB */
+.fab { position:absolute; right:16px; bottom:16px; min-height:56px; padding:0 20px 0 16px; border-radius:var(--r-l); display:flex; align-items:center; gap:12px;
+  background:var(--primary-c); color:var(--on-primary-c); box-shadow:0 3px 6px rgba(0,0,0,.25); font-size:.875em; font-weight:500; }
+
+/* CMP-04/05/06 pola */
+.field { position:relative; border-radius:var(--r-xs); box-shadow:inset 0 0 0 1px var(--outline); min-height:56px; padding:16px 48px 16px 16px;
+  margin:12px 0 0; font-size:1em; line-height:1.5; }
+.field:not(:has(.trail)) { padding-right:16px; }
+.field .lbl { position:absolute; top:-.55em; left:12px; padding:0 4px; background:var(--field-bg, var(--surface)); font-size:.75em; line-height:1.333; color:var(--on-surface-v); }
+.field .ph { color:var(--on-surface-v); }
+.field.empty .lbl { position:static; padding:0; background:none; font-size:1em; line-height:1.5; }
+.field .trail { position:absolute; right:12px; top:16px; color:var(--on-surface-v); }
+.field.focus { box-shadow:inset 0 0 0 2px var(--primary); }
+.field.focus .lbl { color:var(--primary); }
+.field.error { box-shadow:inset 0 0 0 2px var(--error); }
+.field.error .lbl, .field.error .trail { color:var(--error); }
+.help { font-size:.75em; line-height:1.333; color:var(--on-surface-v); margin:4px 16px 0; min-height:16px; }
+.help.err { color:var(--error); display:flex; gap:4px; align-items:flex-start; }
+.help .count { float:right; }
+.row2 { display:flex; gap:16px; } .row2 > * { flex:1; min-width:0; }
+body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:column; gap:0; }
+.section-h { margin:24px 0 8px; font-size:.875em; line-height:1.43; font-weight:500; color:var(--primary); }
+
+/* CMP-07 segmenty */
+.seg { display:flex; border-radius:999px; box-shadow:inset 0 0 0 1px var(--outline); overflow:hidden; }
+.seg > div { flex:1; display:flex; align-items:center; justify-content:center; gap:6px; min-height:40px; padding:4px 8px; font-size:.875em; font-weight:500; text-align:center; }
+.seg > div + div { border-left:1px solid var(--outline); }
+.seg .on { background:var(--secondary-c); color:var(--on-secondary-c); }
+.seg .ic { width:18px; height:18px; }
+.seg.err { box-shadow:inset 0 0 0 2px var(--error); }
+
+/* CMP-08 chipy */
+.chips { display:flex; flex-wrap:wrap; gap:8px; }
+.chip { display:inline-flex; align-items:center; gap:8px; min-height:32px; padding:4px 12px; border-radius:var(--r-s); box-shadow:inset 0 0 0 1px var(--outline-v);
+  color:var(--on-surface-v); font-size:.875em; font-weight:500; }
+.chip.on { background:var(--secondary-c); color:var(--on-secondary-c); box-shadow:none; padding-left:8px; }
+.chip.disabled { opacity:.38; }
+.chip .ic { width:18px; height:18px; }
+
+/* CMP-09 zgoda, CMP-10 radio */
+.check-row { display:flex; gap:16px; align-items:flex-start; padding:12px 0; min-height:48px; }
+.cb { width:18px; height:18px; border-radius:2px; box-shadow:inset 0 0 0 2px var(--on-surface-v); flex:none; margin-top:3px; display:grid; place-items:center; }
+.cb.on { background:var(--primary); box-shadow:none; color:var(--on-primary); }
+.cb.on .ic { width:16px; height:16px; }
+.link { color:var(--primary); text-decoration:underline; }
+.radio-row { display:flex; gap:16px; align-items:flex-start; padding:12px 16px; min-height:56px; }
+.radio { width:20px; height:20px; border-radius:50%; box-shadow:inset 0 0 0 2px var(--on-surface-v); flex:none; margin-top:2px; position:relative; }
+.radio.on { box-shadow:inset 0 0 0 2px var(--primary); }
+.radio.on::after { content:""; position:absolute; inset:5px; border-radius:50%; background:var(--primary); }
+.radio-row.disabled { opacity:.38; }
+
+/* CMP-11 lista */
+.li { display:flex; gap:16px; align-items:center; padding:8px 16px; min-height:56px; }
+.li .txt { flex:1; min-width:0; }
+.li .lead, .li .trail { color:var(--on-surface-v); }
+.li.err, .li.err .lead { color:var(--error); }
+.li.info { cursor:default; }
+.li.disabled { opacity:.38; }
+.group-h { padding:16px 16px 4px; font-size:.875em; font-weight:500; color:var(--primary); }
+.divider { height:1px; background:var(--outline-v); margin:8px 0; }
+
+/* CMP-12 karta */
+.card { background:var(--sc-low); border-radius:var(--r-m); padding:16px; margin:0 0 8px; display:flex; flex-direction:column; gap:4px; }
+.card .meta { display:flex; align-items:center; gap:8px; font-size:.875em; line-height:1.43; color:var(--on-surface-v); }
+.card .meta .ic { width:18px; height:18px; }
+
+/* CMP-13 komunikat */
+.notice { display:flex; gap:16px; padding:16px; border-radius:var(--r-m); background:var(--secondary-c); color:var(--on-secondary-c); margin:0 0 16px; }
+.notice.err { background:var(--error-c); color:var(--on-error-c); }
+.notice .body { flex:1; min-width:0; }
+.notice .nt { font-size:.875em; line-height:1.43; font-weight:500; margin:0 0 2px; }
+.notice p { font-size:.875em; line-height:1.43; margin:0; }
+.notice .btn.text { color:inherit; text-decoration:underline; padding:10px 0; margin:4px 0 -10px; }
+
+/* CMP-14 snackbar */
+.snack { position:absolute; left:16px; right:16px; bottom:16px; min-height:48px; padding:6px 8px 6px 16px; border-radius:var(--r-xs); display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+  background:var(--inv-surface); color:var(--inv-on-surface); font-size:.875em; line-height:1.43; box-shadow:0 3px 6px rgba(0,0,0,.25); z-index:5; }
+.snack > span:first-child { flex:1; min-width:60%; }
+.snack .btn.text { color:var(--inv-primary); margin:0; font-size:1em; }
+.snack.above-fab { bottom:88px; }
+
+/* CMP-15 dialog, CMP-16 arkusz */
+.scrim { position:absolute; inset:0; background:var(--scrim); z-index:4; display:flex; align-items:center; justify-content:center; padding:24px; }
+.scrim.sheet-host { align-items:flex-end; padding:0; }
+.dialog { background:var(--sc-high); border-radius:var(--r-xl); padding:24px; width:100%; max-height:100%; overflow:auto; box-shadow:0 6px 12px rgba(0,0,0,.25); }
+.dialog .dic { display:flex; justify-content:center; margin:0 0 16px; color:var(--on-surface-v); }
+.dialog .dic.err { color:var(--error); }
+.dialog .dt { font-size:1.5em; line-height:1.333; margin:0 0 16px; }
+.dialog .dic + .dt { text-align:center; }
+.dialog .dc { font-size:.875em; line-height:1.43; color:var(--on-surface-v); margin:0 0 24px; }
+.dialog .dc p { margin:0 0 8px; }
+.sheet { background:var(--sc-low); border-radius:var(--r-xl) var(--r-xl) 0 0; width:100%; max-height:92%; overflow:auto; padding:0 0 16px; }
+.sheet .handle { width:32px; height:4px; border-radius:2px; background:var(--on-surface-v); opacity:.4; margin:16px auto 8px; }
+.sheet .st { font-size:1.375em; line-height:1.273; margin:8px 16px 4px; }
+.sheet .inner { padding:0 16px; }
+.sheet .radio-row { padding-left:0; padding-right:0; }
+.sheet .field { --field-bg:var(--sc-low); }
+
+/* CMP-17 postęp, szkielet */
+.lin { height:4px; border-radius:4px; background:var(--sc-highest); overflow:hidden; position:relative; }
+.lin::before { content:""; position:absolute; top:0; bottom:0; left:20%; width:40%; border-radius:4px; background:var(--primary); }
+.circ { width:48px; height:48px; border-radius:50%; border:4px solid var(--primary); border-right-color:var(--sc-highest); display:inline-block; }
+.skel { background:var(--sc-highest); border-radius:var(--r-s); }
+.skel-card { background:var(--sc-low); border-radius:var(--r-m); padding:16px; margin:0 0 8px; }
+.skel-line { height:12px; border-radius:6px; background:var(--sc-highest); margin:6px 0; }
+
+/* CMP-18 stan ekranu */
+.sv { display:flex; flex-direction:column; align-items:center; text-align:center; padding:48px 24px 24px; }
+.sv .ic.s48 { color:var(--on-surface-v); margin:0 0 16px; }
+.sv .headline-s { margin:0 0 8px; }
+.sv .body-m { color:var(--on-surface-v); max-width:320px; margin:0 0 24px; }
+
+/* CMP-19 zakładki */
+.tabs { display:flex; border-bottom:1px solid var(--outline-v); overflow:hidden; }
+.tabs.scrollable { overflow-x:auto; scrollbar-width:none; }
+.tab { flex:1 0 auto; text-align:center; padding:14px 16px 12px; font-size:.875em; font-weight:500; color:var(--on-surface-v); position:relative; white-space:nowrap; }
+.tab.on { color:var(--primary); }
+.tab.on::after { content:""; position:absolute; left:16px; right:16px; bottom:0; height:3px; border-radius:3px 3px 0 0; background:var(--primary); }
+
+/* CMP-20 punkt planu */
+.pi { display:grid; grid-template-columns:16px 1fr; gap:0 12px; }
+.pi .rail { display:flex; flex-direction:column; align-items:center; }
+.pi .dot { width:10px; height:10px; border-radius:50%; background:var(--outline); margin-top:7px; flex:none; }
+.pi .line { flex:1; width:2px; background:var(--outline-v); margin-top:4px; min-height:16px; }
+.pi .pc { padding:0 0 16px; min-width:0; }
+.badge { display:inline-block; padding:4px 8px; border-radius:var(--r-s); background:var(--tertiary-c); color:var(--on-tertiary-c); font-size:.75em; line-height:1.333; font-weight:500; margin:0 0 4px; }
+.pi .route { display:flex; justify-content:flex-end; margin:-4px 0 -8px; }
+
+/* znak słowny */
+.wordmark { font-size:2.25em; line-height:1.222; color:var(--primary); margin:0; font-weight:400; }
+
+/* adnotacje makiety (nie część UI) */
+.anno { position:absolute; z-index:9; background:#FFE066; color:#222; font:12px/1.3 system-ui, sans-serif; padding:2px 6px; border-radius:4px; }
+.pg-anno { background:#FFE066; color:#222; padding:0 4px; border-radius:3px; }
+
+/* paleta w accessibility / podglądzie */
+.swatch-host { display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:8px; }
+</style><script data-kit>
+/* Tamitu – wspólny skrypt makiet (P3-14b krok 2). Dokumentacja, nie kod aplikacji.
+   - przełączniki: język interfejsu PL/EN, motyw jasny/ciemny, skala tekstu 100/150/200%;
+   - <t-x pl="…" en="…"></t-x> – tekst w języku interfejsu; pary <span class="l" lang="pl|en"> – tekst z formatowaniem;
+   - treść planu (język planu) NIE jest przełączana: oznaczona atrybutem lang bez klasy „l".
+   Brak zapisu stanu (bez localStorage), brak zasobów zewnętrznych. Stan startowy można ustawić w adresie: #en, #dark, #s200. */
+(function () {
+  // Ikony: WŁASNE, uproszczone odpowiedniki w stylu Hugeicons Free „Stroke Rounded" (kreska 1,5, zaokrąglone końce),
+  // narysowane na potrzeby makiet – NIE są plikami Hugeicons (licencja do potwierdzenia, UX15). Nazwy w komentarzu = słownik design-system.md pkt 8.
+  // Format: "ścieżka kreski|ścieżka wypełnienia (opcjonalnie, np. kropki)".
+  var ICONS = {
+    add: 'M12 5v14M5 12h14',                                                        // add-01
+    back: 'M19 12H5M11 6l-6 6 6 6',                                                 // arrow-left-01
+    check: 'M5 12.5l4.5 4.5L19 7',                                                  // tick-02
+    info: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 11v5|M12 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2z',   // information-circle
+    error: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7.5v5|M12 17a1 1 0 1 0 0-2 1 1 0 0 0 0 2z', // alert-circle
+    warning: 'M10.3 4.2a2 2 0 0 1 3.4 0l7.6 13.1A2 2 0 0 1 19.6 20H4.4a2 2 0 0 1-1.7-2.7zM12 9v4|M12 17.5a1 1 0 1 0 0-2 1 1 0 0 0 0 2z', // alert-02
+    settings: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM12 6.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11zM12 2.8v3.7M12 17.5v3.7M2.8 12h3.7M17.5 12h3.7M5.5 5.5l2.6 2.6M15.9 15.9l2.6 2.6M5.5 18.5l2.6-2.6M15.9 8.1l2.6-2.6', // settings-02
+    directions: 'M6 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM18 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM8 18h7a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h7', // route-02
+    ai: 'M11 3.5l1.8 4.7 4.7 1.8-4.7 1.8L11 16.5l-1.8-4.7L4.5 10l4.7-1.8zM18 15l.8 2.2 2.2.8-2.2.8L18 21l-.8-2.2L15 18l2.2-.8z', // sparkles
+    flight: 'M3 20.5h18M5.2 8.2l1.6 4.6 12.3 3.4a1.6 1.6 0 0 0 .9-3.1l-5.4-1.5-3.3-6.9-1.9-.5 1.2 6.4-3.6-1-1-2.2z', // airplane-landing-01
+    car: 'M4 16v-3.5L6 8a2 2 0 0 1 1.8-1.2h8.4A2 2 0 0 1 18 8l2 4.5V16a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1zM4.5 12.5h15M7.5 20.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM16.5 20.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z', // car-01
+    transit: 'M6 3.5h12a2 2 0 0 1 2 2V16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5.5a2 2 0 0 1 2-2zM4 11h16M7 18v2.5M17 18v2.5|M8 15.5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM16 15.5a1 1 0 1 0 0-2 1 1 0 0 0 0 2z', // bus-01
+    walk: 'M13 6a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM9.5 21l2.2-6.5 2.8 2.8V21M8 12.5l2.5-4 3.5 1.2 2 3.3M11.7 14.5l-1.2-6', // walking
+    more: '|M12 6.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM12 13.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM12 20.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z', // more-vertical
+    phone: 'M8 2.5h8a2 2 0 0 1 2 2v15a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-15a2 2 0 0 1 2-2zM11 18.5h2', // smart-phone-01
+    delete: 'M4 6.5h16M9.5 6.5v-2h5v2M6.5 6.5l.8 12.6a2 2 0 0 0 2 1.9h5.4a2 2 0 0 0 2-1.9l.8-12.6M10 11v5M14 11v5', // delete-02
+    hotel: 'M3 19V6M3 15.5h18V19M21 15.5v-3a3 3 0 0 0-3-3h-7v6M7 13a1.75 1.75 0 1 0 0-3.5A1.75 1.75 0 0 0 7 13z', // bed-double
+    location: 'M12 19a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM12 2v3M12 19v3M2 12h3M19 12h3|M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z', // gps-01
+    place: 'M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21zM12 12a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z', // location-01
+    wifioff: 'M3 3l18 18M8.5 16a5 5 0 0 1 6.5-.3M5 12.3a10 10 0 0 1 4.3-2.4M19 12.3a10 10 0 0 0-3.4-2.1M2 8.7a15 15 0 0 1 5-3M22 8.7a15 15 0 0 0-11.3-4.1|M12 20.5a1.25 1.25 0 1 0 0-2.5 1.25 1.25 0 0 0 0 2.5z', // wifi-off-01
+    shield: 'M12 21.5s7.5-3 7.5-9.5V5.5L12 2.5 4.5 5.5V12c0 6.5 7.5 9.5 7.5 9.5zM9 12l2 2 4-4', // shield-01
+    language: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM3 12h18M12 3c2.5 2.5 3.5 5.5 3.5 9s-1 6.5-3.5 9c-2.5-2.5-3.5-5.5-3.5-9s1-6.5 3.5-9z', // globe-02
+    logout: 'M14 4.5H7a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h7M11 12h10M17.5 8.5L21 12l-3.5 3.5', // logout-01
+    personremove: 'M10 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM3 20.5c0-3.6 3.1-6 7-6s7 2.4 7 6M16 9h6', // user-remove-01
+    openinnew: 'M11 4.5H6.5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V13M14.5 4H20v5.5M20 4l-9 9', // link-square-02
+    schedule: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7.5V12l3 2', // clock-01
+    calendar: 'M6 4.5h12a2 2 0 0 1 2 2V19a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6.5a2 2 0 0 1 2-2zM4 9.5h16M8 2.5v4M16 2.5v4', // calendar-03
+    dropdown: 'M6 9.5l6 6 6-6', // arrow-down-01
+    luggage: 'M6.5 7h11a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-11a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2zM9 7V5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 5v2M9 11v5M15 11v5M8 20v1.5M16 20v1.5', // luggage-01
+    update: 'M20 12a8 8 0 1 1-2.4-5.7M20 4v4.5h-4.5' // reload
+  };
+  // <i-c n="name" s="18"></i-c> → inline SVG
+  function renderIcons(root) {
+    root.querySelectorAll('i-c').forEach(function (el) {
+      var n = el.getAttribute('n'), s = el.getAttribute('s');
+      var cls = 'ic' + (s ? ' s' + s : '') + (el.className ? ' ' + el.className : '');
+      var parts = (ICONS[n] || '').split('|');
+      el.outerHTML = '<svg class="' + cls + '" viewBox="0 0 24 24" aria-hidden="true">' +
+        (parts[0] ? '<path d="' + parts[0] + '" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' : '') +
+        (parts[1] ? '<path d="' + parts[1] + '" fill="currentColor"/>' : '') + '</svg>';
+    });
+  }
+  function applyLang(lang) {
+    document.body.dataset.lang = lang;
+    document.querySelectorAll('t-x').forEach(function (el) { el.textContent = el.getAttribute(lang) || el.getAttribute('pl'); });
+    document.documentElement.lang = lang;
+  }
+  function btns(group, items, current, onClick) {
+    var d = document.createElement('div'); d.className = 'pg-ctl'; d.setAttribute('role', 'group'); d.setAttribute('aria-label', group);
+    d.innerHTML = '<span>' + group + ':</span>';
+    items.forEach(function (it) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = it[1]; b.dataset.v = it[0];
+      b.setAttribute('aria-pressed', String(it[0] === current));
+      b.addEventListener('click', function () {
+        d.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+        onClick(it[0]);
+      });
+      d.appendChild(b);
+    });
+    return d;
+  }
+  document.addEventListener('DOMContentLoaded', function () {
+    var h = location.hash.toLowerCase();
+    var lang = h.indexOf('en') > -1 ? 'en' : 'pl';
+    var theme = h.indexOf('dark') > -1 ? 'dark' : (h.indexOf('light') > -1 ? 'light' :
+      (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+    var scale = h.indexOf('s200') > -1 ? '200' : (h.indexOf('s150') > -1 ? '150' : '100');
+    document.body.dataset.theme = theme; document.body.dataset.scale = scale;
+    renderIcons(document);
+    applyLang(lang);
+    var note = document.querySelector('.pg-note');
+    if (note) { var s = document.createElement('span'); s.className = 'pg-anno';
+      s.textContent = 'Ikony: własne uproszczone odpowiedniki w stylu Hugeicons Free (Stroke Rounded), nie oryginalne pliki – do czasu potwierdzenia licencji (UX15).';
+      note.appendChild(document.createTextNode(' ')); note.appendChild(s); }
+    var nav = document.querySelector('.pg-nav');
+    if (nav) {
+      var here = location.pathname.split('/').pop();
+      var names = ['01 Start', '02 Ekran startowy', '03 Ponowna akceptacja', '04 Lista planów', '05 Formularz', '06 Zgoda na AI', '07 Generowanie',
+        '08 Widok planu', '09 Trasa', '10 Lokalizacja', '11 Usunięcie planu', '12 Ustawienia', '13 Prywatność', '14 Wylogowanie', '15 Usunięcie konta', '16 Komunikaty'];
+      nav.innerHTML = names.map(function (n) {
+        var f = 'ek-' + n.slice(0, 2) + '.html';
+        return f === here ? '<b>EK-' + n + '</b>' : '<a href="' + f + '">EK-' + n + '</a>';
+      }).join(' · ');
+    }
+    var head = document.querySelector('.pg-head');
+    if (head) {
+      head.appendChild(btns('Język UI', [['pl', 'PL'], ['en', 'EN']], lang, applyLang));
+      head.appendChild(btns('Motyw', [['light', 'Jasny'], ['dark', 'Ciemny']], theme, function (v) { document.body.dataset.theme = v; }));
+      head.appendChild(btns('Tekst', [['100', '100%'], ['150', '150%'], ['200', '200%']], scale, function (v) { document.body.dataset.scale = v; }));
+    }
+  });
+})();
+</script>
+</head>
+<body data-theme="light" data-lang="pl" data-scale="100">
+<header class="pg-head"><h1>EK-12 Ustawienia</h1><span class="meta">US-002, US-003, US-010 · spec: <a href="../screens/ek-12.md">screens/ek-12.md</a></span></header>
+<main class="pg-main">
+<nav class="pg-nav"></nav>
+<p class="pg-note">Komponenty: CMP-01, CMP-11, CMP-16, CMP-10. Działa offline. Brak e-maila konta (UX12) i przełącznika motywu (UX4).</p>
+<div class="states">
+
+<figure class="state"><div class="phone">
+  <div class="sysbar"><span>9:41</span><span>100%</span></div>
+  <div class="appbar"><span class="icbtn"><i-c n="back"></i-c></span><span class="title"><t-x pl="Ustawienia" en="Settings"></t-x></span></div>
+  <div class="scroll">
+    <p class="group-h"><t-x pl="Aplikacja" en="App"></t-x></p>
+    <div class="li"><span class="lead"><i-c n="language"></i-c></span><div class="txt"><p class="body-l"><t-x pl="Język" en="Language"></t-x></p><p class="body-m muted">Polski</p></div></div>
+    <p class="group-h"><t-x pl="Prywatność" en="Privacy"></t-x></p>
+    <div class="li"><span class="lead"><i-c n="shield"></i-c></span><div class="txt"><p class="body-l"><t-x pl="Prywatność i zgody" en="Privacy and consents"></t-x></p><p class="body-m muted"><t-x pl="Zgoda na AI, przechowywanie danych" en="AI consent, data storage"></t-x></p></div></div>
+    <div class="li"><span class="lead"><i-c n="info"></i-c></span><div class="txt"><p class="body-l"><t-x pl="Polityka prywatności" en="Privacy Policy"></t-x></p></div><span class="trail"><i-c n="openinnew"></i-c></span></div>
+    <p class="group-h"><t-x pl="Konto" en="Account"></t-x></p>
+    <div class="li"><span class="lead"><i-c n="logout"></i-c></span><div class="txt"><p class="body-l"><t-x pl="Wyloguj" en="Sign out"></t-x></p></div></div>
+    <div class="divider"></div>
+    <div class="li err"><span class="lead"><i-c n="personremove"></i-c></span><div class="txt"><p class="body-l"><t-x pl="Usuń konto" en="Delete account"></t-x></p><p class="body-m"><t-x pl="Trwale usuwa konto i plany" en="Permanently deletes your account and trips"></t-x></p></div></div>
+    <p class="body-s muted" style="padding:24px 16px"><t-x pl="Wersja 0.1.0 (12)" en="Version 0.1.0 (12)"></t-x></p>
+  </div>
+  <div class="navbar"></div>
+</div><figcaption><b><t-x pl="Domyślny" en="Default"></t-x></b> – grupy; „Usuń konto” na końcu, oddzielone.</figcaption></figure>
+
+<figure class="state"><div class="phone">
+  <div class="sysbar"><span>9:41</span><span>100%</span></div>
+  <div class="appbar"><span class="icbtn"><i-c n="back"></i-c></span><span class="title"><t-x pl="Ustawienia" en="Settings"></t-x></span></div>
+  <div class="scroll"></div>
+  <div class="scrim sheet-host"><div class="sheet">
+    <div class="handle"></div>
+    <p class="st"><t-x pl="Język" en="Language"></t-x></p>
+    <div class="radio-row"><span class="radio"></span><p class="body-l"><t-x pl="Język systemu" en="System language"></t-x></p></div>
+    <div class="radio-row"><span class="radio on"></span><p class="body-l">Polski</p></div>
+    <div class="radio-row"><span class="radio"></span><p class="body-l">English</p></div>
+  </div></div>
+  <div class="navbar"></div>
+</div><figcaption><b><t-x pl="Wybór języka" en="Language picker"></t-x></b> – wybór zmienia UI natychmiast i zamyka arkusz; zapisane plany zostają w swoim języku.</figcaption></figure>
+
+</div>
+</main>
+</body>
+</html>
