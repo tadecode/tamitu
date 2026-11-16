@@ -137,3 +137,14 @@ Wyzwalacz Pub/Sub z powiadomień budżetowych; brak publicznego punktu wejścia.
 ## 7. Historia zmian
 - **v0.3 (2026-11-16, ADR-0011 zatwierdzony przez właściciela):** data przylotu „dziś − 2 dni" (Warsaw); `deleteAccount` bez wymogu dostawcy i bez `unsupported_version`; `dev` tylko dane testowe (SEC-24); mapowanie błędów klienta i pętli `consent_required`; `testData` ze stałej kompilacji; anulowanie = porzucenie wyniku; `config/runtime` niedostępne dla klienta. Implementacja w `backend/functions` – zadanie mobile-dev (`docs/architecture/przeglad-ekranow-p3-14c.md` pkt 5).
 - **v0.2 (2026-11-15):** zatwierdzona na G2 (ADR-0002 z Aneksem A).
+
+## 8. Projekt zmian v0.4 (ADR-0012, status: proponowany – obowiązuje po zatwierdzeniu przez właściciela)
+Źródło: S17 / SEC-26 (B-1 z przeglądu security ekranów). Do czasu zatwierdzenia obowiązują pkt 1–7.
+
+| # | Miejsce | Zmiana |
+|---|---|---|
+| 8.1 | `generatePlan`, wymagania | dodatkowo: ostatni rekord `privacy_policy` w wersji ≥ `config/runtime.policyVersionCurrent`; inaczej `consent_required` z `details.consentType = "privacy_policy"` (sprawdzane przed zgodą AI i przed rezerwacją limitu) |
+| 8.2 | `generatePlan`, zgoda AI | „aktualna zgoda" = ostatni rekord `ai_processing` z `granted = true` i wersją ≥ `aiConsentVersionCurrent` (porównanie numeru, nie równość) |
+| 8.3 | `recordConsent`, `policyVersion` | wzorzec `^(privacy|ai-consent)-v[1-9]\d{0,3}$`, typ zgodny z prefiksem, wersja z listy znanych w kodzie serwera; inaczej `invalid_argument` (`field: policyVersion`) |
+| 8.4 | `consent_required.details` | `consentType` ∈ {`privacy_policy`, `ai_processing`}; aplikacja: `privacy_policy` → EK-03, `ai_processing` → EK-06; przy zsynchronizowanym rekordzie w wersji aplikacji → „Zaktualizuj aplikację" |
+| 8.5 | pkt 6, konwencje | przed `generatePlan` aplikacja wysyła oczekujące rekordy zgód (`synced = 0`) |
