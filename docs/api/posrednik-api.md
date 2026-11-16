@@ -129,3 +129,16 @@ Wyzwalacz Pub/Sub z powiadomień budżetowych; brak publicznego punktu wejścia.
 - Aplikacja mapuje `details.code` na klucze tłumaczeń; nieznany kod → `internal`.
 - `limit_exceeded.resetAt` jest w UTC; aplikacja formatuje w czasie lokalnym (US-011).
 - Brak automatycznych ponowień `generatePlan` w aplikacji (każde ponowienie zużywa slot limitu); ponowienie wyłącznie z decyzji użytkownika. `recordConsent` i `deleteAccount` są idempotentne i mogą być ponawiane automatycznie.
+
+## 7. Projekt zmian v0.3 (ADR-0011, status: proponowany – obowiązuje po zatwierdzeniu przez właściciela)
+Źródło: przegląd ekranów P3-14c (`docs/architecture/przeglad-ekranow-p3-14c.md`). Do czasu zatwierdzenia obowiązują pkt 1–6.
+
+| # | Miejsce | Zmiana |
+|---|---|---|
+| 7.1 | `generatePlan`, `trip.arrival.date` | dolna granica: „dziś − 2 dni" w `Europe/Warsaw` (zamiast − 1); górna bez zmian (+2 lata). Aplikacja waliduje ostrzej: od „wczoraj" w strefie urządzenia |
+| 7.2 | `deleteAccount` | nie zwraca `unsupported_version` (każda `apiVersion` ≥ 1); nie wymaga `sign_in_provider = google.com`; reszta bez zmian (`auth_time` ≤ 5 min, App Check) |
+| 7.3 | konfiguracja `dev` | `ENVIRONMENT=dev` + `ALLOW_REAL_DATA=true` → odmowa startu; w `dev` `config/runtime.allowRealData` ignorowane (tylko `testData=true` z `testUids`) |
+| 7.4 | pkt 6, mapowanie w aplikacji | `unavailable` bez `details.code` = błąd transportu → „brak sieci"; `deadline-exceeded` → „przekroczony czas"; `consent_required` przy zsynchronizowanym rekordzie w wersji aplikacji → „zaktualizuj aplikację" (bez pętli do EK-06) |
+| 7.5 | `testData` | ustawiane stałą kompilacji (`TAMITU_TEST_DATA`): `dev` zawsze `true`; `prod` tylko buildy wewnętrzne do zamknięcia SEC-15 |
+| 7.6 | anulowanie (Q12) | callable nie ma przerwania żądania: anulowanie = porzucenie wyniku po stronie klienta (odpowiedź z tym `requestId` jest odrzucana, nic nie zapisujemy); żądanie na serwerze kończy się normalnie |
+| 7.7 | wersja polityki | klient używa stałej wbudowanej w aplikację; `config/runtime.policyVersionCurrent` nie jest udostępniana klientowi |

@@ -25,7 +25,7 @@ Pola tekstowe (po oczyszczeniu: normalizacja Unicode NFC, usunięcie znaków ste
 |---|---|---|---|
 | Baza konta `tamitu_<sha256(uid)[0..16]>.db` (Drift + SQLCipher) | plany, dane podróży, preferencje, zgody lokalne | tak, AES-256, klucz w Keystore | wyłączona (`allowBackup=false`, `dataExtractionRules`) |
 | `flutter_secure_storage` | klucz bazy; znacznik „usuwanie w toku" (skrót UID) | Keystore | wyłączona |
-| `shared_preferences` | `uiLanguage` (`pl`/`en`/system), tymczasowa zgoda na politykę przed logowaniem (`version`, `lang`, `acceptedAt`), flagi UI | nie (brak danych podróży) | wyłączona |
+| `shared_preferences` | `uiLanguage` (`pl`/`en`/system), tymczasowa zgoda na politykę przed logowaniem (`version`, `lang`, `acceptedAt`; **proponowane w ADR-0011 pkt 10: także `consentId`** dla idempotentnych ponowień), flagi UI | nie (brak danych podróży) | wyłączona |
 | Firebase SDK (Auth) | token odświeżający, stan sesji (D2) | wg SDK | wyłączona |
 | **Nigdzie** | lokalizacja, współrzędne, URL trasy ze współrzędnymi, prompty/odpowiedzi surowe | – | – |
 
