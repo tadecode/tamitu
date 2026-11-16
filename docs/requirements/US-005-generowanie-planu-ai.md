@@ -11,7 +11,9 @@
 - **Given** użytkownik wybrał język planu polski lub angielski (domyślnie język interfejsu – propozycja, N11) **When** plan jest wygenerowany **Then** nazwy dni, opisy i komunikaty planu są w wybranym języku (testowalne: automatyczne wykrycie języka opisów na zestawie przypadków w obu językach).
 - **Given** język interfejsu różny od języka planu **When** użytkownik wyświetla plan **Then** elementy interfejsu są w języku interfejsu, a treść planu w języku planu; informacja o AI (poniżej) jest w języku interfejsu.
 - **Given** język planu **When** plan jest zapisany (US-008) **Then** po zmianie języka interfejsu treść zapisanego planu pozostaje w oryginalnym języku.
-- **Given** trwa generowanie **Then** użytkownik widzi wskaźnik postępu i może anulować; po anulowaniu nic nie jest zapisane.
+- **Given** trwa generowanie **Then** użytkownik widzi wskaźnik postępu i może anulować; po anulowaniu nic nie jest zapisane, a użytkownik wraca do formularza z zachowanymi danymi.
+- **Given** użytkownik anuluje generowanie **Then** widzi informację, że wykorzystanie limitu dziennego może nie zostać zwrócone, jeśli generowanie już się rozpoczęło (zasada limitu – US-011, Q12). **[ZMIANA P3-12/P3-14a]**
+- **Given** użytkownik używa przycisku „wstecz" systemu w trakcie generowania **Then** jest traktowane jak próba anulowania (z potwierdzeniem). **[ZMIANA P3-14a – propozycja]**
 - **Given** odpowiedź AI nie spełnia oczekiwanego formatu (np. zła liczba dni, brak punktów, język inny niż żądany) **When** system ją waliduje **Then** ponawia próbę ograniczoną liczbę razy, a po niepowodzeniu pokazuje komunikat o błędzie bez zapisywania częściowego planu.
 - **Given** model AI jest niedostępny lub przekroczono limit czasu **When** użytkownik czeka **Then** widzi komunikat i może spróbować ponownie, a dane formularza nie są utracone.
 - **Given** użytkownik wygenerował już 5 planów w ciągu doby na koncie (N4; wartość do zmiany po pomiarze kosztu) **When** próbuje kolejny **Then** widzi informację o limicie (US-011).

@@ -8,6 +8,8 @@
 ## Kryteria akceptacji
 - **Given** zalogowany użytkownik na ekranie głównym **When** wybiera „Nowa podróż" **Then** widzi formularz z polami: cel podróży, baza noclegowa, liczba dni, sposób przyjazdu (lot / auto) oraz preferencje: zainteresowania, budżet, tempo zwiedzania, liczba osób.
 - **Given** formularz **When** użytkownik pozostawia puste pole cel, baza noclegowa lub liczba dni **Then** formularz nie przechodzi dalej i wskazuje brakujące pola.
+- **Given** pole „baza noclegowa" **Then** jego etykieta brzmi „Nazwa obiektu lub dzielnica" (PL) / odpowiednik w EN, a podpowiedź informuje, by nie wpisywać pełnego adresu prywatnego (np. mieszkania znajomych); wpis nie jest blokowany, limit 80 znaków. **[ZMIANA P3-12/P3-14a – Security, przegląd 1-3; model-danych pkt 1]**
+- **Given** formularz **When** data przylotu/przyjazdu jest wcześniejsza niż wczoraj lub późniejsza niż za 2 lata **Then** pole jest odrzucone z komunikatem o dozwolonym zakresie. **[ZMIANA P3-14a – propozycja, zgodna z kontraktem API; U10]**
 - **Given** formularz **When** liczba dni jest mniejsza niż 1 lub większa niż 14 **Then** pole jest odrzucone z komunikatem o dozwolonym zakresie (maksimum 14 dni – decyzja właściciela, N2).
 - **Given** wybrano „lot" **When** użytkownik wypełnia formularz **Then** wymagana jest data i godzina przylotu oraz miejsce lądowania (lotnisko); numer lotu jest opcjonalny.
 - **Given** wybrano „auto" **When** użytkownik wypełnia formularz **Then** wymagana jest data i planowana godzina przyjazdu.
