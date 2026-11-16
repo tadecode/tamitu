@@ -3,15 +3,22 @@
 | Faza | Role | Artefakty | Bramka |
 |---|---|---|---|
 | 1 Odkrywanie | analyst, security | `docs/requirements/`, rejestr danych osobowych (wstępny), ryzyka | **G1 Zakres** |
-| 2 Projekt | architect, security (+ UX, DBA później) | `docs/architecture/`, `docs/adr/`, `docs/data/`, `docs/api/`, model zagrożeń | **G2 Architektura** |
+| 2 Projekt | architect, ux, dba, data-analyst, security | `docs/architecture/`, `docs/adr/`, `docs/data/` (model: architect; schemat, zapytania, migracje: dba), `docs/api/`, `docs/ux/` (marka, design system, layout, biblioteka komponentów, wzorce, przepływy, pierwsze makiety), `docs/analytics/` (plan pomiarów, zdarzenia), model zagrożeń | **G2 Architektura** |
 | 3 Planowanie | orchestrator, analyst | `docs/backlog.md` z zadaniami, kolejność iteracji, definicje ukończenia | G3 (opcjonalna) |
 | 4 Implementacja (pętla) | mobile-dev, qa, security | kod, testy, raporty QA | testy zielone + werdykt QA |
-| 5 Wydanie | mobile-dev, qa, security (+ DevOps) | build, checklista wydania, notatki | **G5 Wydanie** |
+| 5 Wydanie | mobile-dev, qa, security, data-analyst (+ DevOps) | build, checklista wydania, notatki, raport kosztów i metryk pilota | **G5 Wydanie** |
 | 6 Utrzymanie | wszyscy wg potrzeby | triage błędów, nowe wymagania | powrót do fazy 1/3 |
 
 ## Pętla implementacji (faza 4), dla każdego zadania
 
 1. orchestrator wybiera zadanie i przypisuje właściciela.
+1a. **Zadanie z interfejsem (UI) najpierw przechodzi przez ux.** ux składa ekran z biblioteki komponentów
+   (`docs/ux/components/`) wg wzorców i zasad layoutu (`docs/ux/patterns.md`, `layout.md`) i pisze
+   specyfikację `docs/ux/screens/<id>.md` (stany, dane, teksty, dostępność) wraz z makietą PL/EN
+   `docs/ux/mockups/<id>.html`; architect sprawdza dane i koszt względem
+   `docs/api/` i `docs/data/`; security przegląda ekrany zgód, uprawnień i prywatności. Po uzgodnieniu
+   orchestrator oznacza ekran `ux-ready` w backlogu. Bez `ux-ready` zadanie UI nie idzie do mobile-dev.
+   Zadania bez UI (backend, testy, CI) pomijają ten krok.
 2. mobile-dev: gałąź `feat/<id>`, kod + testy.
 3. Po otwarciu PR: CI (`farm-guards`, `conventions`, `secrets`, `flutter`) musi być zielone.
 4. reviewer: przegląd kodu z PR (bezpieczeństwo, wydajność, jakość) wg

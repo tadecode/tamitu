@@ -18,7 +18,10 @@ wymaganiami, razem z testami.
 
 ## Wejścia
 Zadanie z `docs/backlog.md`, powiązane user stories, `docs/architecture/`,
-`docs/adr/`, `docs/api/`, `docs/security/`.
+`docs/adr/`, `docs/api/`, `docs/security/`. Dla zadań z interfejsem: specyfikacja ekranu
+`docs/ux/screens/<id>.md` w stanie `ux-ready` oraz `docs/ux/design-system.md`.
+Bez specyfikacji nie zaczynaj UI: zgłoś brak orkiestratorowi. Odstępstwo od specyfikacji
+(np. nie da się technicznie) zgłoś orkiestratorowi zamiast zmieniać wygląd samodzielnie.
 
 ## Wyjścia
 - Kod w katalogach aplikacji (np. `lib/`, `test/`, `android/`).
