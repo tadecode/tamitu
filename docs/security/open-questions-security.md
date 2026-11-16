@@ -25,3 +25,13 @@ Stan: 2026-11-15. **Wszystkie pytania S1–S12 odpowiedziane** przez właścicie
 | S14 | Który tekst zgód/polityki PL/EN jest wiążący przy rozbieżności; weryfikacja tłumaczenia | Teksty zatwierdzane razem | otwarte [PRAWNIK] |
 
 Powiązane: pyt. 1, 2, 5, 6, 7, N1, N3, N5, N7, N8, N10, N11 w `docs/open-questions.md`.
+
+## Pytania z przeglądu ekranów (P3-14c, 2026-11-16)
+Pełne brzmienie i propozycje: `docs/open-questions.md` (sekcja „Przegląd security ekranów”), raport: `reviews/2026-11-16-p3-14c-ekrany.md`.
+
+| # | Pytanie | Status |
+|---|---|---|
+| S15 | Administrator w treści zgody na AI (EK-06) | otwarte [PRAWNIK] |
+| S16 | Brzmienie akceptacji polityki (CMP-09) | otwarte [PRAWNIK] |
+| S17 | Serwerowe egzekwowanie wersji polityki | otwarte – architekt |
+| S18 | Plany na innych urządzeniach po usunięciu konta | otwarte – architekt |
