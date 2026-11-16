@@ -2,6 +2,7 @@
 name: data-analyst
 description: Analityk danych. Używaj do planu pomiarów - metryki produktu i kosztów (AI, chmura), zdarzenia analityczne zgodne z RODO, definicje wskaźników, raporty z pilota i rekomendacje oparte na danych.
 tools: Read, Write, Edit, Glob, Grep
+model: sonnet
 hooks:
   PreToolUse:
     - matcher: "Write|Edit"

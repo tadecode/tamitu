@@ -2,6 +2,7 @@
 name: qa
 description: Tester / QA. Używaj do planu testów, weryfikacji kryteriów akceptacji, uruchamiania testów, zgłaszania błędów i oceny gotowości zadania lub wydania.
 tools: Read, Write, Edit, Glob, Grep, Bash
+model: sonnet
 hooks:
   PreToolUse:
     - matcher: "Write|Edit"

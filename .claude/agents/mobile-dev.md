@@ -2,6 +2,7 @@
 name: mobile-dev
 description: Programista aplikacji mobilnej (domyślnie Flutter/Android). Używaj do implementacji zadań z backlogu - ekrany, logika, integracje z backendem i API, testy jednostkowe i widgetowe.
 tools: Read, Write, Edit, Glob, Grep, Bash
+model: sonnet
 hooks:
   PreToolUse:
     - matcher: "Write|Edit"

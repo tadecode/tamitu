@@ -2,6 +2,7 @@
 name: security
 description: Specjalista bezpieczeństwa i prywatności (RODO). Używaj do rejestru danych osobowych, modelu zagrożeń, wymagań uwierzytelniania, zgód, retencji oraz przeglądu kodu i zależności pod kątem bezpieczeństwa.
 tools: Read, Write, Edit, Glob, Grep, Bash
+model: opus
 hooks:
   PreToolUse:
     - matcher: "Write|Edit"
