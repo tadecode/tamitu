@@ -1,17 +1,17 @@
 # Komponent: CMP-20 Punkt planu
 
 - Status: szkic
-- Autor: ux · Data: 2026-11-16 · Wersja: 0.1
-- Odpowiednik Material 3 / Flutter: brak gotowego widgetu; złożony z `ListTile`-podobnego układu (tekst, ikona), znacznika pory dnia (tekst `labelMedium` w `tertiaryContainer`) i `IconButton`/`TextButton` „Trasa". Uzasadnienie: plan to oś czasu (pory dnia), a `ListTile` nie ma znacznika pory i działania drugorzędnego z etykietą. Koszt: niski (kompozycja widgetów M3).
+- Autor: ux · Data: 2026-11-16 · Wersja: 0.2 (znacznik godziny zamiast pory dnia – kontrakt API zwraca `startTime`)
+- Odpowiednik Material 3 / Flutter: brak gotowego widgetu; złożony z `ListTile`-podobnego układu (tekst, ikona), znacznika godziny (tekst `labelMedium` w `tertiaryContainer`) i `IconButton`/`TextButton` „Trasa". Uzasadnienie: plan to oś czasu (godziny), a `ListTile` nie ma znacznika czasu i działania drugorzędnego z etykietą. Koszt: niski (kompozycja widgetów M3).
 
 ## Cel
-Jeden punkt dnia w planie (EK-08): pora dnia, nazwa miejsca, krótki opis, wejście do trasy (EK-09).
+Jeden punkt dnia w planie (EK-08): orientacyjna godzina (`startTime`), nazwa miejsca, miejscowość, krótki opis, wejście do trasy (EK-09).
 Nie służy do: edycji punktu (poza MVP), mapy (poza MVP).
 
 ## Warianty
 | Wariant | Kiedy użyć | Uwagi |
 |---|---|---|
-| Punkt | domyślnie | znacznik pory („Rano", „Południe", „Popołudnie", „Wieczór"), nazwa `titleMedium`, opis `bodyMedium`, przycisk „Trasa" (`directions`) |
+| Punkt | domyślnie | znacznik godziny („ok. 15:00"), nazwa `titleMedium`, miejscowość `bodyMedium` `onSurfaceVariant`, opis `bodyMedium`, przycisk „Trasa" (`directions`) |
 | Przylot / przyjazd | pierwszy element dnia 1 | ikona `flight_land`/`directions_car`, tekst „Przylot 14:30 · lotnisko LIS" z godziną w `tertiary`; bez przycisku trasy |
 | Dzień bez punktów | dzień 1 przy późnym przylocie | tylko wariant przylotu + tekst „Dziś tylko dojazd do noclegu" – **nie** jako błąd |
 
@@ -25,19 +25,19 @@ Nie służy do: edycji punktu (poza MVP), mapy (poza MVP).
 | Błąd | n/d |
 
 ## Rozmiary i odstępy
-Wnętrze 16 dp; znacznik pory: wysokość 24 dp, wnętrze 8 dp, `shape-s`; między punktami 8 dp; przycisk „Trasa" cel 48 dp, wyrównany do prawej pod opisem.
+Wnętrze 16 dp; znacznik godziny: wysokość 24 dp, wnętrze 8 dp, `shape-s`; między punktami 8 dp; przycisk „Trasa" cel 48 dp, wyrównany do prawej pod opisem.
 
 ## Tokeny
 Znacznik: `tertiaryContainer`/`onTertiaryContainer`, `labelMedium`; nazwa `titleMedium` `onSurface`; opis `bodyMedium` `onSurfaceVariant`; oś `outlineVariant`; przycisk tekstowy `primary`.
 
 ## Zachowanie
-Treść punktu (nazwa, opis) w **języku planu** – może różnić się od języka interfejsu; etykiety (pora dnia, „Trasa") w języku interfejsu. Opis zawija się bez limitu linii (to treść główna). Kolejność punktów wg pory dnia.
+Treść punktu (nazwa, opis) w **języku planu** – może różnić się od języka interfejsu; etykiety (prefiks godziny, „Trasa") w języku interfejsu. Opis zawija się bez limitu linii (to treść główna). Kolejność punktów wg godziny (rosnąco – gwarancja API). Godzina jest orientacyjna (prefiks „ok."/„approx."), bo plan tworzy AI.
 
 ## Dostępność
-- Etykieta dla TalkBack: „Popołudnie. Oceanarium. {opis}. Przycisk: Trasa do Oceanarium"; język treści planu oznaczony (TalkBack przeczyta z właściwą wymową).
+- Etykieta dla TalkBack: „Około 15:00. Oceanarium, Lizbona. {opis}. Przycisk: Trasa do Oceanarium"; język treści planu oznaczony (TalkBack przeczyta z właściwą wymową).
 - Cel dotyku 48 dp.
 - Kontrast: onTertiaryContainer/tertiaryContainer ≥ 7,2:1; onSurfaceVariant/surface ≥ 8,8:1; oś – dekoracyjna.
-- Skalowanie do 200%: wszystko się zawija; znacznik pory nad nazwą.
+- Skalowanie do 200%: wszystko się zawija; znacznik godziny nad nazwą.
 
 ## Teksty
 | Klucz l10n | PL | EN |
@@ -47,8 +47,7 @@ Treść punktu (nazwa, opis) w **języku planu** – może różnić się od ję
 | `planArrivalFlight` | Przylot {time} | Arrival {time} |
 | `planArrivalCar` | Przyjazd {time} | Arrival {time} |
 | `planDayOnlyArrival` | Dziś tylko dojazd do noclegu | Today: just getting to your accommodation |
-
-Etykiety pór dnia – w `screens/` (krok 2), zależne od formatu odpowiedzi API.
+| `planItemTime` | ok. {time} | approx. {time} |
 
 ## Użycie
 EK-08; wzorzec lista i szczegóły.

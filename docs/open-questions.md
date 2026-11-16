@@ -69,11 +69,11 @@ Szczegóły: `docs/ux/brand.md`, `docs/ux/design-system.md`, podgląd `docs/ux/m
 
 | # | Pytanie | Zadaje | Status | Propozycja domyślna | Skutek |
 |---|---|---|---|---|---|
-| UX1 | Który wariant marki: A „Lazur" (morski, Roboto) czy B „Terakota" (ciepły, Nunito w tytułach)? | ux → owner | otwarte | **A „Lazur"** (odróżnienie działań od błędów, zaufanie przy zgodach i AI, najniższy koszt) | brand.md, design-system.md, krok 2 (ekrany) |
+| UX1 | Który wariant marki: A „Lazur" (morski, Roboto) czy B „Terakota" (ciepły, Nunito w tytułach)? | ux → owner | **zamknięte 2026-11-16: A** („Wybieram wariant A"); UX5 nieaktualne | **A „Lazur"** (odróżnienie działań od błędów, zaufanie przy zgodach i AI, najniższy koszt) | brand.md, design-system.md, krok 2 (ekrany) |
 | UX2 | Logo i ikona aplikacji: kto i kiedy dostarcza? | ux → owner | otwarte | Do wersji testowych tymczasowy znak słowny „Tamitu" i ikona adaptacyjna „T" na kolorze primary (specyfikacja ux); finalne logo od grafika przed publikacją w Play | brand.md pkt 5, EK-02, ikona APK |
 | UX3 | Czy włączyć kolory dynamiczne Androida (Material You, kolory z tapety)? | ux → owner | otwarte | Nie – kolory marki stałe, kontrast sprawdzony | design-system.md pkt 1 |
 | UX4 | Motyw jasny/ciemny: tylko wg systemu czy także wybór w Ustawieniach? | ux → owner, analyst | otwarte | Tylko wg systemu w MVP (EK-12 nie przewiduje przełącznika) | EK-12 |
-| UX5 | Wariant B: dołączenie czcionki Nunito do aplikacji (ok. +0,3 MB, bez pobierania z Google Fonts w czasie działania) – akceptowalne technicznie? | ux → architect | otwarte (dotyczy tylko B) | Tak, jako zasób aplikacji; pakiet pobierający czcionki z sieci wykluczony | brand.md, ADR-0008 |
+| UX5 | Wariant B: dołączenie czcionki Nunito do aplikacji (ok. +0,3 MB, bez pobierania z Google Fonts w czasie działania) – akceptowalne technicznie? | ux → architect | nieaktualne (wybrano A, 2026-11-16) | Tak, jako zasób aplikacji; pakiet pobierający czcionki z sieci wykluczony | brand.md, ADR-0008 |
 | UX6 | Ton i forma zwracania się: „Ty" czy forma bezosobowa; formy rodzajowe („Zapoznałem(-am) się") czy neutralne („Zapoznaję się z polityką…")? | ux → owner, [PRAWNIK] dla zgód | otwarte | „Ty" / „you"; w zgodach forma neutralna bez rodzaju, jeśli prawnik nie wymaga innej | wszystkie teksty, CMP-09 |
 | UX7 | Ilustracje w stanach pustych i błędach: same ikony Material czy ilustracje (koszt grafika)? | ux → owner | otwarte | Same ikony 48 dp w MVP | CMP-18 |
 | UX8 | Konwencja kluczy l10n (lowerCamelCase z prefiksem obszaru, np. `planListEmptyTitle`) – zgodna z planem mobile-dev? | ux → mobile-dev | otwarte | Jak w `docs/ux/components/index.md` | ARB, wszystkie ekrany |

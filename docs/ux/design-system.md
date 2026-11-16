@@ -1,9 +1,6 @@
 # Design system Tamitu (Material 3)
 
-- Status: szkic, wersja 0.1 (2026-11-16, ux, P3-14b krok 1)
-- Zależność: wybór wariantu marki (`brand.md`, pytanie UX1). Do czasu wyboru dokument zawiera tokeny obu
-  wariantów; po wyborze tabele wariantu odrzuconego zostaną usunięte, a status zmieni się na „zatwierdzony".
-- Zasada: komponenty (`components/`) i ekrany odwołują się **wyłącznie do nazw tokenów** z tego pliku,
+- Status: wariant marki wybrany przez właściciela 2026-11-16: **A „Lazur"** (UX1). Wersja 0.2 (ux, P3-14b krok 2); tokeny wariantu B usunięte (opis w `brand.md`, aneks).
   nigdy do wartości (hex, px). Zero wartości „na oko".
 
 ## 1. Fundament
@@ -19,7 +16,7 @@
 
 ## 2. Kolory – role M3
 
-### 2.1 Wariant A „Lazur" (seed `#006A6A`)
+### 2.1 Role kolorów – wariant A „Lazur" (seed `#006A6A`)
 
 | Rola | Jasny | Ciemny |
 |---|---|---|
@@ -54,42 +51,7 @@
 | inversePrimary | `#80D5D4` | `#006A6A` |
 | scrim / shadow | `#000000` | `#000000` |
 
-### 2.2 Wariant B „Terakota" (seed `#9B4419`)
-
-| Rola | Jasny | Ciemny |
-|---|---|---|
-| primary | `#9B4419` | `#FFB692` |
-| onPrimary | `#FFFFFF` | `#552000` |
-| primaryContainer | `#FFDBCB` | `#7A2E04` |
-| onPrimaryContainer | `#351000` | `#FFDBCB` |
-| secondary | `#76574A` | `#E6BEAD` |
-| onSecondary | `#FFFFFF` | `#442A1F` |
-| secondaryContainer | `#FFDBCF` | `#5C4034` |
-| onSecondaryContainer | `#2C160C` | `#FFDBCF` |
-| tertiary | `#3F5F90` | `#A9C7FF` |
-| onTertiary | `#FFFFFF` | `#08305F` |
-| tertiaryContainer | `#D6E3FF` | `#264777` |
-| onTertiaryContainer | `#001B3E` | `#D6E3FF` |
-| error | `#BA1A1A` | `#FFB4AB` |
-| onError | `#FFFFFF` | `#690005` |
-| errorContainer | `#FFDAD6` | `#93000A` |
-| onErrorContainer | `#410002` | `#FFDAD6` |
-| surface | `#FFF8F5` | `#1A120E` |
-| onSurface | `#221A16` | `#F1DFD8` |
-| onSurfaceVariant | `#53443D` | `#D8C2B9` |
-| surfaceContainerLowest | `#FFFFFF` | `#140C09` |
-| surfaceContainerLow | `#FFF1EB` | `#221A16` |
-| surfaceContainer | `#FCEAE3` | `#271E1A` |
-| surfaceContainerHigh | `#F6E5DD` | `#322824` |
-| surfaceContainerHighest | `#F1DFD8` | `#3D332E` |
-| outline | `#85736B` | `#A08D85` |
-| outlineVariant | `#D8C2B9` | `#53443D` |
-| inverseSurface | `#382E2A` | `#F1DFD8` |
-| onInverseSurface | `#FFEDE6` | `#382E2A` |
-| inversePrimary | `#FFB692` | `#9B4419` |
-| scrim / shadow | `#000000` | `#000000` |
-
-### 2.3 Znaczenie ról w Tamitu (wspólne dla wariantów)
+### 2.2 Znaczenie ról w Tamitu (wspólne dla wariantów)
 
 | Znaczenie | Role | Przykład |
 |---|---|---|
@@ -109,7 +71,7 @@ Brak osobnej roli „sukces" (zielony): potwierdzenia przekazuje snackbar z teks
 myliłaby się z primary. Ostrzeżenia, które nie są błędem, używają `secondaryContainer` z ikoną `warning`
 (np. „Wylogowanie: plany zostają na urządzeniu").
 
-### 2.4 Warstwy stanu (state layers) M3
+### 2.3 Warstwy stanu (state layers) M3
 Nakładka koloru treści (`on…`) o nieprzezroczystości: najechanie 8%, fokus 10%, naciśnięcie 10%,
 przeciąganie 16%. Element nieaktywny: treść `onSurface` 38%, kontener `onSurface` 12%.
 Wartości standardowe M3, bez zmian.
@@ -119,20 +81,20 @@ Wartości standardowe M3, bez zmian.
 Skala M3 (rozmiar / wysokość linii w sp, grubość). Wszystkie rozmiary w **sp** – skalują się z ustawieniem
 systemu do 200%.
 
-| Styl | Rozmiar / linia | Grubość | A „Lazur" | B „Terakota" | Użycie w Tamitu |
-|---|---|---|---|---|---|
-| displaySmall | 36 / 44 | 400 | Roboto | Nunito 700 | znak słowny na ekranie startowym (EK-02) |
-| headlineMedium | 28 / 36 | 400 | Roboto | Nunito 700 | tytuł ekranu pełnoekranowego stanu (rzadko) |
-| headlineSmall | 24 / 32 | 400 | Roboto | Nunito 700 | tytuł dialogu, tytuł stanu pustego/błędu |
-| titleLarge | 22 / 28 | 400 | Roboto | Nunito 600 | tytuł w pasku górnym |
-| titleMedium | 16 / 24 | 500 | Roboto | Nunito 700 | tytuł karty planu, nagłówek sekcji formularza, nazwa punktu planu |
-| titleSmall | 14 / 20 | 500 | Roboto | Nunito 700 | nagłówek grupy w Ustawieniach |
-| bodyLarge | 16 / 24 | 400 | Roboto | Roboto | treść zgód, opis punktu planu, tekst w polu |
-| bodyMedium | 14 / 20 | 400 | Roboto | Roboto | tekst pomocniczy, opis w liście, komunikaty |
-| bodySmall | 12 / 16 | 400 | Roboto | Roboto | podpowiedź i błąd pod polem, licznik znaków |
-| labelLarge | 14 / 20 | 500 | Roboto | Roboto | przyciski, zakładki dni, segmenty |
-| labelMedium | 12 / 16 | 500 | Roboto | Roboto | chipy, znacznik godziny |
-| labelSmall | 11 / 16 | 500 | Roboto | Roboto | odznaki (rzadko; nie dla treści istotnej) |
+| Styl | Rozmiar / linia | Grubość | Krój | Użycie w Tamitu |
+|---|---|---|---|---|
+| displaySmall | 36 / 44 | 400 | Roboto | znak słowny na ekranie startowym (EK-02) |
+| headlineMedium | 28 / 36 | 400 | Roboto | tytuł ekranu pełnoekranowego stanu (rzadko) |
+| headlineSmall | 24 / 32 | 400 | Roboto | tytuł dialogu, tytuł stanu pustego/błędu |
+| titleLarge | 22 / 28 | 400 | Roboto | tytuł w pasku górnym |
+| titleMedium | 16 / 24 | 500 | Roboto | tytuł karty planu, nagłówek sekcji formularza, nazwa punktu planu |
+| titleSmall | 14 / 20 | 500 | Roboto | nagłówek grupy w Ustawieniach |
+| bodyLarge | 16 / 24 | 400 | Roboto | treść zgód, opis punktu planu, tekst w polu |
+| bodyMedium | 14 / 20 | 400 | Roboto | tekst pomocniczy, opis w liście, komunikaty |
+| bodySmall | 12 / 16 | 400 | Roboto | podpowiedź i błąd pod polem, licznik znaków |
+| labelLarge | 14 / 20 | 500 | Roboto | przyciski, zakładki dni, segmenty |
+| labelMedium | 12 / 16 | 500 | Roboto | chipy, znacznik godziny |
+| labelSmall | 11 / 16 | 500 | Roboto | odznaki (rzadko; nie dla treści istotnej) |
 
 Zasady: najmniejszy tekst z treścią istotną = bodySmall 12 sp; brak wersalików w treści (tylko etykiety
 krótsze niż 3 słowa mogą mieć wielką literę na początku – zwykła pisownia zdaniowa); maks. ~70 znaków
@@ -154,15 +116,15 @@ Skala 4 dp, rytm 8 dp. Dozwolone wartości (tokeny):
 
 ## 5. Kształty (promienie)
 
-| Token M3 | A „Lazur" | B „Terakota" | Komponenty |
-|---|---|---|---|
-| `shape-none` | 0 | 0 | pasek górny, pełnoekranowe arkusze |
-| `shape-xs` | 4 | 8 | snackbar, pole tekstowe (outlined), menu |
-| `shape-s` | 8 | 12 | chip, odznaka godziny |
-| `shape-m` | 12 | 16 | karta, komunikat (notice) |
-| `shape-l` | 16 | 24 | FAB rozszerzony |
-| `shape-xl` | 28 | 32 | dialog, arkusz dolny (górne rogi) |
-| `shape-full` | pełne | pełne | przyciski, przyciski segmentowe, przełączniki |
+| Token M3 | dp | Komponenty |
+|---|---|---|
+| `shape-none` | 0 | pasek górny, pełnoekranowe arkusze |
+| `shape-xs` | 4 | snackbar, pole tekstowe (outlined), menu |
+| `shape-s` | 8 | chip, odznaka godziny |
+| `shape-m` | 12 | karta, komunikat (notice) |
+| `shape-l` | 16 | FAB rozszerzony |
+| `shape-xl` | 28 | dialog, arkusz dolny (górne rogi) |
+| `shape-full` | pełne | przyciski, przyciski segmentowe, przełączniki |
 
 ## 6. Wysokość (elevation)
 
@@ -185,7 +147,7 @@ M3 rozróżnia warstwy przede wszystkim **kolorem kontenera (tonal)**, cień tyl
 
 ## 8. Ikony
 
-- Zestaw: Material Symbols – A: Outlined, B: Rounded; grubość 400, grade 0, rozmiar optyczny 24.
+- Zestaw: Material Symbols Outlined; grubość 400, grade 0, rozmiar optyczny 24.
 - Rozmiary: 24 dp (standard), 18 dp (wewnątrz przycisku/chipa), 48 dp (stan pusty/błędu).
 - Kolor: dziedziczy z roli treści (`onSurfaceVariant` w liście, `on…Container` w kontenerach).
 - Ikona nigdy nie jest jedynym nośnikiem znaczenia: obok jest tekst albo etykieta dla TalkBack.
@@ -219,7 +181,7 @@ M3 rozróżnia warstwy przede wszystkim **kolorem kontenera (tonal)**, cień tyl
 | Token | Miejsce w motywie |
 |---|---|
 | Role kolorów (pkt 2) | `ColorScheme` (jasny i ciemny), wpisane jawnie |
-| Typografia (pkt 3) | `TextTheme`; w B rodzina czcionki dla display/headline/title |
+| Typografia (pkt 3) | `TextTheme` (Roboto – domyślna, bez dodatkowych zasobów) |
 | Kształty (pkt 5) | motywy komponentów (`FilledButtonThemeData`, `CardTheme`, `DialogTheme`, `InputDecorationTheme`…) |
 | Odstępy (pkt 4) | stałe w kodzie (np. klasa z wartościami 4…48) – nazwy do uzgodnienia z mobile-dev |
 | Ikony (pkt 8) | Material Symbols (zestaw ikon dołączony do aplikacji; bez pobierania z sieci) |

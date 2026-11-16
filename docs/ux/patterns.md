@@ -112,5 +112,5 @@ Powiadomienia systemowe (push) – poza MVP.
 ## 14. Wspólna reguła: kolor nigdy sam
 
 Stan i znaczenie zawsze przekazuje także kształt, ikona lub tekst: wybrany chip/segment – ikona `check`;
-aktywna zakładka – wskaźnik; błąd – ikona `error` i tekst; radio – wypełnione koło. Ważne szczególnie dla wariantu B
-(primary i error w zbliżonym odcieniu).
+aktywna zakładka – wskaźnik; błąd – ikona `error` i tekst; radio – wypełnione koło.
+

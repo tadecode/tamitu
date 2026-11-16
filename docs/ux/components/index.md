@@ -5,7 +5,7 @@
   go tutaj (z wariantami i stanami), potem używamy. Zmiana komponentu = przegląd wszystkich ekranów,
   które go używają, i wpis w `.farm/log/`.
 - Komponenty odwołują się do **ról** i **tokenów** z `design-system.md` (nie do wartości), więc są
-  niezależne od wariantu marki (A/B).
+  łatwe do zmiany przy przyszłej zmianie marki (wybrany wariant: A „Lazur").
 - Wszystkie komponenty to standardowe widgety Material 3 we Flutterze, z dwoma wyjątkami złożonymi
   z widgetów M3 (CMP-18 stan ekranu, CMP-20 punkt planu) – uzasadnienie w ich plikach.
 

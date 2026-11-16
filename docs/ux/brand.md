@@ -1,6 +1,6 @@
 # Marka Tamitu – dwa warianty do wyboru
 
-- Status: **propozycja do decyzji właściciela** (pytanie UX1 w `docs/open-questions.md`)
+- Status: **zatwierdzony wariant A „Lazur"** – decyzja właściciela 2026-11-16 (UX1: „Wybieram wariant A"). Wariant B zostaje w dokumencie jako aneks (historia decyzji); nie jest używany.
 - Autor: ux · Data: 2026-11-16 · Wersja: 0.1 · Zadanie: P3-14b krok 1
 - Podgląd do porównania: [`mockups/brand-preview.html`](mockups/brand-preview.html) (otwórz w przeglądarce; oba warianty, jasny i ciemny motyw)
 
@@ -22,7 +22,7 @@ spokój podróży), **B** przez „tu" (ciepło miejsca, słońce, dachówki, lo
 
 ---
 
-## 1. Wariant A – „Lazur" (morski, spokojny, rzeczowy)
+## 1. Wariant A – „Lazur" (morski, spokojny, rzeczowy) – **wybrany**
 
 ### Charakter
 Spokojny, czysty, budzący zaufanie. Morska zieleń kojarzy się z wodą, horyzontem i mapą, a jednocześnie
@@ -67,7 +67,7 @@ informacja „Plan stworzony przez AI…" jako komunikat `secondaryContainer` z 
 
 ---
 
-## 2. Wariant B – „Terakota" (ciepły, wakacyjny, przyjazny)
+## 2. Wariant B – „Terakota" (ciepły, wakacyjny, przyjazny) – **odrzucony** (aneks)
 
 ### Charakter
 Ciepły, słoneczny, „wakacyjny": terakota przypomina dachówki południowych miast, piasek i zachód słońca.
@@ -177,7 +177,7 @@ Kontrast trzeba ponownie sprawdzić po implementacji motywu (zrzuty ekranu) i wp
 - **Ilustracje:** brak w MVP; stany puste i błędy używają dużej ikony Material (48 dp) – zero kosztu,
   spójne z ikonografią. Pytanie UX7.
 
-## 6. Rekomendacja ux: **Wariant A „Lazur"**
+## 6. Rekomendacja ux: **Wariant A „Lazur"** – przyjęta przez właściciela 2026-11-16
 
 Uzasadnienie:
 1. **Bezpieczeństwo interakcji:** w aplikacji z działaniami nieodwracalnymi (usuwanie planu i konta) oraz
