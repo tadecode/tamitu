@@ -1,6 +1,6 @@
 # Kontrakt API pośrednika (Cloud Functions callable)
 
-Stan: 2026-11-16, wersja 0.3 (v0.2 zatwierdzona na G2 wraz z ADR-0002 i jego Aneksem A; zmiany v0.3 z ADR-0011, zatwierdzonego przez właściciela 2026-11-16 – lista w pkt 7), autor: architect. ADR-0002, ADR-0011. Schematy: `schemas/generate-plan.request.schema.json`, `schemas/generate-plan.response.schema.json`.
+Stan: 2026-11-16, wersja 0.4 (v0.2 zatwierdzona na G2 wraz z ADR-0002 i jego Aneksem A; v0.3 z ADR-0011 i v0.4 z ADR-0012, oba zatwierdzone przez właściciela 2026-11-16 – historia w pkt 7), autor: architect. ADR-0002, ADR-0011, ADR-0012. Schematy: `schemas/generate-plan.request.schema.json`, `schemas/generate-plan.response.schema.json`.
 Region: `europe-west4`. Wywołanie przez SDK `cloud_functions` (callable): token ID Firebase i token App Check dołączane automatycznie. Format: JSON, UTF-8, `Content-Type: application/json`.
 
 ## 1. Zasady wspólne
@@ -16,7 +16,7 @@ Region: `europe-west4`. Wywołanie przez SDK `cloud_functions` (callable): token
 - Rozmiar żądania ≤ 4 KB; przekroczenie → `invalid_argument`.
 
 ## 2. `generatePlan`
-Wymaga: token ID (`sign_in_provider = google.com`), App Check, aktualnej zgody `ai_processing`, `aiEnabled = true`, wolnego limitu.
+Wymaga: token ID (`sign_in_provider = google.com`), App Check, **aktualnej akceptacji `privacy_policy`** (ostatni rekord w wersji ≥ `config/runtime.policyVersionCurrent`), aktualnej zgody `ai_processing` (ostatni rekord `granted = true` w wersji ≥ `aiConsentVersionCurrent`), `aiEnabled = true`, wolnego limitu. Zgody sprawdzane w tej kolejności, przed rezerwacją limitu; wersje porównywane po numerze `N` z `privacy-vN` / `ai-consent-vN`; brak lub zły format wartości w `config/runtime` → fail-closed (`consent_required`, `privacy_policy`) (ADR-0012).
 
 ### Żądanie
 ```json
@@ -92,7 +92,7 @@ Gwarancje po walidacji serwerowej: liczba dni = `trip.days`; `dayNumber` kolejne
 | `app_check_failed` | `failed-precondition` | brak/niepoprawny token App Check | – |
 | `invalid_argument` | `invalid-argument` | błąd schematu/zbioru/długości | `field` (ścieżka pola, bez wartości) |
 | `unsupported_version` | `failed-precondition` | niezgodna `apiVersion` | `minVersion` |
-| `consent_required` | `failed-precondition` | brak aktualnej zgody AI | `consentType` |
+| `consent_required` | `failed-precondition` | brak aktualnej akceptacji polityki lub zgody AI (ADR-0012) | `consentType` ∈ {`privacy_policy`, `ai_processing`} |
 | `limit_exceeded` | `resource-exhausted` | limit konta wyczerpany | `limit`, `resetAt` |
 | `ai_unavailable` | `unavailable` | model niedostępny, limit globalny, `aiEnabled=false`, przekroczony czas | `retryAfterSec` (opcjonalnie) |
 | `ai_invalid_response` | `internal` | odpowiedź niepoprawna po 2 próbach | – |
@@ -119,7 +119,7 @@ Wymaga: token ID, App Check.
   "clientAt": "2026-11-15T10:12:03Z"
 }
 ```
-Odpowiedź 200: `{ "consentId": "...", "receivedAt": "2026-11-15T10:12:04Z" }`. Idempotentne po `consentId` (powtórne wysłanie nie tworzy duplikatu). Walidacja: `type` ∈ {`privacy_policy`, `ai_processing`}, `lang` ∈ {`pl`, `en`}, `policyVersion` ≤ 40 znaków, `clientAt` w przedziale ±24 h od czasu serwera (w przeciwnym razie zapisany czas serwera, pole `clientAt` oznaczone jako skorygowane). Błędy: `unauthenticated` (także użytkownik usunięty), `app_check_failed`, `invalid_argument`, `internal`. Wycofanie zgody (`granted=false`) aplikacja zapisuje przed potwierdzeniem w UI (ADR-0002, Aneks A pkt 4).
+Odpowiedź 200: `{ "consentId": "...", "receivedAt": "2026-11-15T10:12:04Z" }`. Idempotentne po `consentId` (powtórne wysłanie nie tworzy duplikatu). Walidacja: `type` ∈ {`privacy_policy`, `ai_processing`}, `lang` ∈ {`pl`, `en`}, `policyVersion` – wzorzec `^(privacy|ai-consent)-v[1-9]\d{0,3}$`, prefiks zgodny z `type` (`privacy` ↔ `privacy_policy`, `ai-consent` ↔ `ai_processing`) i wersja z listy znanych w kodzie serwera, inaczej `invalid_argument` z `field: policyVersion` (ADR-0012, SEC-21), `clientAt` w przedziale ±24 h od czasu serwera (w przeciwnym razie zapisany czas serwera, pole `clientAt` oznaczone jako skorygowane). Błędy: `unauthenticated` (także użytkownik usunięty), `app_check_failed`, `invalid_argument`, `internal`. Wycofanie zgody (`granted=false`) aplikacja zapisuje przed potwierdzeniem w UI (ADR-0002, Aneks A pkt 4).
 
 ## 4. `deleteAccount`
 Wymaga: token ID z `auth_time` ≤ 5 min, App Check. **Nie wymaga** `sign_in_provider = google.com` (usuwa wyłącznie konto z tokenu) i **nie zwraca** `unsupported_version` – przyjmuje każdą `apiVersion` ≥ 1, aby prawo do usunięcia nie zależało od wersji aplikacji ani dostawcy (ADR-0011 pkt 4). Aplikacja przed wywołaniem zawsze wykonuje ponowne uwierzytelnienie Google (ADR-0011 pkt 8). Żądanie: `{ "apiVersion": 1 }`. Odpowiedź 200: `{ "deleted": true }`. Kolejność: dane Firestore → użytkownik Auth → kontrolne powtórne usunięcie Firestore. Dowód zgód usuwany z kontem (Q9). Błędy: `reauth_required` (`failed-precondition`), `unauthenticated`, `app_check_failed`, `internal`. Idempotentne.
@@ -130,21 +130,12 @@ Wyzwalacz Pub/Sub z powiadomień budżetowych; brak publicznego punktu wejścia.
 ## 6. Konwencje dla aplikacji
 - Aplikacja mapuje `details.code` na klucze tłumaczeń; nieznany kod → `internal`.
 - Błędy klienta (ADR-0011 pkt 2): `unavailable` **bez** `details.code` (błąd transportu) oraz `network-request-failed` (Auth/logowanie) → „brak sieci"; `deadline-exceeded` → „przekroczony czas". Brak sieci wykrywany po próbie – aplikacja nie używa detektora łączności ani `ACCESS_NETWORK_STATE`.
-- `consent_required`, gdy aplikacja ma już zsynchronizowany rekord `ai_processing` w wersji wbudowanej w aplikację → komunikat „Zaktualizuj aplikację" (bez ponownego EK-06; ADR-0011 pkt 7). Serwer podnosi `aiConsentVersionCurrent` dopiero po wydaniu aplikacji z nowym tekstem zgody.
+- Przed `generatePlan` aplikacja wysyła oczekujące rekordy zgód (`synced = 0`) (ADR-0012 pkt 5).
+- `consent_required`: `consentType = privacy_policy` → EK-03, `ai_processing` → EK-06. Gdy aplikacja ma już zsynchronizowany rekord tego typu w wersji wbudowanej w aplikację → komunikat „Zaktualizuj aplikację" (bez pętli; ADR-0011 pkt 7, ADR-0012 pkt 5). Serwer podnosi `aiConsentVersionCurrent` dopiero po wydaniu aplikacji z nowym tekstem zgody.
 - `limit_exceeded.resetAt` jest w UTC; aplikacja formatuje w czasie lokalnym (US-011).
 - Brak automatycznych ponowień `generatePlan` w aplikacji (każde ponowienie zużywa slot limitu); ponowienie wyłącznie z decyzji użytkownika. `recordConsent` i `deleteAccount` są idempotentne i mogą być ponawiane automatycznie.
 
 ## 7. Historia zmian
+- **v0.4 (2026-11-16, ADR-0012 zatwierdzony przez właściciela; S17, SEC-26):** `generatePlan` egzekwuje aktualną akceptację `privacy_policy` (`consent_required`, `consentType=privacy_policy`); porównanie wersji „≥ bieżąca" dla obu zgód; wzorzec i lista znanych wersji w `recordConsent`; wysyłka oczekujących zgód przed `generatePlan`. Implementacja – mobile-dev (P3-04/P3-05).
 - **v0.3 (2026-11-16, ADR-0011 zatwierdzony przez właściciela):** data przylotu „dziś − 2 dni" (Warsaw); `deleteAccount` bez wymogu dostawcy i bez `unsupported_version`; `dev` tylko dane testowe (SEC-24); mapowanie błędów klienta i pętli `consent_required`; `testData` ze stałej kompilacji; anulowanie = porzucenie wyniku; `config/runtime` niedostępne dla klienta. Implementacja w `backend/functions` – zadanie mobile-dev (`docs/architecture/przeglad-ekranow-p3-14c.md` pkt 5).
 - **v0.2 (2026-11-15):** zatwierdzona na G2 (ADR-0002 z Aneksem A).
-
-## 8. Projekt zmian v0.4 (ADR-0012, status: proponowany – obowiązuje po zatwierdzeniu przez właściciela)
-Źródło: S17 / SEC-26 (B-1 z przeglądu security ekranów). Do czasu zatwierdzenia obowiązują pkt 1–7.
-
-| # | Miejsce | Zmiana |
-|---|---|---|
-| 8.1 | `generatePlan`, wymagania | dodatkowo: ostatni rekord `privacy_policy` w wersji ≥ `config/runtime.policyVersionCurrent`; inaczej `consent_required` z `details.consentType = "privacy_policy"` (sprawdzane przed zgodą AI i przed rezerwacją limitu) |
-| 8.2 | `generatePlan`, zgoda AI | „aktualna zgoda" = ostatni rekord `ai_processing` z `granted = true` i wersją ≥ `aiConsentVersionCurrent` (porównanie numeru, nie równość) |
-| 8.3 | `recordConsent`, `policyVersion` | wzorzec `^(privacy|ai-consent)-v[1-9]\d{0,3}$`, typ zgodny z prefiksem, wersja z listy znanych w kodzie serwera; inaczej `invalid_argument` (`field: policyVersion`) |
-| 8.4 | `consent_required.details` | `consentType` ∈ {`privacy_policy`, `ai_processing`}; aplikacja: `privacy_policy` → EK-03, `ai_processing` → EK-06; przy zsynchronizowanym rekordzie w wersji aplikacji → „Zaktualizuj aplikację" |
-| 8.5 | pkt 6, konwencje | przed `generatePlan` aplikacja wysyła oczekujące rekordy zgód (`synced = 0`) |
