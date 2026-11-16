@@ -71,8 +71,9 @@ jobs:
         run: |
           if [ ! -f pubspec.yaml ]; then
             echo "Brak pubspec.yaml - krok pominięty (szkielet jeszcze nie powstał)."
-          elif [ -n "$BASE_SHA" ] && ! git diff --name-only "$BASE_SHA" HEAD | grep -qv '^backend/'; then
-            echo "PR zmienia tylko backend/ - testy Fluttera pominięte (kontrola nadal zgłasza sukces)."
+          elif [ -n "$BASE_SHA" ] && ! git diff --name-only --no-renames "$BASE_SHA" HEAD | grep -Ev '^(backend/|docs/|\.farm/|\.claude/)|\.md$' | grep -q .; then
+            # --no-renames: przeniesienie pliku pokazuje starą i nową ścieżkę (np. lib/a.dart -> docs/ nie pominie buildu).
+            echo "PR zmienia tylko backend/, dokumentację lub pliki farmy - testy Fluttera pominięte (kontrola nadal zgłasza sukces)."
           else
             echo "flutter=true" >> "$GITHUB_OUTPUT"
           fi
