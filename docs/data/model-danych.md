@@ -1,6 +1,6 @@
 # Model danych – Tamitu (MVP)
 
-Stan: 2026-11-16, wersja 0.3 (ADR-0011: `consentId` w tymczasowym wpisie zgody); wcześniej 0.2 (po G2; ADR zatwierdzone), autor: architect (przegląd Security: `docs/security/przeglad-adr.md`). Powiązane: ADR-0005, `docs/security/personal-data-register.md` (kody D1..D16), `przechowywanie-i-retencja.md`, `docs/api/posrednik-api.md`.
+Stan: 2026-11-16, wersja 0.4 (ADR-0011: `consentId` w tymczasowym wpisie zgody; `consents_local.received_at` – UX17; ADR-0012: format wersji zgód); wcześniej 0.2 (po G2; ADR zatwierdzone), autor: architect (przegląd Security: `docs/security/przeglad-adr.md`). Powiązane: ADR-0005, `docs/security/personal-data-register.md` (kody D1..D16), `przechowywanie-i-retencja.md`, `docs/api/posrednik-api.md`.
 Zasada: dane podróży tylko lokalnie; po stronie chmury wyłącznie zgody (D3), licznik (D10), konfiguracja (bez danych osobowych) i konto Auth (D1).
 
 ## 1. Wartości wyliczeniowe (wspólne dla aplikacji i serwera)
@@ -92,7 +92,7 @@ Wszystkie zapisy i odczyty wyłącznie z funkcji (Admin SDK); klient nie ma dost
 | `users/{uid}/consents/{consentId}` | `type` (`privacy_policy`\|`ai_processing`), `granted` (bool), `policyVersion` (string), `lang` (`pl`\|`en`), `clientAt` (timestamp), `receivedAt` (timestamp serwera) | D3 | do usunięcia konta; dowód usuwany z kontem (Q9; [PRAWNIK] do potwierdzenia, ewentualna zmiana nowym ADR). Brak TTL – tworzenie dokumentów dla nieistniejącego UID blokuje sprawdzenie istnienia użytkownika (ADR-0002, Aneks A pkt 1) |
 | `usage/{uid}` | `day` (`YYYY-MM-DD`, Europe/Warsaw), `count` (int), `updatedAt` (timestamp, polityka TTL 30 dni) | D10 | jeden dokument na konto, nadpisywany co dobę; TTL 30 dni od ostatniej aktualizacji; kasowany z kontem |
 | `usage_global/{day}` | `count`, `expireAt` (TTL 7 dni) | brak danych osobowych | 7 dni |
-| `config/runtime` | `aiEnabled`, `allowRealData` (domyślnie `false`; zmienia wyłącznie właściciel wg procedury z Aneksu A ADR-0001), `perUserDailyLimit` (5), `globalDailyLimit` (50), `testUids[]` (UID właściciela do czasu SEC-15; dostęp tylko właściciel z 2FA), `policyVersionCurrent`, `aiConsentVersionCurrent` | brak danych osobowych (UID testowych kont właściciela) | stała |
+| `config/runtime` | `aiEnabled`, `allowRealData` (domyślnie `false`; zmienia wyłącznie właściciel wg procedury z Aneksu A ADR-0001), `perUserDailyLimit` (5), `globalDailyLimit` (50), `testUids[]` (UID właściciela do czasu SEC-15; dostęp tylko właściciel z 2FA), `policyVersionCurrent` (format `privacy-vN`, start `privacy-v1`), `aiConsentVersionCurrent` (format `ai-consent-vN`, start `ai-consent-v1`; obie porównywane „≥ bieżąca", brak/zły format → fail-closed, ADR-0012) | brak danych osobowych (UID testowych kont właściciela) | stała |
 
 Indeksy: `consents` – zapytanie „ostatnia zgoda danego typu": indeks złożony (`type` rosnąco, `receivedAt` malejąco) w `firestore.indexes.json`.
 
