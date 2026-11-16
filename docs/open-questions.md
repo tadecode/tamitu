@@ -64,6 +64,21 @@ Szczegóły i wpływ na ekrany: `docs/requirements/screens-and-flows.md` pkt 5. 
 
 Rozstrzygnięte w tym przeglądzie (bez nowych pytań): US-010 zgodne z Q9 (dowód zgód usuwany z kontem; ewentualna zmiana po poradzie prawnika = nowy ADR); anulowanie generowania wg Q12 odzwierciedlone w US-005/US-011.
 
+## Marka i design system (P3-14b krok 1), ux, 2026-11-16
+Szczegóły: `docs/ux/brand.md`, `docs/ux/design-system.md`, podgląd `docs/ux/mockups/brand-preview.html`. Do czasu odpowiedzi obowiązuje propozycja (poza UX1 – bez wyboru wariantu krok 2 nie rusza).
+
+| # | Pytanie | Zadaje | Status | Propozycja domyślna | Skutek |
+|---|---|---|---|---|---|
+| UX1 | Który wariant marki: A „Lazur" (morski, Roboto) czy B „Terakota" (ciepły, Nunito w tytułach)? | ux → owner | otwarte | **A „Lazur"** (odróżnienie działań od błędów, zaufanie przy zgodach i AI, najniższy koszt) | brand.md, design-system.md, krok 2 (ekrany) |
+| UX2 | Logo i ikona aplikacji: kto i kiedy dostarcza? | ux → owner | otwarte | Do wersji testowych tymczasowy znak słowny „Tamitu" i ikona adaptacyjna „T" na kolorze primary (specyfikacja ux); finalne logo od grafika przed publikacją w Play | brand.md pkt 5, EK-02, ikona APK |
+| UX3 | Czy włączyć kolory dynamiczne Androida (Material You, kolory z tapety)? | ux → owner | otwarte | Nie – kolory marki stałe, kontrast sprawdzony | design-system.md pkt 1 |
+| UX4 | Motyw jasny/ciemny: tylko wg systemu czy także wybór w Ustawieniach? | ux → owner, analyst | otwarte | Tylko wg systemu w MVP (EK-12 nie przewiduje przełącznika) | EK-12 |
+| UX5 | Wariant B: dołączenie czcionki Nunito do aplikacji (ok. +0,3 MB, bez pobierania z Google Fonts w czasie działania) – akceptowalne technicznie? | ux → architect | otwarte (dotyczy tylko B) | Tak, jako zasób aplikacji; pakiet pobierający czcionki z sieci wykluczony | brand.md, ADR-0008 |
+| UX6 | Ton i forma zwracania się: „Ty" czy forma bezosobowa; formy rodzajowe („Zapoznałem(-am) się") czy neutralne („Zapoznaję się z polityką…")? | ux → owner, [PRAWNIK] dla zgód | otwarte | „Ty" / „you"; w zgodach forma neutralna bez rodzaju, jeśli prawnik nie wymaga innej | wszystkie teksty, CMP-09 |
+| UX7 | Ilustracje w stanach pustych i błędach: same ikony Material czy ilustracje (koszt grafika)? | ux → owner | otwarte | Same ikony 48 dp w MVP | CMP-18 |
+| UX8 | Konwencja kluczy l10n (lowerCamelCase z prefiksem obszaru, np. `planListEmptyTitle`) – zgodna z planem mobile-dev? | ux → mobile-dev | otwarte | Jak w `docs/ux/components/index.md` | ARB, wszystkie ekrany |
+| UX9 | Usunięcie planu: dialog potwierdzenia (wymaganie US-009) czy natychmiastowe usunięcie z „Cofnij" w snackbarze (zalecenie M3; usunięcie odroczone o ok. 10 s)? | ux → owner, architect | otwarte | Dialog w MVP (zgodnie z US-009 i „trwałym usunięciem"); „Cofnij" do rozważenia później | EK-11, US-009 |
+
 ## Nadal do wykonania przez właściciela
 - Odpowiedź na N11 (może zostać przyjęta propozycja domyślna).
 - Dane administratora (nazwa, adres, NIP) do polityki prywatności (S1).
