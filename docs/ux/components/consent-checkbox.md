@@ -31,11 +31,13 @@ Pole 18 dp w celu 48 dp; tekst `bodyLarge` z wcięciem 16 dp za polem; **cały w
 Obrys pola `onSurfaceVariant` (niezaznaczone), `primary` (zaznaczone); tekst `onSurface`; link `primary` z podkreśleniem.
 
 ## Zachowanie
-Dotknięcie wiersza przełącza; dotknięcie linku tylko otwiera dokument (nie zaznacza). Zaznaczenie nie jest
-zapisywane, dopóki logowanie się nie uda (rekord lokalny tymczasowy wg privacy-checklist).
+Dotknięcie wiersza przełącza; dotknięcie linku tylko otwiera dokument (nie zaznacza).
+- **Zmiana języka interfejsu zdejmuje zaznaczenie** – akceptacja dotyczy tekstu, który był widoczny (P-3, raport security P3-14c).
+- Zaznaczenie żyje tylko w pamięci ekranu: **nie przeżywa zamknięcia aplikacji ani zabicia procesu**; po anulowaniu logowania u Google zostaje tylko w bieżącej sesji ekranu.
+- Rekord tymczasowy (`shared_preferences`: `version`, `lang`, `acceptedAt`) powstaje **dopiero przy dotknięciu „Zaloguj"** i jest **czyszczony, jeśli logowanie się nie uda** (anulowanie, błąd, brak sieci); po udanym logowaniu → `recordConsent(privacy_policy)`.
 
 ## Dostępność
-- Etykieta dla TalkBack: „Zapoznałem się z polityką prywatności, pole wyboru, niezaznaczone"; link osobno: „Polityka prywatności, link, otwiera przeglądarkę".
+- Etykieta dla TalkBack: **ten sam tekst co widoczny** („Potwierdzam zapoznanie się z polityką prywatności i akceptuję ją, pole wyboru, niezaznaczone") – bez skrótów i form rodzajowych (P-2); link osobno: „Polityka prywatności, link, otwiera przeglądarkę".
 - Cel dotyku 48 dp dla wiersza i linku.
 - Kontrast: onSurface/surface ≥ 14:1; primary/surface ≥ 5,4:1; obrys pola onSurfaceVariant/surface ≥ 7,8:1.
 - Skalowanie do 200%: tekst zawija się; pole wyrównane do pierwszej linii.
@@ -43,10 +45,10 @@ zapisywane, dopóki logowanie się nie uda (rekord lokalny tymczasowy wg privacy
 ## Teksty
 | Klucz l10n | PL | EN |
 |---|---|---|
-| `consentPolicyCheckbox` | Zapoznałem(-am) się z {policyLink} i akceptuję ją | I have read and accept the {policyLink} |
+| `consentPolicyCheckbox` | Potwierdzam zapoznanie się z {policyLink} i akceptuję ją | I confirm I have read and accept the {policyLink} |
 | `consentPolicyLink` | polityką prywatności | Privacy Policy |
 
-Treść ostateczna [PRAWNIK] (privacy-checklist: akceptacja = potwierdzenie zapoznania); forma rodzajowa „(-am)" do decyzji (UX6).
+**Jeden klucz i jeden tekst** w CMP-09, EK-02 i EK-03 (dowód akceptacji dotyczy jednego tekstu przypisanego do wersji; P-2). Forma neutralna, bez rodzaju. Brzmienie ostateczne [PRAWNIK] (S16, UX6); zmiana tekstu PL lub EN = nowa wersja polityki/akceptacji.
 
 ## Użycie
 EK-02, EK-03; wzorzec zgody i uprawnienia.
