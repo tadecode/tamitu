@@ -58,5 +58,11 @@ Zadanie przykładowe T-001 (szkielet Flutter) powstanie w fazie 3 po G2.
 | P3-11 | Test wariantu C lokalizacji (link bez `origin`) na urządzeniu; ewentualny nowy ADR zastępujący (Q1) | mobile-dev/architect | todo (w ramach P3-07) |
 | P3-12 | Poprawki wymagań UI: etykieta noclegu bez pełnego adresu, komunikat przy wylogowaniu, US-010 vs Q9 (dowód zgód usuwany z kontem), US-011 anulowanie | analyst | todo |
 | P3-13 | Rejestr danych: szyfrowanie bazy, T11/T12/D7 po Q1 = A | security | todo |
+| P3-14a | Przegląd wymagań pod kątem ekranów: lista ekranów, przepływy, stany brzegowe (brak sieci, limit, wylogowanie, usunięcie konta, anulowanie), poprawki z P3-12 | analyst | todo |
+| P3-14b | Mockup UI PL/EN (klikalny prototyp, nie kod aplikacji) na podstawie P3-14a | designer (brak roli: propozycja FARM-003) | blocked |
+| P3-14c | Przegląd mockupu przez architekta: zgodność z ADR, API, modelem danych, kosztami; lista zmian i ewentualne nowe ADR | architect | blocked |
+| P3-14d | Akceptacja mockupu przez właściciela (wpis w `.farm/log/` i `docs/open-questions.md`) | owner | blocked |
+
+**Decyzja właściciela 2026-11-16:** przed implementacją ekranów (P3-04, P3-06, P3-07) przechodzimy P3-14a..d; każde zadanie wykonuje osobny agent z właściwą rolą. P3-04, P3-06, P3-07 wstrzymane do P3-14d. Prace bez UI (SEC-18/19/21 w backendzie, SEC-24, zadania właściciela) idą równolegle.
 
 Wejścia z Aneksów A ADR (do uwzględnienia przy realizacji): SEC-03, SEC-04, SEC-07, SEC-09, P3-03 (konta usług `fn-ai`, `fn-consent`, `fn-account`, `fn-budget`; sink logów; tokeny debug App Check jako sekrety); P3-01/02/06 (kryteria SQLCipher, lockfile, `flutter_secure_storage`; ADR-0008, ADR-0005). Warunek: `ALLOW_REAL_DATA=false` do zamknięcia SEC-15.
