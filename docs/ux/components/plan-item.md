@@ -11,8 +11,8 @@ Nie służy do: edycji punktu (poza MVP), mapy (poza MVP).
 ## Warianty
 | Wariant | Kiedy użyć | Uwagi |
 |---|---|---|
-| Punkt | domyślnie | znacznik godziny („ok. 15:00"), nazwa `titleMedium`, miejscowość `bodyMedium` `onSurfaceVariant`, opis `bodyMedium`, przycisk „Trasa" (`directions`) |
-| Przylot / przyjazd | pierwszy element dnia 1 | ikona `flight_land`/`directions_car`, tekst „Przylot 14:30 · lotnisko LIS" z godziną w `tertiary`; bez przycisku trasy |
+| Punkt | domyślnie | znacznik godziny („ok. 15:00"), nazwa `titleMedium`, miejscowość `bodyMedium` `onSurfaceVariant`, opis `bodyMedium`, przycisk „Trasa" (`route-02`) |
+| Przylot / przyjazd | pierwszy element dnia 1 | ikona `airplane-landing-01`/`car-01`, tekst „Przylot 14:30 · lotnisko LIS" z godziną w `tertiary`; bez przycisku trasy |
 | Dzień bez punktów | dzień 1 przy późnym przylocie | tylko wariant przylotu + tekst „Dziś tylko dojazd do noclegu" – **nie** jako błąd |
 
 ## Stany

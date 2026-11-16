@@ -11,18 +11,18 @@ Nie służy do: więcej niż 3 opcji (CMP-10 lub CMP-05), wielokrotnego wyboru (
 ## Warianty
 | Wariant | Kiedy użyć | Uwagi |
 |---|---|---|
-| 2 opcje z ikoną | sposób dojazdu: Lot (`flight_land`) / Auto (`directions_car`) – EK-05; język interfejsu PL / EN – EK-02 | wymagane pole bez wartości domyślnej: żaden segment nie jest wybrany na start (dojazd) |
+| 2 opcje z ikoną | sposób dojazdu: Lot (`airplane-landing-01`) / Auto (`car-01`) – EK-05; język interfejsu PL / EN – EK-02 | wymagane pole bez wartości domyślnej: żaden segment nie jest wybrany na start (dojazd) |
 | 3 opcje | budżet (niski/średni/wysoki), tempo (spokojne/umiarkowane/intensywne), język planu – EK-05; tryb trasy (auto/komunikacja/pieszo) – EK-09 | domyślne z modelu danych: średni, umiarkowane, język UI |
 
 ## Stany
 | Stan | Wygląd i zachowanie |
 |---|---|
 | Domyślny (niewybrany) | obrys `outline`, tekst `onSurface` |
-| Wybrany | tło `secondaryContainer`, tekst `onSecondaryContainer`, ikona `check` przed tekstem (znaczenie nie tylko kolorem) |
+| Wybrany | tło `secondaryContainer`, tekst `onSecondaryContainer`, ikona `tick-02` przed tekstem (znaczenie nie tylko kolorem) |
 | Fokus / naciśnięty | warstwa stanu 10% |
 | Nieaktywny | 38% (np. tryb trasy bez sieci – nie: tryb można wybrać offline, blokowane jest dopiero otwarcie map) |
 | Ładowanie | n/d |
-| Błąd | brak wyboru w wymaganym polu: tekst błędu pod komponentem `bodySmall` `error` + ikona `error` |
+| Błąd | brak wyboru w wymaganym polu: tekst błędu pod komponentem `bodySmall` `error` + ikona `alert-circle` |
 
 ## Rozmiary i odstępy
 Wysokość 40 dp wizualnie, cel dotyku 48 dp; pełna szerokość wiersza, segmenty równej szerokości; etykieta sekcji (titleSmall) 8 dp nad komponentem.

@@ -14,7 +14,7 @@
 Klucze ARB muszą być poprawnymi identyfikatorami Dart (gen_l10n, ADR-0006), więc **lowerCamelCase bez
 kropek**: `<obszar><Element><Wariant>`, np. `commonRetry`, `planListEmptyTitle`, `tripFormLodgingHelper`.
 Obszary: `common` (wspólne), `appBar`, `planList` (EK-04), `tripForm` (EK-05), `consent` (EK-02/03/06/13),
-`generation` (EK-07), `plan` (EK-08), `route` (EK-09/10), `settings` (EK-12..15), `error` (EK-16).
+`generation` (EK-07), `plan` (EK-08), `route` (EK-09/10), `settings-02` (EK-12..15), `error` (EK-16).
 Nazwy ostateczne uzgadnia ux z mobile-dev (pytanie UX8). W specyfikacjach komponentów podane są tylko
 klucze **wspólne**; klucze ekranowe powstaną w `screens/` (krok 2).
 

@@ -17,7 +17,7 @@ Nie służy do: zakresów dat (poza MVP).
 ## Stany
 | Stan | Wygląd i zachowanie |
 |---|---|
-| Domyślny | pole jak CMP-04 z ikoną `calendar_today` / `schedule`, bez wartości |
+| Domyślny | pole jak CMP-04 z ikoną `calendar-03` / `clock-01`, bez wartości |
 | Fokus / naciśnięty | otwiera modalny wybierak M3 (kalendarz / tarcza godzin z przełącznikiem na wpisywanie) |
 | Nieaktywny | jak CMP-04 |
 | Ładowanie | n/d |

@@ -12,7 +12,7 @@ Nie służy do: komunikatów (CMP-13), pojedynczych ustawień (CMP-11), dekoracj
 | Wariant | Kiedy użyć | Uwagi |
 |---|---|---|
 | Plan (klikalna) | EK-04 | tytuł: cel podróży (`titleMedium`); linia 2: „{n} dni · lot/auto" z ikoną; linia 3: „Utworzono {data}" (`bodyMedium` `onSurfaceVariant`). Cała karta otwiera EK-08 |
-| Podsumowanie podróży (statyczna) | EK-08 nad zakładkami dni | wiersze z ikonami: `hotel` nocleg, `flight_land`/`directions_car` przylot/przyjazd z datą i godziną (godzina w `tertiary`) |
+| Podsumowanie podróży (statyczna) | EK-08 nad zakładkami dni | wiersze z ikonami: `bed-double` nocleg, `airplane-landing-01`/`car-01` przylot/przyjazd z datą i godziną (godzina w `tertiary`) |
 
 ## Stany
 | Stan | Wygląd i zachowanie |

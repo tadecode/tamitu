@@ -17,7 +17,7 @@ Nie służy do: pojedynczego wyboru (CMP-07/CMP-10), działań, wolnego tekstu (
 | Stan | Wygląd i zachowanie |
 |---|---|
 | Domyślny | obrys `outlineVariant`, tekst `onSurfaceVariant` |
-| Wybrany | tło `secondaryContainer`, tekst `onSecondaryContainer`, ikona `check` z lewej (znaczenie nie tylko kolorem) |
+| Wybrany | tło `secondaryContainer`, tekst `onSecondaryContainer`, znacznik wyboru z lewej, rysowany przez `FilterChip` (znaczenie nie tylko kolorem) |
 | Fokus / naciśnięty | warstwa stanu 10% |
 | Nieaktywny | po wybraniu 5: niewybrane chipy 38% i niedostępne; komunikat przy liczniku „Możesz wybrać maks. 5" |
 | Ładowanie | n/d |

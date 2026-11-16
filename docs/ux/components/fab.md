@@ -11,7 +11,7 @@ Nie służy do: działań na innych ekranach (tam CMP-02), działań destrukcyjn
 ## Warianty
 | Wariant | Kiedy użyć | Uwagi |
 |---|---|---|
-| Rozszerzony (ikona + tekst) | domyślnie | `add` + „Nowa podróż" |
+| Rozszerzony (ikona + tekst) | domyślnie | `add-01` + „Nowa podróż" |
 | Zwinięty (sama ikona) | nie używamy w MVP | tekst pomaga nowym użytkownikom; przy przewijaniu FAB **nie** zwija się |
 
 ## Stany

@@ -11,9 +11,9 @@ Nie służy do: głównego działania ekranu (to przycisk/FAB w treści), komuni
 ## Warianty
 | Wariant | Kiedy użyć | Uwagi |
 |---|---|---|
-| Główny (bez wstecz) | EK-04 lista planów | tytuł „Twoje podróże" + ikona `settings` |
-| Zagnieżdżony (ze wstecz) | wszystkie ekrany podrzędne | ikona `arrow_back` po lewej |
-| Z menu | EK-08 | ikona `more_vert` → menu z „Usuń plan" (destrukcyjne nie jako ikona na wierzchu) |
+| Główny (bez wstecz) | EK-04 lista planów | tytuł „Twoje podróże" + ikona `settings-02` |
+| Zagnieżdżony (ze wstecz) | wszystkie ekrany podrzędne | ikona `arrow-left-01` po lewej |
+| Z menu | EK-08 | ikona `more-vertical` → menu z „Usuń plan" (destrukcyjne nie jako ikona na wierzchu) |
 | Blokujący (bez wstecz) | EK-03, EK-07 | brak strzałki; wyjście tylko działaniami ekranu |
 
 ## Stany

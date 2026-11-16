@@ -13,7 +13,7 @@ anulowania generowania (EK-07). Nie służy do: długich treści (zgody – peł
 | Wariant | Kiedy użyć | Uwagi |
 |---|---|---|
 | Potwierdzenie | wylogowanie, anulowanie generowania | tytuł-pytanie, treść ze skutkiem, przyciski tekstowe: „Anuluj" + działanie |
-| Destrukcyjne | usunięcie planu | działanie potwierdzające w kolorze `error` (tekst), ikona `delete` nad tytułem |
+| Destrukcyjne | usunięcie planu | działanie potwierdzające w kolorze `error` (tekst), ikona `delete-02` nad tytułem |
 
 ## Stany
 | Stan | Wygląd i zachowanie |

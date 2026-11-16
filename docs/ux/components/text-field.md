@@ -23,7 +23,7 @@ Nie służy do: wyboru z zamkniętej listy (CMP-05, CMP-07, CMP-08), daty i godz
 | Fokus | obrys `primary` 2 dp, etykieta unosi się na obrys (`primary`) |
 | Nieaktywny | obrys i tekst `onSurface` 38%/12% (nie używamy w MVP poza blokadą w trakcie generowania) |
 | Ładowanie | n/d |
-| Błąd | obrys `error` 2 dp, ikona `error` na końcu pola, komunikat pod polem `bodySmall` `error` zastępuje podpowiedź; walidacja **przy opuszczeniu pola** i przy „Generuj" (wtedy fokus przechodzi do pierwszego błędnego pola) |
+| Błąd | obrys `error` 2 dp, ikona `alert-circle` na końcu pola, komunikat pod polem `bodySmall` `error` zastępuje podpowiedź; walidacja **przy opuszczeniu pola** i przy „Generuj" (wtedy fokus przechodzi do pierwszego błędnego pola) |
 
 ## Rozmiary i odstępy
 Wysokość 56 dp (rośnie przy skali tekstu); wnętrze 16 dp; podpowiedź/błąd 4 dp pod polem; między polami 16 dp; pełna szerokość minus marginesy.

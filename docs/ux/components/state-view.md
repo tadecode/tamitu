@@ -13,11 +13,11 @@ Nie służy do: błędów pojedynczych pól, chwilowych potwierdzeń.
 ## Warianty
 | Wariant | Kiedy użyć | Ikona | Działanie |
 |---|---|---|---|
-| Pusty | brak danych | `luggage` lub `map` (decyzja w kroku 2) | jedno wypełnione („Nowa podróż") |
-| Błąd | nie udało się wczytać/wykonać | `error` | tonalne „Spróbuj ponownie" + ewentualnie tekstowe „Wróć" |
-| Brak sieci | ekran wymaga sieci | `wifi_off` | tonalne „Spróbuj ponownie" |
-| Limit | limit dzienny wyczerpany (gdy pokazujemy na całym ekranie) | `schedule` | tekstowe „Wróć do planów" |
-| Blokujący | wymagana aktualizacja (U3), baza niedostępna (U12) | `system_update` / `error` | wypełnione (np. „Zaktualizuj aplikację") + tekstowe alternatywy |
+| Pusty | brak danych | `luggage-01` | jedno wypełnione („Nowa podróż") |
+| Błąd | nie udało się wczytać/wykonać | `alert-circle` | tonalne „Spróbuj ponownie" + ewentualnie tekstowe „Wróć" |
+| Brak sieci | ekran wymaga sieci | `wifi-off-01` | tonalne „Spróbuj ponownie" |
+| Limit | limit dzienny wyczerpany (gdy pokazujemy na całym ekranie) | `clock-01` | tekstowe „Wróć do planów" |
+| Blokujący | wymagana aktualizacja (U3), baza niedostępna (U12) | `reload` / `alert-circle` | wypełnione (np. „Zaktualizuj aplikację") + tekstowe alternatywy |
 
 ## Stany
 | Stan | Wygląd i zachowanie |

@@ -147,34 +147,61 @@ M3 rozróżnia warstwy przede wszystkim **kolorem kontenera (tonal)**, cień tyl
 
 ## 8. Ikony
 
-- Zestaw: Material Symbols Outlined; grubość 400, grade 0, rozmiar optyczny 24.
-- Rozmiary: 24 dp (standard), 18 dp (wewnątrz przycisku/chipa), 48 dp (stan pusty/błędu).
+- **Zestaw: Hugeicons, darmowy zestaw „Stroke Rounded" (Free)** – decyzja właściciela 2026-11-16 (UX14: „tak zastapić odrazu”); zastępuje Material Symbols. Tylko zestaw darmowy, **bez Pro**.
+- **Warunek:** licencja zestawu Free i pakiet Flutter (`hugeicons`) są **niezweryfikowane** – potwierdza architekt (UX15, ADR-0008). Do potwierdzenia w repozytorium nie ma plików ani ścieżek SVG Hugeicons; makiety używają **własnych, uproszczonych odpowiedników** w tym stylu (kreska zaokrąglona), z adnotacją.
+- Styl: kreska 1,5 dp, zaokrąglone zakończenia i narożniki, bez wypełnienia; siatka 24 dp. Stan aktywny (np. wybrany segment) sygnalizuje kontener i znacznik `tick-02`, nie wypełniona wersja ikony (zestaw Free jej nie zapewnia w tym stylu).
+- Rozmiary: 24 dp (standard), 18 dp (wewnątrz przycisku/chipa), 48 dp (stan pusty/błędu). Przy 18 dp kreska 1,5 dp jest cienka – kontrast ikony liczony jak dla elementu interfejsu (≥ 3:1) jest spełniony kolorem (`onSurfaceVariant`/`surface` 8,9:1), ale qa sprawdza czytelność na urządzeniu.
 - Kolor: dziedziczy z roli treści (`onSurfaceVariant` w liście, `on…Container` w kontenerach).
 - Ikona nigdy nie jest jedynym nośnikiem znaczenia: obok jest tekst albo etykieta dla TalkBack.
-- Słownik ikon (nazwy Material Symbols):
+- Słownik ikon. **Znaczenie** (pierwsza kolumna) jest stałym identyfikatorem w specyfikacjach; nazwy Hugeicons to propozycja z katalogu Free – mobile-dev potwierdza dokładną nazwę (sufiks, np. `-01`/`-02`) w katalogu przy implementacji, bez zmiany znaczenia.
 
-| Znaczenie | Ikona |
-|---|---|
-| Nowa podróż | `add` |
-| Ustawienia | `settings` |
-| Wstecz | `arrow_back` |
-| Usuń | `delete` |
-| Trasa / otwórz w Google Maps | `directions`, `open_in_new` |
-| Auto / komunikacja / pieszo | `directions_car`, `directions_transit`, `directions_walk` |
-| Lot / przylot | `flight_land` |
-| Nocleg | `hotel` |
-| Moja lokalizacja | `my_location` |
-| Informacja o AI | `auto_awesome` |
-| Informacja | `info` |
-| Ostrzeżenie | `warning` |
-| Błąd | `error` |
-| Brak sieci | `wifi_off` |
-| Prywatność | `shield` |
-| Język | `language` |
-| Wyloguj | `logout` |
-| Usuń konto | `person_remove` |
-| Plany tylko na urządzeniu | `smartphone` |
-| Limit dzienny | `schedule` |
+| Znaczenie | Hugeicons Free (Stroke Rounded) | Dawniej (Material Symbols) |
+|---|---|---|
+| Nowa podróż | `add-01` | `add` |
+| Ustawienia | `settings-02` | `settings` |
+| Wstecz | `arrow-left-01` | `arrow_back` |
+| Więcej opcji | `more-vertical` | `more_vert` |
+| Usuń | `delete-02` | `delete` |
+| Trasa | `route-02` | `directions` |
+| Otwórz na zewnątrz (Maps, polityka) | `link-square-02` | `open_in_new` |
+| Auto / komunikacja / pieszo | `car-01`, `bus-01`, `walking` | `directions_car`, `directions_transit`, `directions_walk` |
+| Lot / przylot | `airplane-landing-01` | `flight_land` |
+| Nocleg | `bed-double` | `hotel` |
+| Moja lokalizacja | `gps-01` | `my_location` |
+| Informacja o AI | `sparkles` | `auto_awesome` |
+| Informacja | `information-circle` | `info` |
+| Ostrzeżenie | `alert-02` | `warning` |
+| Błąd | `alert-circle` | `error` |
+| Brak sieci | `wifi-off-01` | `wifi_off` |
+| Prywatność | `shield-01` | `shield` |
+| Język | `globe-02` | `language` |
+| Wyloguj | `logout-01` | `logout` |
+| Usuń konto | `user-remove-01` | `person_remove` |
+| Plany tylko na urządzeniu | `smart-phone-01` | `smartphone` |
+| Limit dzienny, godzina | `clock-01` | `schedule` |
+| Data | `calendar-03` | `calendar_today` |
+| Rozwiń listę | `arrow-down-01` | `arrow_drop_down` |
+| Wybrane (segment) | `tick-02` | `check` |
+| Stan pusty listy planów | `luggage-01` | `luggage` |
+| Aktualizacja aplikacji | `reload` | `system_update` |
+
+### 8.1 Ikony wbudowane w widgety Material 3
+
+Część widgetów M3 rysuje własne ikony Material. Zasada: **podmieniamy w motywie lub parametrze tam, gdzie Flutter na to pozwala; tam, gdzie nie – zostaje wyjątek** (spójność ważniejsza niż własny kod widgetów).
+
+| Widget (komponent) | Wbudowany element | Decyzja |
+|---|---|---|
+| `AppBar` – przycisk wstecz (CMP-01) | ikona strzałki | **podmiana** w motywie (ikona przycisku wstecz) na `arrow-left-01` |
+| `DropdownMenu` (CMP-05) | strzałka rozwijania | **podmiana** parametrem ikony końcowej na `arrow-down-01` |
+| `SegmentedButton` (CMP-07) | znacznik wybranego segmentu | **podmiana** (ikona wybranego) na `tick-02` |
+| `Checkbox` (CMP-09), `FilterChip` (CMP-08) | znacznik zaznaczenia | **bez zmian** – to rysowany kształt, nie ikona z zestawu; wygląda neutralnie |
+| `Radio` (CMP-10) | kółko | bez zmian (rysowany kształt) |
+| `PopupMenuButton` / menu (EK-08) | „więcej" | **podmiana** ikony na `more-vertical` |
+| `showDatePicker` (CMP-06) | strzałki miesięcy, przełącznik kalendarz/klawiatura | **wyjątek**: zostają ikony Material (brak prostej podmiany w motywie); widoczne tylko w oknie wybieraka |
+| `showTimePicker` (CMP-06) | przełącznik tarcza/klawiatura | **wyjątek**: jak wyżej |
+| Okna systemu Android (uprawnienia, wybór konta Google) | – | nie nasze ekrany |
+
+Gdyby architekt uznał podmianę za zbyt kosztowną w którymś miejscu, dopisujemy go do wyjątków (bez zmiany specyfikacji ekranów – znaczenie ikony zostaje).
 
 ## 9. Mapowanie na Fluttera (bez kodu)
 
@@ -184,6 +211,6 @@ M3 rozróżnia warstwy przede wszystkim **kolorem kontenera (tonal)**, cień tyl
 | Typografia (pkt 3) | `TextTheme` (Roboto – domyślna, bez dodatkowych zasobów) |
 | Kształty (pkt 5) | motywy komponentów (`FilledButtonThemeData`, `CardTheme`, `DialogTheme`, `InputDecorationTheme`…) |
 | Odstępy (pkt 4) | stałe w kodzie (np. klasa z wartościami 4…48) – nazwy do uzgodnienia z mobile-dev |
-| Ikony (pkt 8) | Material Symbols (zestaw ikon dołączony do aplikacji; bez pobierania z sieci) |
+| Ikony (pkt 8) | Hugeicons Free Stroke Rounded – pakiet do potwierdzenia przez architekta (UX15); zestaw dołączony do aplikacji, bez pobierania z sieci; podmiany w motywach wg pkt 8.1 |
 
 Szczegóły techniczne (nazwy klas, pakiety) decyduje mobile-dev/architekt; ux podaje tylko wartości.

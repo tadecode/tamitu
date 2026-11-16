@@ -17,7 +17,7 @@ Wygląda jak pole tekstowe (spójność formularza). Nie służy do: 2–3 opcji
 ## Stany
 | Stan | Wygląd i zachowanie |
 |---|---|
-| Domyślny | jak CMP-04, ikona `arrow_drop_down` na końcu |
+| Domyślny | jak CMP-04, ikona `arrow-down-01` na końcu |
 | Fokus / rozwinięte | obrys `primary`, menu pod polem (`surfaceContainer`, elevation 3), wybrana pozycja wyróżniona `secondaryContainer` |
 | Nieaktywny | jak CMP-04 |
 | Ładowanie | n/d |

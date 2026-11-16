@@ -13,9 +13,9 @@ Nie służy do: potwierdzeń chwilowych (CMP-14), błędów całego ekranu (CMP-
 ## Warianty
 | Wariant | Kiedy użyć | Wygląd |
 |---|---|---|
-| Informacja | AI, plany na urządzeniu, czas lokalny | `secondaryContainer` / `onSecondaryContainer`, ikona `info` lub `auto_awesome` (AI) |
-| Ostrzeżenie | brak sieci przy akcji, przybliżony punkt, skutki wylogowania | `secondaryContainer`, ikona `warning` / `wifi_off`, tytuł pogrubiony |
-| Błąd / zagrożenie | nieodwracalne usunięcie konta, limit wyczerpany | `errorContainer` / `onErrorContainer`, ikona `error` / `schedule` |
+| Informacja | AI, plany na urządzeniu, czas lokalny | `secondaryContainer` / `onSecondaryContainer`, ikona `information-circle` lub `sparkles` (AI) |
+| Ostrzeżenie | brak sieci przy akcji, przybliżony punkt, skutki wylogowania | `secondaryContainer`, ikona `alert-02` / `wifi-off-01`, tytuł pogrubiony |
+| Błąd / zagrożenie | nieodwracalne usunięcie konta, limit wyczerpany | `errorContainer` / `onErrorContainer`, ikona `alert-circle` / `clock-01` |
 
 Znaczenie przenosi **ikona + tytuł + tekst**, kolor tylko wzmacnia.
 

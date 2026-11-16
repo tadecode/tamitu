@@ -44,7 +44,7 @@ Projektujemy najpierw dla **compact** (telefon pionowo, szerokość < 600 dp; od
 
 - **Pasek górny**: tytuł ekranu po lewej (po ikonie wstecz), działania po prawej (maks. 2 ikony, reszta w menu).
 - **Nawigacja: bez dolnego paska nawigacji.** Aplikacja ma dwa cele najwyższego poziomu (Plany i Ustawienia),
-  a dolna nawigacja jest dla 3–5 celów. Ustawienia: ikona `settings` w pasku górnym listy planów (EK-04).
+  a dolna nawigacja jest dla 3–5 celów. Ustawienia: ikona `settings-02` w pasku górnym listy planów (EK-04).
   Wszystkie pozostałe ekrany są zagnieżdżone (strzałka wstecz). Gdyby w przyszłości doszły kolejne cele
   (np. „W pobliżu"), przechodzimy na `NavigationBar`.
 - **Wstecz systemowe** zawsze działa jak strzałka w pasku górnym; wyjątki opisane w przepływach

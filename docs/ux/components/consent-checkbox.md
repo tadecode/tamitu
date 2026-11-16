@@ -12,13 +12,13 @@ musi być tak samo łatwa jak zgoda.
 ## Warianty
 | Wariant | Kiedy użyć | Uwagi |
 |---|---|---|
-| Z linkiem do dokumentu | akceptacja polityki | link „politykę prywatności" w treści otwiera przeglądarkę w języku interfejsu (ikona `open_in_new` po linku) |
+| Z linkiem do dokumentu | akceptacja polityki | link „politykę prywatności" w treści otwiera przeglądarkę w języku interfejsu (ikona `link-square-02` po linku) |
 
 ## Stany
 | Stan | Wygląd i zachowanie |
 |---|---|
 | Domyślny | **niezaznaczony zawsze na start** (RODO; nigdy nie zapamiętujemy zaznaczenia między wersjami) |
-| Zaznaczony | pole `primary` z ikoną `check` `onPrimary`; przycisk logowania staje się aktywny |
+| Zaznaczony | pole `primary` ze znacznikiem `onPrimary` (rysuje go widget Checkbox – nie ikona z zestawu); przycisk logowania staje się aktywny |
 | Fokus / naciśnięty | warstwa stanu 10% wokół pola |
 | Nieaktywny | w trakcie logowania (po dotknięciu „Zaloguj") |
 | Ładowanie | n/d |

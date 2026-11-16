@@ -11,8 +11,8 @@ Nie służy do: planów na liście głównej (CMP-12 karta – więcej treści, 
 ## Warianty
 | Wariant | Kiedy użyć | Uwagi |
 |---|---|---|
-| Nawigacyjny | „Prywatność", „Język" | ikona wiodąca 24 dp, opcjonalnie wartość w drugiej linii („Polski"), ikona `chevron_right` nie jest wymagana w M3 – nie używamy |
-| Zewnętrzny | „Polityka prywatności" | ikona końcowa `open_in_new` (otwiera przeglądarkę) |
+| Nawigacyjny | „Prywatność", „Język" | ikona wiodąca 24 dp, opcjonalnie wartość w drugiej linii („Polski"), ikona `arrow-right-01` nie jest wymagana w M3 – nie używamy |
+| Zewnętrzny | „Polityka prywatności" | ikona końcowa `link-square-02` (otwiera przeglądarkę) |
 | Informacyjny (bez działania) | „Zgoda na AI · wyrażona 12.05.2027" | bez warstwy stanu, nie jest celem dotyku |
 | Destrukcyjny | „Usuń konto" | ikona i tekst `error`; na końcu listy, w osobnej grupie |
 | Nagłówek grupy | „Konto", „Prywatność" | `titleSmall` `primary`, nie jest interaktywny |

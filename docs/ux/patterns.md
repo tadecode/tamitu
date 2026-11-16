@@ -51,7 +51,7 @@
 
 - **Kiedy:** funkcja wymaga sieci (logowanie, zgody, generowanie, usunięcie konta, Google Maps, link do polityki).
 - **Kiedy nie:** ekrany działające offline (EK-04, EK-08, EK-11, EK-12, język) – **bez** komunikatu o braku sieci, dopóki użytkownik nie spróbuje akcji sieciowej.
-- **Składniki:** CMP-13 „Ostrzeżenie" z `wifi_off` w miejscu akcji (formularz EK-05: nad przyciskiem „Generuj plan" – sprawdzenie przed wysłaniem, bez zużycia limitu, U6); CMP-18 „Brak sieci" dla ekranów, które bez sieci nie mają treści; CMP-14 dla akcji jednorazowej (otwarcie map).
+- **Składniki:** CMP-13 „Ostrzeżenie" z `wifi-off-01` w miejscu akcji (formularz EK-05: nad przyciskiem „Generuj plan" – sprawdzenie przed wysłaniem, bez zużycia limitu, U6); CMP-18 „Brak sieci" dla ekranów, które bez sieci nie mają treści; CMP-14 dla akcji jednorazowej (otwarcie map).
 - **Zasady:** jednolity tekst (EK-16), zawsze „Spróbuj ponownie" lub powrót; komunikat znika sam po powrocie sieci.
 
 ## 7. Potwierdzenie działania destrukcyjnego
@@ -111,6 +111,6 @@ Powiadomienia systemowe (push) – poza MVP.
 
 ## 14. Wspólna reguła: kolor nigdy sam
 
-Stan i znaczenie zawsze przekazuje także kształt, ikona lub tekst: wybrany chip/segment – ikona `check`;
-aktywna zakładka – wskaźnik; błąd – ikona `error` i tekst; radio – wypełnione koło.
+Stan i znaczenie zawsze przekazuje także kształt, ikona lub tekst: wybrany chip/segment – ikona `tick-02`;
+aktywna zakładka – wskaźnik; błąd – ikona `alert-circle` i tekst; radio – wypełnione koło.
 

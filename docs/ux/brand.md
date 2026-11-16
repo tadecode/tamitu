@@ -56,8 +56,7 @@ Domyślna skala M3: xs 4 · s 8 · m 12 · l 16 · xl 28 dp; przyciski i chipy w
 (pill) wg M3. Wrażenie: uporządkowane, „aplikacyjne".
 
 ### Ikonografia
-**Material Symbols Outlined** (wypełnienie 0, grubość 400, rozmiar optyczny 24). Wersja wypełniona
-(fill 1) tylko dla stanu aktywnego (np. wybrany tryb trasy). Ikony zawsze z etykietą tekstową lub opisem dla TalkBack.
+**Hugeicons, darmowy zestaw Stroke Rounded** (kreska 1,5 dp, zaokrąglone zakończenia) – decyzja właściciela 2026-11-16 (UX14), zastępuje pierwotnie proponowane Material Symbols Outlined. Licencja i pakiet do potwierdzenia przez architekta (UX15). Zaokrąglona kreska łagodzi rzeczowy charakter wariantu A. Ikony zawsze z etykietą tekstową lub opisem dla TalkBack. Słownik i ikony wbudowane w widgety M3: `design-system.md` pkt 8.
 
 ### Przykładowe użycie
 Lista planów na tle `surface`, plany jako karty `surfaceContainerLow` z tytułem miasta (titleMedium)

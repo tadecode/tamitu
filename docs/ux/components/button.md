@@ -15,8 +15,8 @@ Nie służy do: nawigacji między ekranami listy (to element listy/karta), wybor
 | Tonalny (tonal) | ważne drugorzędne: „Spróbuj ponownie" w stanie błędu | `secondaryContainer` / `onSecondaryContainer` |
 | Obrysowany (outlined) | alternatywa równorzędna lub drugorzędna: „Anuluj generowanie"; **pary równorzędne w zgodach** (EK-06) | obrys `outline`, tekst `primary` |
 | Tekstowy (text) | najmniej ważne: działania w dialogu i snackbarze, „Polityka prywatności" | tekst `primary` |
-| Destrukcyjny | „Usuń plan", „Usuń konto" (potwierdzenie) | wypełniony `error`/`onError` **tylko** w dialogu/ekranie potwierdzenia; poza nim outlined z tekstem `error` i ikoną `delete` |
-| Z ikoną | gdy ikona pomaga rozpoznać działanie (`directions`, `open_in_new`) | ikona 18 dp przed tekstem; tekst zawsze obecny |
+| Destrukcyjny | „Usuń plan", „Usuń konto" (potwierdzenie) | wypełniony `error`/`onError` **tylko** w dialogu/ekranie potwierdzenia; poza nim outlined z tekstem `error` i ikoną `delete-02` |
+| Z ikoną | gdy ikona pomaga rozpoznać działanie (`route-02`, `link-square-02`) | ikona 18 dp przed tekstem; tekst zawsze obecny |
 
 ## Stany
 | Stan | Wygląd i zachowanie |

@@ -32,7 +32,7 @@ Współczynniki policzone wzorem WCAG (luminancja względna sRGB) dla tokenów z
 Wszystkie pary spełniają próg. `outlineVariant` (separatory, oś czasu, obrys niewybranego chipa) jest dekoracyjny – granicę elementu wyznacza tekst. Po implementacji: ponowna kontrola na zrzutach (Accessibility Scanner) – zadanie qa.
 
 ## 2. Kolor nie jest jedynym nośnikiem znaczenia
-Wybór: ikona `check` (chip, segment), wypełnione koło (radio), wskaźnik (zakładka). Błąd: ikona `error` + tekst. Stan zgody: tekst („Wyrażona", „Wycofana") + data. Działania destrukcyjne: tekst z czasownikiem i ikona `delete`.
+Wybór: ikona `tick-02` (chip, segment), wypełnione koło (radio), wskaźnik (zakładka). Błąd: ikona `alert-circle` + tekst. Stan zgody: tekst („Wyrażona", „Wycofana") + data. Działania destrukcyjne: tekst z czasownikiem i ikona `delete-02`.
 
 ## 3. Cele dotyku
 - Minimum 48 × 48 dp dla każdego elementu interaktywnego; odstęp ≥ 8 dp.
