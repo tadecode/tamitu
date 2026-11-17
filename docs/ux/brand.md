@@ -170,7 +170,7 @@ Kontrast trzeba ponownie sprawdzić po implementacji motywu (zrzuty ekranu) i wp
 - **Ton komunikacji:** zwracamy się na „Ty" (PL) / „you" (EN), krótkie zdania, czasowniki w przyciskach
   („Generuj plan", „Usuń plan"), bez wykrzykników i żargonu technicznego; o danych i AI mówimy wprost.
   Propozycja do potwierdzenia (UX6).
-- **Logo i ikona aplikacji:** brak. Do czasu dostarczenia przez właściciela: znak słowny „Tamitu"
+- **Logo i ikona aplikacji:** **projekt od właściciela (2026-11-17):** `assets/tamitu-logo.svg` (znak + napis) i `assets/tamitu-mark.svg` (sam znak: morska trasa łącząca dwa miejsca, koralowy znacznik celu – kolory `primary` i `tertiary` wariantu A). Do dopracowania przed użyciem (UX2): napis jako krzywe zamiast `<text>`; wielkość liter („tamitu" vs „Tamitu" w znaku słownym EK-02); wariant ciemny (w obecnych kolorach 2,9:1 na tle ciemnym – poniżej 3:1; propozycja: `#80D5D4` / `#FFB5A0`); specyfikacja ikony adaptacyjnej Androida (warstwa 108 dp, strefa bezpieczna 66 dp, wersja monochromatyczna). Poprzednio: brak. Do czasu dostarczenia przez właściciela: znak słowny „Tamitu"
   zapisany stylem headlineSmall w kolorze primary i tymczasowa ikona adaptacyjna (litera „T" w kolorze
   onPrimary na tle primary) – tylko do wersji testowych. Pytanie UX2.
 - **Ilustracje:** brak w MVP; stany puste i błędy używają dużej ikony Material (48 dp) – zero kosztu,

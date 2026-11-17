@@ -248,8 +248,6 @@ body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:colu
 
 /* znak słowny */
 .wordmark { font-size:2.25em; line-height:1.222; color:var(--primary); margin:0; font-weight:400; }
-.travel-hero { display:block; width:100%; height:150px; object-fit:cover; border-radius:20px; margin:0 0 18px; box-shadow:0 6px 16px rgba(18,64,61,.16); }
-@media (max-height:700px) { .travel-hero { height:118px; margin-bottom:12px; } }
 
 /* adnotacje makiety (nie część UI) */
 .anno { position:absolute; z-index:9; background:#FFE066; color:#222; font:12px/1.3 system-ui, sans-serif; padding:2px 6px; border-radius:4px; }
@@ -257,7 +255,16 @@ body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:colu
 
 /* paleta w accessibility / podglądzie */
 .swatch-host { display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:8px; }
-</style><script data-kit>
+</style><style>
+/* EK-02 – styl ekranowy (poza blokiem data-kit, który nadpisuje synchronizacja _kit.css).
+   Ilustracja dekoracyjna: źródło docs/ux/assets/ek-02-travel-hero.svg, tu wklejona (makieta samodzielna). */
+.travel-hero { display:block; width:100%; height:144px; border-radius:var(--r-l); margin:0 0 16px;
+  background:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjAwIDY4MCIgYXJpYS1oaWRkZW49InRydWUiIGZvY3VzYWJsZT0iZmFsc2UiPgogIDwhLS0gSWx1c3RyYWNqYSBkZWtvcmFjeWpuYSBFSy0wMiAoZGFjaHkgbmFkIHJ6ZWvEhSwgdHJhbXdhaiwgemFjaMOzZCBzxYJvxYRjYSkuIEJleiB0ZWtzdHUgaSBiZXogaW5mb3JtYWNqaSBkbyBvZGN6eXRhbmlhIHByemV6IFRhbGtCYWNrLiAtLT4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0ic2t5IiB4MT0iMCIgeTE9IjAiIHgyPSIwIiB5Mj0iMSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzlGRTFERSIvPgogICAgICA8c3RvcCBvZmZzZXQ9Ii42OCIgc3RvcC1jb2xvcj0iI0Y4RDRBRSIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNGMkI0OTQiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9IndhdGVyIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+CiAgICAgIDxzdG9wIHN0b3AtY29sb3I9IiM1NUFFQjAiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMTk3QjgyIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogICAgPGxpbmVhckdyYWRpZW50IGlkPSJoaWxsIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+CiAgICAgIDxzdG9wIHN0b3AtY29sb3I9IiM1RTlBODIiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMkU3MDY3Ii8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogICAgPGNsaXBQYXRoIGlkPSJmcmFtZSI+PHJlY3Qgd2lkdGg9IjEyMDAiIGhlaWdodD0iNjgwIiByeD0iNDIiLz48L2NsaXBQYXRoPgogICAgPGZpbHRlciBpZD0ic2hhZG93IiB4PSItLjIiIHk9Ii0uMiIgd2lkdGg9IjEuNCIgaGVpZ2h0PSIxLjUiPgogICAgICA8ZmVEcm9wU2hhZG93IGR4PSIwIiBkeT0iMTIiIHN0ZERldmlhdGlvbj0iMTIiIGZsb29kLWNvbG9yPSIjMTczQzNBIiBmbG9vZC1vcGFjaXR5PSIuMTgiLz4KICAgIDwvZmlsdGVyPgogIDwvZGVmcz4KICA8ZyBjbGlwLXBhdGg9InVybCgjZnJhbWUpIj4KICAgIDxyZWN0IHdpZHRoPSIxMjAwIiBoZWlnaHQ9IjY4MCIgZmlsbD0idXJsKCNza3kpIi8+CiAgICA8Y2lyY2xlIGN4PSI4ODMiIGN5PSIyMDUiIHI9IjEwMyIgZmlsbD0iI0Y3QjQ1RiIgb3BhY2l0eT0iLjk2Ii8+CiAgICA8Y2lyY2xlIGN4PSI4ODMiIGN5PSIyMDUiIHI9IjEzMiIgZmlsbD0iI0Y3QjQ1RiIgb3BhY2l0eT0iLjE2Ii8+CiAgICA8cGF0aCBkPSJNMCAzMzJjMTI3LTgxIDIxOC02NyAzMzAtMTUgMTIwLTkxIDI1NS0xMDcgMzgxLTE2IDEyNy05NiAzMDAtNzMgNDg5IDIzdjE1NkgwWiIgZmlsbD0iIzkxQjk5RCIvPgogICAgPHBhdGggZD0iTTAgMzgyYzE4MC05OSAzMTctNzggNDQ2LTEgMTE1LTc1IDIzMy03NiAzNjAtNiAxMjYtOTIgMjY0LTc3IDM5NC01djE1N0gwWiIgZmlsbD0idXJsKCNoaWxsKSIvPgogICAgPHBhdGggZD0iTTAgNDM3YzE3My00NyAzMTMtNDcgNDQ4IDAgMTUxLTUzIDMwMy00OSA0NDkgNSAxMTAtMzAgMjExLTI5IDMwMy00djI0MkgwWiIgZmlsbD0idXJsKCN3YXRlcikiLz4KICAgIDxwYXRoIGQ9Ik0wIDQ3MmMxNzUtMjkgMzE5LTI3IDQ1MSA0bTgyIDEwYzE0MS0yNCAyNjMtMjEgMzc3IDhtLTc3NSA0NGMxMjQtMTggMjIxLTE1IDMwNyA1bTI3MCAxNWMxMzMtMjMgMjcwLTE3IDQxMSAxNyIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjQjhFM0Q3IiBzdHJva2Utd2lkdGg9IjgiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgb3BhY2l0eT0iLjYyIi8+CiAgICA8IS0tIExpc2JvbiByb29mdG9wcywgc3RlcHBpbmcgZG93biB0aGUgaGlsbHNpZGUgLS0+CiAgICA8ZyBmaWx0ZXI9InVybCgjc2hhZG93KSI+CiAgICAgIDxwYXRoIGQ9Ik0wIDQxNGgxNzJ2MTY2SDB6IiBmaWxsPSIjRjVFNkNDIi8+PHBhdGggZD0ibS0xNiA0MTYgMTAyLTgyIDExMSA4MnoiIGZpbGw9IiNCNzVENDgiLz4KICAgICAgPHBhdGggZD0iTTEwNiAzNjRoMTYwdjE2OEgxMDZ6IiBmaWxsPSIjRjZEOEI3Ii8+PHBhdGggZD0ibTkxIDM2NiA5NS03MSA5NCA3MXoiIGZpbGw9IiNDNzZBNTEiLz4KICAgICAgPHBhdGggZD0iTTIyNSA0MTVoMjAydjE1M0gyMjV6IiBmaWxsPSIjRkFFQkQyIi8+PHBhdGggZD0ibTIxMCA0MTcgMTEyLTg0IDEyMSA4NHoiIGZpbGw9IiNBOTUxNDMiLz4KICAgICAgPHBhdGggZD0iTTM2MiAzNTJoMTYzdjE3M0gzNjJ6IiBmaWxsPSIjRjVEMEFDIi8+PHBhdGggZD0ibTM0NSAzNTQgOTgtODAgMTAwIDgweiIgZmlsbD0iI0M3NkI0QiIvPgogICAgICA8cGF0aCBkPSJNNTAwIDQwMmgxOTN2MTUzSDUwMHoiIGZpbGw9IiNGM0UwQzYiLz48cGF0aCBkPSJtNDg1IDQwNCAxMDYtNzcgMTE3IDc3eiIgZmlsbD0iI0I2NUE0NSIvPgogICAgICA8cGF0aCBkPSJNNjYwIDM0NmgxNjh2MTc1SDY2MHoiIGZpbGw9IiNGN0RBQjkiLz48cGF0aCBkPSJtNjQ0IDM0OCA5OS04MSAxMDEgODF6IiBmaWxsPSIjQzM2NzRDIi8+CiAgICAgIDxwYXRoIGQ9Ik04MTAgMzkyaDE3OHYxNjNIODEweiIgZmlsbD0iI0Y4RTdDQyIvPjxwYXRoIGQ9Im03OTQgMzk0IDEwMC03NSAxMTAgNzV6IiBmaWxsPSIjQjg1ODQ2Ii8+CiAgICAgIDxwYXRoIGQ9Ik05NjUgMzQ4aDE4MHYxOTRIOTY1eiIgZmlsbD0iI0Y0RDNCMyIvPjxwYXRoIGQ9Im05NDcgMzUwIDEwNS04NyAxMTIgODd6IiBmaWxsPSIjQzg2QzUyIi8+CiAgICAgIDxwYXRoIGQ9Ik0xMDk2IDQwMWgxNTB2MTc1aC0xNTB6IiBmaWxsPSIjRjhFOEQwIi8+PHBhdGggZD0ibTEwODAgNDAzIDkxLTc2IDkxIDc2eiIgZmlsbD0iI0E5NEY0MyIvPgogICAgPC9nPgogICAgPCEtLSB3aW5kb3dzIC0tPgogICAgPGcgZmlsbD0iIzRFNzc3NCIgb3BhY2l0eT0iLjg4Ij4KICAgICAgPHBhdGggZD0iTTM1IDQ2MGgyOXY0NEgzNXpNMTEyIDQyMGgyNXYzNmgtMjV6TTE2MCA0MjBoMjV2MzZoLTI1ek0yNTUgNDU4aDMxdjQyaC0zMXpNMzM1IDQ1NWgzMXY0MmgtMzF6TTM5NSA0MDNoMjR2MzdoLTI0ek00NjQgNDAzaDI0djM3aC0yNHpNNTM5IDQ0NGgyNnY0MGgtMjZ6TTYyMSA0NDRoMjZ2NDBoLTI2ek02OTQgMzk0aDI1djM4aC0yNXpNNzYwIDM5NGgyNXYzOGgtMjV6TTg0OCA0MzdoMjh2NDBoLTI4ek05MTkgNDM3aDI4djQwaC0yOHpNMTAwMCAzOTVoMjZ2NDBoLTI2ek0xMDgwIDQ0NGgyNnY0MGgtMjZ6TTExNTAgNDQ0aDI2djQwaC0yNnoiLz4KICAgIDwvZz4KICAgIDwhLS0gYnJpZGdlIG9uIHRoZSBmYXIgc2hvcmUgLS0+CiAgICA8cGF0aCBkPSJNNjkwIDQzMGg0NjJNNzQyIDQzMGwyMC04Mm0zMzAgODItMjAtODJNNzUwIDM0OGgzMjNtLTI4NSAwdjgybTI0Ny04MnY4MiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRTlDN0E0IiBzdHJva2Utd2lkdGg9IjkiIG9wYWNpdHk9Ii44NSIvPgogICAgPHBhdGggZD0iTTc1NSAzNDhjMzAtNzEgNzctNzEgMTA3IDBtMTA0IDBjMzAtNzEgNzctNzEgMTA3IDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0U5QzdBNCIgc3Ryb2tlLXdpZHRoPSI3IiBvcGFjaXR5PSIuODUiLz4KICAgIDwhLS0gZm9yZWdyb3VuZCB0cmFtIGFuZCB0cmFjayAtLT4KICAgIDxwYXRoIGQ9Ik0wIDYwMmMyMDUtNzEgMzY1LTkxIDU0MS02MXMzMzUgMzEgNjU5LTg5IiBmaWxsPSJub25lIiBzdHJva2U9IiNDNEEyOEIiIHN0cm9rZS13aWR0aD0iMTgiIG9wYWNpdHk9Ii41NSIvPgogICAgPGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMzEwIDQwOCkgcm90YXRlKC04KSIgZmlsdGVyPSJ1cmwoI3NoYWRvdykiPgogICAgICA8cGF0aCBkPSJNMjYgMjFjMC0xNCAxMi0yNSAyNy0yNWgxNDFjMTggMCAzMSAxMyAzMSAzMHYxMThIMjZ6IiBmaWxsPSIjRjJCNjQyIi8+CiAgICAgIDxwYXRoIGQ9Ik00NiAxNWg1MHY1MUg0NnpNMTExIDE1aDk0djUxaC05NHoiIGZpbGw9IiM0RDc3NzUiLz4KICAgICAgPHBhdGggZD0iTTM0IDgwaDE4NHYzM0gzNHoiIGZpbGw9IiNFODhDNDUiLz4KICAgICAgPHBhdGggZD0iTTUzIDEyMGgxNDV2MjRINTN6IiBmaWxsPSIjRjdFM0JFIi8+CiAgICAgIDxjaXJjbGUgY3g9IjY3IiBjeT0iMTUxIiByPSIxOCIgZmlsbD0iIzI2M0YzRSIvPjxjaXJjbGUgY3g9IjY3IiBjeT0iMTUxIiByPSI3IiBmaWxsPSIjRDRFMEQ3Ii8+CiAgICAgIDxjaXJjbGUgY3g9IjE4MyIgY3k9IjE1MSIgcj0iMTgiIGZpbGw9IiMyNjNGM0UiLz48Y2lyY2xlIGN4PSIxODMiIGN5PSIxNTEiIHI9IjciIGZpbGw9IiNENEUwRDciLz4KICAgICAgPHBhdGggZD0iTTk1LTcgMTI3LTMzbS0xOCAzNCAxOC0zNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNDA1RTVCIiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogICAgICA8cGF0aCBkPSJNMjUgOTJoLTIwbTIyNSAwaDE4IiBzdHJva2U9IiNGN0UzQkUiIHN0cm9rZS13aWR0aD0iOCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgICA8L2c+CiAgICA8IS0tIHNtYWxsIGJpcmRzIGFuZCByb3V0ZS1saWtlIHRyYXZlbCB0cmFpbCAtLT4KICAgIDxwYXRoIGQ9Ik0xOTMgMTgxcTE4LTE3IDM2IDAgMTgtMTcgMzYgMG00MC0zN3ExNC0xMyAyOCAwIDE0LTEzIDI4IDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzM1NkU3MCIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIG9wYWNpdHk9Ii43NSIvPgogICAgPHBhdGggZD0iTTExMiAyNjBjNTQtMzYgMTA0LTM4IDE0Ny03IiBmaWxsPSJub25lIiBzdHJva2U9IiNGRkY3RTkiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWRhc2hhcnJheT0iMiAxNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBvcGFjaXR5PSIuOSIvPgogICAgPHBhdGggZD0ibTI0OCAyNDEgMTggMTItMTkgOSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZGN0U5IiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgogIDwvZz4KPC9zdmc+Cg==") center / cover no-repeat; }
+body[data-theme="dark"] .travel-hero { filter:brightness(.78) saturate(.9); } /* propozycja ux – docelowo wariant ciemny grafiki */
+body[data-scale="150"] .travel-hero { height:96px; }
+body[data-scale="200"] .travel-hero { display:none; } /* przy 200% pierwszeństwo ma informacja o prywatności */
+</style>
+<script data-kit>
 /* Tamitu – wspólny skrypt makiet (P3-14b krok 2). Dokumentacja, nie kod aplikacji.
    - przełączniki: język interfejsu PL/EN, motyw jasny/ciemny, skala tekstu 100/150/200%;
    - <t-x pl="…" en="…"></t-x> – tekst w języku interfejsu; pary <span class="l" lang="pl|en"> – tekst z formatowaniem;
@@ -366,7 +373,7 @@ body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:colu
 <header class="pg-head"><h1>EK-02 Ekran startowy: prywatność i logowanie</h1><span class="meta">US-001, US-003 · spec: <a href="../screens/ek-02.md">screens/ek-02.md</a> · <span class="pg-anno">przegląd security</span></span></header>
 <main class="pg-main">
 <nav class="pg-nav"></nav>
-<p class="pg-note">Komponenty: CMP-07, CMP-13, CMP-09, CMP-02, CMP-14. Zgoda na AI nie jest tu pytana (tylko informacja). Przycisk logowania pokazany jako tekst – wygląd zgodny z wytycznymi Google sprawdzi mobile-dev. Przełącznik „Język UI” na górze strony = przełącznik PL/EN na ekranie.</p>
+<p class="pg-note">Komponenty: CMP-07, CMP-13, CMP-09, CMP-02, CMP-14. Zgoda na AI nie jest tu pytana (tylko informacja). Przycisk logowania pokazany jako tekst – wygląd zgodny z wytycznymi Google sprawdzi mobile-dev. Przełącznik „Język UI” na górze strony = przełącznik PL/EN na ekranie. <b>v0.3:</b> ilustracja dekoracyjna (właściciel, 2026-11-17) – w ciemnym motywie przygaszona (propozycja), przy tekście 150% niższa, przy 200% ukryta.</p>
 <div class="states">
 
 <!-- wspólny szablon treści powtórzony w stanach -->
@@ -375,7 +382,7 @@ body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:colu
   <div class="scroll pad">
     <div style="display:flex;justify-content:flex-end;padding-top:8px"><div class="seg" style="width:136px"><div class="on"><i-c n="check"></i-c>PL</div><div>EN</div></div></div>
     <div class="gap-24"></div>
-    <img class="travel-hero" src="../assets/ek-02-travel-hero.svg" alt="" aria-hidden="true" />
+    <div class="travel-hero" aria-hidden="true"></div>
     <p class="wordmark">Tamitu</p>
     <div class="gap-8"></div>
     <p class="body-l"><t-x pl="Plan podróży dzień po dniu – tam i tu, w jednym miejscu." en="Your day-by-day travel plan – here and there, in one place."></t-x></p>
@@ -396,7 +403,7 @@ body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:colu
   <div class="scroll pad">
     <div style="display:flex;justify-content:flex-end;padding-top:8px"><div class="seg" style="width:136px"><div>PL</div><div class="on"><i-c n="check"></i-c>EN</div></div></div>
     <div class="gap-24"></div>
-    <img class="travel-hero" src="../assets/ek-02-travel-hero.svg" alt="" aria-hidden="true" />
+    <div class="travel-hero" aria-hidden="true"></div>
     <p class="wordmark">Tamitu</p>
     <div class="gap-8"></div>
     <p class="body-l"><t-x pl="Plan podróży dzień po dniu – tam i tu, w jednym miejscu." en="Your day-by-day travel plan – here and there, in one place."></t-x></p>
@@ -414,7 +421,7 @@ body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:colu
   <div class="scroll pad">
     <div style="display:flex;justify-content:flex-end;padding-top:8px"><div class="seg" style="width:136px;opacity:.38"><div class="on"><i-c n="check"></i-c>PL</div><div>EN</div></div></div>
     <div class="gap-24"></div>
-    <img class="travel-hero" src="../assets/ek-02-travel-hero.svg" alt="" aria-hidden="true" />
+    <div class="travel-hero" aria-hidden="true"></div>
     <p class="wordmark">Tamitu</p>
     <div class="gap-8"></div>
     <p class="body-l"><t-x pl="Plan podróży dzień po dniu – tam i tu, w jednym miejscu." en="Your day-by-day travel plan – here and there, in one place."></t-x></p>
@@ -431,7 +438,7 @@ body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:colu
   <div class="scroll pad">
     <div style="display:flex;justify-content:flex-end;padding-top:8px"><div class="seg" style="width:136px;opacity:.38"><div class="on"><i-c n="check"></i-c>PL</div><div>EN</div></div></div>
     <div class="gap-24"></div>
-    <img class="travel-hero" src="../assets/ek-02-travel-hero.svg" alt="" aria-hidden="true" />
+    <div class="travel-hero" aria-hidden="true"></div>
     <p class="wordmark">Tamitu</p>
     <div class="gap-8"></div>
     <p class="body-l"><t-x pl="Plan podróży dzień po dniu – tam i tu, w jednym miejscu." en="Your day-by-day travel plan – here and there, in one place."></t-x></p>
@@ -448,7 +455,7 @@ body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:colu
   <div class="scroll pad">
     <div style="display:flex;justify-content:flex-end;padding-top:8px"><div class="seg" style="width:136px"><div class="on"><i-c n="check"></i-c>PL</div><div>EN</div></div></div>
     <div class="gap-24"></div>
-    <img class="travel-hero" src="../assets/ek-02-travel-hero.svg" alt="" aria-hidden="true" />
+    <div class="travel-hero" aria-hidden="true"></div>
     <p class="wordmark">Tamitu</p>
     <div class="gap-8"></div>
     <p class="body-l"><t-x pl="Plan podróży dzień po dniu – tam i tu, w jednym miejscu." en="Your day-by-day travel plan – here and there, in one place."></t-x></p>
