@@ -13,6 +13,7 @@ import {
 } from "./config.js";
 import {
   consentDocPath,
+  latestConsentFromDoc,
   storedReceivedAt,
   toStoredConsent,
   type ConsentType,
@@ -56,14 +57,15 @@ async function latestConsent(uid: string, type: ConsentType): Promise<LatestCons
     .orderBy("receivedAt", "desc")
     .limit(1)
     .get();
-  const d = snap.docs[0]?.data();
-  if (!d || typeof d["granted"] !== "boolean" || typeof d["policyVersion"] !== "string") return undefined;
-  return { granted: d["granted"], policyVersion: d["policyVersion"] };
+  return latestConsentFromDoc(snap.docs[0]?.data());
 }
 
+/** Both reads in parallel (review PR #51 #5a): one round trip instead of two. */
 async function loadLatestConsents(uid: string): Promise<LatestConsents> {
-  const privacy = await latestConsent(uid, "privacy_policy");
-  const ai = await latestConsent(uid, "ai_processing");
+  const [privacy, ai] = await Promise.all([
+    latestConsent(uid, "privacy_policy"),
+    latestConsent(uid, "ai_processing"),
+  ]);
   return { privacy, ai };
 }
 
