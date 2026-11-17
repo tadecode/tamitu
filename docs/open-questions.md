@@ -181,3 +181,9 @@ Szczegóły: `docs/security/reviews/2026-11-16-p3-14c-ekrany.md`. Do czasu odpow
 | QA12 | `consent_required` bez `details.consentType` lub z nieznaną wartością – zachowanie klienta? | qa → architect | otwarte | Jak `internal` (komunikat ogólny), bez przejścia do EK-03/EK-06 i bez pętli | ERR-06 |
 | QA13 | Testy integracyjne i ręczne z logowaniem przed P3-03: czy dopuszczamy adapter testowy logowania Google (spreparowany token dla emulatora Auth), dostępny tylko w testach / flavorze `dev` i nieobecny w buildzie `prod`? | qa → architect, security | otwarte | Tak: interfejs logowania w `features/auth/data` z implementacją testową w `integration_test/`; test, że build `prod` jej nie zawiera | SIGN-11, testy I i M z logowaniem |
 | QA14 | Po wygaśnięciu sesji lub wylogowaniu użytkownik z aktualną akceptacją znów zaznacza pole na EK-02 i powstaje nowy rekord `privacy_policy`. Zamierzone? | qa → security | otwarte | Tak (CMP-09: „zawsze niezaznaczony"; historia tylko dopisywanie) | SES-01, OUT-03 |
+
+## Konfiguracja środowisk (P3-03), orchestrator, 2026-11-17
+
+| # | Pytanie | Zadaje | Status | Propozycja domyślna | Skutek |
+|---|---|---|---|---|---|
+| O1 | Tabela „Data residency" Vertex AI (stan 2026-11-17): dla `gemini-2.5-flash`, `gemini-2.5-flash-lite` i nowszych Flash przetwarzanie ML ma gwarancję w multi-regionie `eu` (przy wywołaniu z regionu UE), ale **nie** w `europe-west4` (NL). ADR-0001 pkt 1 mówi o przetwarzaniu w `europe-west4`. Czy poprawić ADR (nowy, zastępujący) na „przetwarzanie ML w UE, wywołanie z `europe-west4`" albo przejść na punkt `eu`? | orchestrator → architect, security | otwarte | Region funkcji i Firestore bez zmian (`europe-west4`); wywołanie Vertex z `europe-west4`, w polityce „przetwarzanie w UE"; zakaz punktu `global` zostaje; SEC-15 poz. 3 otwarta | ADR-0001, SEC-15, SEC-10; runbook `.farm/runbooks/P3-03-firebase.md` |
