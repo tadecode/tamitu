@@ -39,7 +39,7 @@ Wniosek: region `europe-west4` bez zmian. Korekta sformułowania ADR-0001 → py
 | 6 | Auth (tylko Google), aplikacje Android, SHA-1/SHA-256 | zrobione (prod bez SHA) | 2026-11-17 | Google włączone w obu projektach (inni dostawcy wyłączeni); aplikacje Android zarejestrowane; SHA klucza debug tylko w dev; prod czeka na klucz wydań / Play App Signing |
 | 7 | App Check (Play Integrity), tokeny debug poza repo | zrobione (dev); prod otwarte | 2026-11-17 | dev: Play Integrity zarejestrowane, token debug `owner-laptop` (wartość u właściciela w menedżerze haseł); API `firebaseappcheck`, `playintegrity` włączone w obu projektach; prod: rejestracja po SHA klucza wydań + Play Console |
 | 8 | Firestore Native, reguły `deny all`, `config/runtime` | zrobione (bez indeksów/TTL) | 2026-11-17 | Bazy `(default)` w `europe-west4`, Native, PITR wyłączone, ochrona przed usunięciem w prod; reguły `deny all` z repo; `config/runtime` z bezpiecznymi wartościami; indeksy i TTL wstrzymane (O4) |
-| 9 | Vertex AI API, warunki przetwarzania danych (właściciel) | – | | |
+| 9 | Vertex AI API, warunki przetwarzania danych (właściciel) | w toku | 2026-11-18 | API `aiplatform` włączone (etap 5); Privacy & Security: organ nadzorczy – Polska (UODO); SCC nie potwierdzane (adres rozliczeniowy w UE); SEC-15 otwarte |
 | 10 | `google-services.json` lokalnie i w CI | – | | |
 
 ## Szczegóły etapów
@@ -160,3 +160,9 @@ cd backend && firebase deploy --only firestore:rules --project=<P>
 | `aiConsentVersionCurrent` | `ai-consent-v1` |
 
 Zmiany `config/runtime` – tylko właściciel z 2FA (ADR-0002 Aneks A pkt 7, SEC-16).
+
+### Etap 9 – Vertex AI i warunki (właściciel czyta i decyduje sam)
+- Konsola → IAM & Admin → **Privacy & Security** (poziom organizacji): 2026-11-18 właściciel wybrał **organ nadzorczy: Polska (UODO)**.
+- „Standardowe klauzule umowne" (przycisk dla klientów z adresem rozliczeniowym poza EMEA) – **nie potwierdzono**: adres rozliczeniowy w Polsce, umowa z Google Cloud EMEA; ewentualna wątpliwość → lista do prawnika (S1).
+- Do odnotowania po lekturze właściciela: aneks o przetwarzaniu danych (CDPA), kontakty RODO, dokumentacja „data governance" Vertex (brak trenowania – ADR-0001 SEC-15 poz. 2), tabela „Data residency" (poz. 3, pytanie O1).
+- SEC-15 **pozostaje otwarte** do potwierdzenia wszystkich pozycji listy z ADR-0001; `ALLOW_REAL_DATA=false`.
