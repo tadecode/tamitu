@@ -28,8 +28,10 @@
    (maks. 2 razy, potem eskalacja).
 6. security: przegląd, jeśli zadanie dotyka danych osobowych, sieci,
    uwierzytelniania, reklam lub płatności (pogłębia ustalenia recenzenta).
-7. orchestrator: aktualizacja backlogu, statusu i dziennika; zapisuje prośbę
-   o merge w `.farm/requests/` po spełnieniu definicji ukończenia.
+7. orchestrator: po merge przenosi zgłoszenia ról (status zadań, nowe zadania, pytania – sekcja „Dla orkiestratora”
+   w plikach przekazania) zbiorczo do `docs/backlog.md` i `docs/open-questions.md` osobnym małym PR-em,
+   aktualizuje status; zapisuje prośbę o merge w `.farm/requests/` po spełnieniu definicji ukończenia.
+   Role nie edytują backlogu ani pytań otwartych; każdy wpis dziennika to osobny plik (`handoff.md`).
 8. github-steward (osobna sesja): merguje (`--squash`) dopiero gdy CI zielone,
    właściciel zatwierdził PR, raporty recenzenta i QA są w porządku.
 
@@ -41,4 +43,8 @@
   nie wymagają reviewer. Brak raportu reviewer = PR nie jest gotowy do merge.
 - Do następnej fazy tylko po zatwierdzeniu bramki przez człowieka
   (dotyczy G1, G2, G5).
+- **Wspólne pliki (decyzja właściciela 2026-11-17):** żeby PR-y nie kolidowały, dziennik to osobne pliki
+  (`.farm/log/<data>/<HHMM>-<rola>-<zadanie>.md`), a `docs/backlog.md` i `docs/open-questions.md` zmienia tylko
+  orkiestrator po merge (zgłoszenia w pliku przekazania). Okres przejściowy i szczegóły: `handoff.md`;
+  zmiany uprawnień ról i `CLAUDE.md`: `.farm/requests/FARM-006-shared-files.md`.
 - Zmiana zakresu po G1 lub architektury po G2 = nowy przebieg bramki.
