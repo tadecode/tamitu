@@ -70,6 +70,10 @@ Zadanie przykładowe T-001 (szkielet Flutter) powstanie w fazie 3 po G2.
 | P3-14e | Wymagania dla „Usuń wszystkie plany" (U7; US-009/US-002), wyboru motywu (UX4) i zapamiętania trybu trasy (UX11); sprawdzić wpływ na rejestr danych (security) | analyst | todo |
 | P3-14f | Zmiany ekranów: EK-09 (zapamiętany tryb), EK-12 (motyw, język), EK-13/EK-12 („Usuń wszystkie plany" z potwierdzeniem), EK-04/EK-13 (informacja „plany tylko na tym urządzeniu"); potem ponowne zatwierdzenie właściciela | ux | todo (po P3-14e) |
 | P3-14g | Ustawienia lokalne (motyw, tryb trasy) i masowe usuwanie planów w modelu danych/ADR-0005 (bez nowych danych osobowych?) | architect | todo |
+| REV-01 | Przegląd wsteczny PR #51 (ADR-0011 pkt 3–5, ADR-0012) wg kroku przeglądu; raport `docs/reviews/PR-51.md` | reviewer | w toku |
+| REV-02 | Przegląd wsteczny PR #15 i #17 (szkielety) | reviewer | propozycja – do decyzji właściciela |
+
+**Decyzja właściciela 2026-11-17 (krok przeglądu):** każdy PR z kodem (Flutter, backend) przechodzi: zielone CI → przegląd roli `reviewer` (raport `docs/reviews/PR-<nr>.md` + komentarz w PR) → poprawki autora przy werdykcie „zmiany wymagane” → zatwierdzenie i merge przez właściciela. Zadania z ekranami: dodatkowo `qa` weryfikuje kryteria akceptacji przed `done`. PR-y z samą dokumentacją – bez reviewer. Powód: PR #15, #17, #51 weszły bez przeglądu. Zasada w `.farm/workflows/phases.md`.
 
 **Zatwierdzenie ekranów 2026-11-16:** właściciel: „zatwierdzam ekrany EK-01, 02, 03, 06 i 16". EK-01, EK-02, EK-03, EK-06, EK-16 mają status `ux-ready` (EK-06 z tekstem roboczym `ai-consent-v1`; ostateczny `ai-consent-v2` po prawniku i SEC-15), więc P3-04 (logowanie Google, zgody, `recordConsent`) może ruszyć. EK-09, EK-12, EK-13 czekają na P3-14f.
 
