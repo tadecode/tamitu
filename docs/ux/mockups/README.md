@@ -2,8 +2,9 @@
 
 Dokumentacja do akceptacji – **nie kod aplikacji**. Wariant marki A „Lazur".
 
-- `ek-01.html` … `ek-16.html` – makieta każdego ekranu (specyfikacje w `../screens/`). Każdy plik jest **samodzielny**
-  (style i skrypt wklejone), otwiera się bezpośrednio w przeglądarce, bez sieci i zasobów zewnętrznych.
+- `ek-01.html` … `ek-16.html` – makieta każdego ekranu (specyfikacje w `../screens/`). Style i skrypt są wklejone do plików;
+  EK-02 używa lokalnej ilustracji `../assets/ek-02-travel-hero.svg`. Makiety otwierają się bezpośrednio w przeglądarce,
+  bez sieci i zewnętrznych zasobów.
 - Przełączniki na górze strony: **Język UI** PL/EN, **Motyw** jasny/ciemny, **Tekst** 100/150/200% (symulacja skali czcionki systemu).
   Stan startowy można ustawić w adresie: `#en`, `#dark`, `#s200` (np. `ek-06.html#en-dark`).
 - Każdy telefon to jeden stan ekranu (podpis pod nim). Żółte etykiety to adnotacje makiety, nie część interfejsu.

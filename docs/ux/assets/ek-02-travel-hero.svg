@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 680" role="img" aria-labelledby="title desc">
+  <title id="title">Podróż do Lizbony</title>
+  <desc id="desc">Ilustracja wektorowa z widokiem na lizbońskie dachy, rzekę Tag i żółty tramwaj o zachodzie słońca.</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9FE1DE"/>
+      <stop offset=".68" stop-color="#F8D4AE"/>
+      <stop offset="1" stop-color="#F2B494"/>
+    </linearGradient>
+    <linearGradient id="water" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#55AEB0"/>
+      <stop offset="1" stop-color="#197B82"/>
+    </linearGradient>
+    <linearGradient id="hill" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#5E9A82"/>
+      <stop offset="1" stop-color="#2E7067"/>
+    </linearGradient>
+    <clipPath id="frame"><rect width="1200" height="680" rx="42"/></clipPath>
+    <filter id="shadow" x="-.2" y="-.2" width="1.4" height="1.5">
+      <feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#173C3A" flood-opacity=".18"/>
+    </filter>
+  </defs>
+  <g clip-path="url(#frame)">
+    <rect width="1200" height="680" fill="url(#sky)"/>
+    <circle cx="883" cy="205" r="103" fill="#F7B45F" opacity=".96"/>
+    <circle cx="883" cy="205" r="132" fill="#F7B45F" opacity=".16"/>
+    <path d="M0 332c127-81 218-67 330-15 120-91 255-107 381-16 127-96 300-73 489 23v156H0Z" fill="#91B99D"/>
+    <path d="M0 382c180-99 317-78 446-1 115-75 233-76 360-6 126-92 264-77 394-5v157H0Z" fill="url(#hill)"/>
+    <path d="M0 437c173-47 313-47 448 0 151-53 303-49 449 5 110-30 211-29 303-4v242H0Z" fill="url(#water)"/>
+    <path d="M0 472c175-29 319-27 451 4m82 10c141-24 263-21 377 8m-775 44c124-18 221-15 307 5m270 15c133-23 270-17 411 17" fill="none" stroke="#B8E3D7" stroke-width="8" stroke-linecap="round" opacity=".62"/>
+    <!-- Lisbon rooftops, stepping down the hillside -->
+    <g filter="url(#shadow)">
+      <path d="M0 414h172v166H0z" fill="#F5E6CC"/><path d="m-16 416 102-82 111 82z" fill="#B75D48"/>
+      <path d="M106 364h160v168H106z" fill="#F6D8B7"/><path d="m91 366 95-71 94 71z" fill="#C76A51"/>
+      <path d="M225 415h202v153H225z" fill="#FAEBD2"/><path d="m210 417 112-84 121 84z" fill="#A95143"/>
+      <path d="M362 352h163v173H362z" fill="#F5D0AC"/><path d="m345 354 98-80 100 80z" fill="#C76B4B"/>
+      <path d="M500 402h193v153H500z" fill="#F3E0C6"/><path d="m485 404 106-77 117 77z" fill="#B65A45"/>
+      <path d="M660 346h168v175H660z" fill="#F7DAB9"/><path d="m644 348 99-81 101 81z" fill="#C3674C"/>
+      <path d="M810 392h178v163H810z" fill="#F8E7CC"/><path d="m794 394 100-75 110 75z" fill="#B85846"/>
+      <path d="M965 348h180v194H965z" fill="#F4D3B3"/><path d="m947 350 105-87 112 87z" fill="#C86C52"/>
+      <path d="M1096 401h150v175h-150z" fill="#F8E8D0"/><path d="m1080 403 91-76 91 76z" fill="#A94F43"/>
+    </g>
+    <!-- windows -->
+    <g fill="#4E7774" opacity=".88">
+      <path d="M35 460h29v44H35zM112 420h25v36h-25zM160 420h25v36h-25zM255 458h31v42h-31zM335 455h31v42h-31zM395 403h24v37h-24zM464 403h24v37h-24zM539 444h26v40h-26zM621 444h26v40h-26zM694 394h25v38h-25zM760 394h25v38h-25zM848 437h28v40h-28zM919 437h28v40h-28zM1000 395h26v40h-26zM1080 444h26v40h-26zM1150 444h26v40h-26z"/>
+    </g>
+    <!-- bridge on the far shore -->
+    <path d="M690 430h462M742 430l20-82m330 82-20-82M750 348h323m-285 0v82m247-82v82" fill="none" stroke="#E9C7A4" stroke-width="9" opacity=".85"/>
+    <path d="M755 348c30-71 77-71 107 0m104 0c30-71 77-71 107 0" fill="none" stroke="#E9C7A4" stroke-width="7" opacity=".85"/>
+    <!-- foreground tram and track -->
+    <path d="M0 602c205-71 365-91 541-61s335 31 659-89" fill="none" stroke="#C4A28B" stroke-width="18" opacity=".55"/>
+    <g transform="translate(310 408) rotate(-8)" filter="url(#shadow)">
+      <path d="M26 21c0-14 12-25 27-25h141c18 0 31 13 31 30v118H26z" fill="#F2B642"/>
+      <path d="M46 15h50v51H46zM111 15h94v51h-94z" fill="#4D7775"/>
+      <path d="M34 80h184v33H34z" fill="#E88C45"/>
+      <path d="M53 120h145v24H53z" fill="#F7E3BE"/>
+      <circle cx="67" cy="151" r="18" fill="#263F3E"/><circle cx="67" cy="151" r="7" fill="#D4E0D7"/>
+      <circle cx="183" cy="151" r="18" fill="#263F3E"/><circle cx="183" cy="151" r="7" fill="#D4E0D7"/>
+      <path d="M95-7 127-33m-18 34 18-34" fill="none" stroke="#405E5B" stroke-width="6" stroke-linecap="round"/>
+      <path d="M25 92h-20m225 0h18" stroke="#F7E3BE" stroke-width="8" stroke-linecap="round"/>
+    </g>
+    <!-- small birds and route-like travel trail -->
+    <path d="M193 181q18-17 36 0 18-17 36 0m40-37q14-13 28 0 14-13 28 0" fill="none" stroke="#356E70" stroke-width="5" stroke-linecap="round" opacity=".75"/>
+    <path d="M112 260c54-36 104-38 147-7" fill="none" stroke="#FFF7E9" stroke-width="5" stroke-dasharray="2 15" stroke-linecap="round" opacity=".9"/>
+    <path d="m248 241 18 12-19 9" fill="none" stroke="#FFF7E9" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>
