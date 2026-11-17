@@ -34,6 +34,11 @@
    właściciel zatwierdził PR, raporty recenzenta i QA są w porządku.
 
 ## Zasady
+- **Krok przeglądu (decyzja właściciela 2026-11-17):** każdy PR z kodem (Flutter, backend) przechodzi
+  zielone CI → przegląd `reviewer` (raport `docs/reviews/PR-<nr>.md` + komentarz w PR) → poprawki autora
+  przy werdykcie „zmiany wymagane” → zatwierdzenie i merge przez właściciela. Zadania z ekranami:
+  dodatkowo `qa` weryfikuje kryteria akceptacji przed oznaczeniem `done`. PR-y z samą dokumentacją
+  nie wymagają reviewer. Brak raportu reviewer = PR nie jest gotowy do merge.
 - Do następnej fazy tylko po zatwierdzeniu bramki przez człowieka
   (dotyczy G1, G2, G5).
 - Zmiana zakresu po G1 lub architektury po G2 = nowy przebieg bramki.
