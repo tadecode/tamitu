@@ -34,8 +34,8 @@ Wniosek: region `europe-west4` bez zmian. Korekta sformułowania ADR-0001 → py
 | 1 | Konto rozliczeniowe, Blaze, nazwy, organizacja | zrobione | 2026-11-17 | Konto rozliczeniowe istnieje, otwarte, profil płatności typu „Organizacja" (firma TadeCode, zweryfikowany 2026-11-14); **okres próbny** – kredyt ok. 1186 zł, koniec ok. 2027-02-15; organizacja Cloud Identity/Workspace domeny firmy istnieje (projekty pod organizacją, bez folderu); „My First Project" nieużywany przez Tamitu |
 | 2 | Projekty dev/prod (bez Analytics) | zrobione | 2026-11-17 | Projekty z `gcloud projects create` w organizacji, rozliczenia podpięte (`gcloud billing projects link`), Firebase: dev przez konsolę (akceptacja warunków Firebase przez właściciela, Analytics i Gemini in Firebase wyłączone), prod `firebase projects:addfirebase`; nazwy „Tamitu Dev" / „Tamitu Prod" |
 | 3 | Budżety 20/100 PLN, progi 50/90/100%, Pub/Sub `budget-alerts` | zrobione | 2026-11-17 | Budżety „tamitu-dev 20 PLN" i „tamitu-prod 100 PLN" (miesięczne, filtr na projekt, kredyty nieodliczane); prod + prognoza 100% i temat `budget-alerts`; „My First Project" odpięty od rozliczeń |
-| 4 | Kubełek logów UE 30 dni, sink, wykluczenie `_Default` | – | | |
-| 5 | Konta usług `fn-ai`, `fn-consent`, `fn-account`, `fn-budget` | – | | |
+| 4 | Kubełek logów UE 30 dni, sink, wykluczenie `_Default` | zrobione | 2026-11-17 | Kubełek `tamitu-logs` (`europe-west4`, 30 dni), sink `tamitu-eu-sink`, sink `_Default` wyłączony; test wpisu: UE 1 / `_Default` 0 w obu projektach |
+| 5 | Konta usług `fn-ai-plan`, `fn-consent`, `fn-account`, `fn-budget` | zrobione (bez wartości sekretu) | 2026-11-17 | `fn-ai` → **`fn-ai-plan`** (Google: ID konta 6–30 znaków; pytanie O2); sekret `UID_HASH_PEPPER` w `europe-west4` bez wersji – wartość dodaje właściciel |
 | 6 | Auth (tylko Google), aplikacje Android, SHA-1/SHA-256 | – | | |
 | 7 | App Check (Play Integrity), tokeny debug poza repo | – | | |
 | 8 | Firestore Native, reguły `deny all`, `config/runtime` | – | | |
@@ -83,3 +83,34 @@ gcloud billing budgets create --billing-account=<KONTO> --billing-project=tamitu
 - `budgetGuard` (P3-09) nie jest wdrożony; temat istnieje, subskrypcji brak. Wdrożenie funkcji z kontem `fn-budget` (etap 5).
 - Polecenia `gcloud billing …` z `--billing-project=<nasz projekt>` – wspólny limit zapytań klienta gcloud bywa wyczerpany (429).
 - Kwoty zmienia wyłącznie właściciel (SEC-09).
+
+### Etap 4 – logi (wykonane z terminala za zgodą właściciela)
+W obu projektach:
+```
+gcloud logging buckets create tamitu-logs --project=<P> --location=europe-west4 --retention-days=30
+gcloud logging sinks create tamitu-eu-sink logging.googleapis.com/projects/<P>/locations/europe-west4/buckets/tamitu-logs --project=<P> --log-filter="<filtr _Default>"
+gcloud logging sinks update _Default --project=<P> --disabled
+```
+- Filtr sinka = filtr `_Default` (wszystko poza logami audytu administracyjnego – te idą do `_Required`, 400 dni, bez danych użytkowników).
+- Wyłączenie sinka `_Default` zamiast filtra wykluczającego – ten sam skutek (nic nowego w `global`), prostsza konfiguracja.
+- Zmiany sinków działają z opóźnieniem kilku minut (pierwsze testy: wpis nadal w `_Default`). Test po ok. 5 min: wpis `p3-03-acceptance-3` – kubełek UE 1, `_Default` 0 (dev i prod).
+- **Otwarte:** test odbioru z Aneksu A pkt 1 (wywołanie funkcji → wpisy Cloud Run/Functions tylko w kubełku UE) – po pierwszym wdrożeniu.
+
+### Etap 5 – konta usług i sekret (wykonane z terminala za zgodą właściciela)
+| Konto (`<nazwa>@<projekt>.iam.gserviceaccount.com`) | Funkcja | Role w projekcie | Sekret `UID_HASH_PEPPER` |
+|---|---|---|---|
+| `fn-ai-plan` | `generatePlan` | `roles/aiplatform.user`, `roles/datastore.user`, `roles/firebaseauth.viewer` | `secretAccessor` |
+| `fn-consent` | `recordConsent` | `roles/datastore.user`, `roles/firebaseauth.viewer` | `secretAccessor` |
+| `fn-account` | `deleteAccount` | `roles/datastore.user`, `roles/firebaseauth.admin` | `secretAccessor` |
+| `fn-budget` | `budgetGuard` | `roles/datastore.user` (bez Auth) | – |
+
+- Włączone API (oba projekty): `iam`, `secretmanager`, `aiplatform`; prod dodatkowo `orgpolicy` (odczyt zasad).
+- Sekret `UID_HASH_PEPPER`: replikacja `user-managed`, tylko `europe-west4`; dostęp na poziomie sekretu. **Brak wersji** – wartość dodaje właściciel lokalnie (poniżej), nigdy przez czat ani repo.
+- Zasady organizacji: `iam.disableServiceAccountKeyCreation` egzekwowane (brak kluczy JSON – zgodne z ADR); `iam.allowedPolicyMemberDomains` = `allowAll` (callable mogą być publiczne). Kluczy zarządzanych przez użytkownika: 0.
+- Ograniczenia do przeglądu (SEC-17): `roles/datastore.user` = cała baza (IAM Firestore bez rozróżnienia kolekcji) – zakres wynika z kodu; rozważenie ról niestandardowych – security.
+- **Przy pierwszym wdrożeniu:** `roles/run.invoker` dla `fn-budget` na usłudze `budgetguard` (wyzwalacz Pub/Sub); `serviceAccount` w opcjach każdej funkcji (SEC-20, mobile-dev); wdrażający potrzebuje `iam.serviceAccountUser` na tych kontach (właściciel ma jako Owner; CI – WIF, Steward).
+
+Dodanie wartości sekretu (właściciel, PowerShell, osobno dla każdego projektu – różne wartości; plik tymczasowy bez znaku nowej linii, usuwany od razu):
+```
+$p='tamitu-dev-tadecode'; $b=New-Object byte[] 32; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); $f=New-TemporaryFile; [IO.File]::WriteAllText($f,[Convert]::ToBase64String($b)); gcloud secrets versions add UID_HASH_PEPPER --project=$p --data-file=$f; Remove-Item $f; $b=$null
+```
