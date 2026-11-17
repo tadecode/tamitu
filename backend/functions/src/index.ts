@@ -1,6 +1,6 @@
 import { getApps, initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
-import { getFirestore } from "firebase-admin/firestore";
+import { getFirestore, Timestamp } from "firebase-admin/firestore";
 import { defineSecret } from "firebase-functions/params";
 import { onCall, type CallableRequest } from "firebase-functions/v2/https";
 import { onMessagePublished } from "firebase-functions/v2/pubsub";
@@ -11,7 +11,7 @@ import {
   SAFE_RUNTIME_DEFAULTS,
   type RuntimeConfig,
 } from "./config.js";
-import type { ConsentType, LatestConsent, LatestConsents } from "./consents.js";
+import type { ConsentType, ConsentWriter, LatestConsent, LatestConsents } from "./consents.js";
 import { budgetGuardCore, deleteAccountCore, generatePlanCore, recordConsentCore, type Deps } from "./endpoints.js";
 import { runGuarded } from "./handler.js";
 
@@ -59,12 +59,35 @@ async function loadLatestConsents(uid: string): Promise<LatestConsents> {
   return { privacy, ai };
 }
 
+/**
+ * P3-04: idempotent create by consentId in a transaction. An existing document is never overwritten
+ * (first write wins); the stored receivedAt is returned so a retry gets the same answer.
+ */
+const writeConsent: ConsentWriter = async (uid, consentId, doc) => {
+  const db = getFirestore();
+  const ref = db.doc(`users/${uid}/consents/${consentId}`);
+  return db.runTransaction(async (tx) => {
+    const existing = await tx.get(ref);
+    if (existing.exists) {
+      const at = existing.get("receivedAt") as unknown;
+      return { receivedAt: at instanceof Timestamp ? at.toDate() : doc.receivedAt };
+    }
+    tx.create(ref, {
+      ...doc,
+      clientAt: Timestamp.fromDate(doc.clientAt),
+      receivedAt: Timestamp.fromDate(doc.receivedAt),
+    });
+    return { receivedAt: doc.receivedAt };
+  });
+};
+
 function deps(): Deps {
   return {
     verifier: getAuth(),
     config: staticConfig,
     loadRuntime,
     loadLatestConsents,
+    writeConsent,
     pepper: UID_PEPPER.value(),
     now: () => new Date(),
     model: stubModel,
