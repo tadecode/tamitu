@@ -40,7 +40,7 @@ Wniosek: region `europe-west4` bez zmian. Korekta sformułowania ADR-0001 → py
 | 7 | App Check (Play Integrity), tokeny debug poza repo | zrobione (dev); prod otwarte | 2026-11-17 | dev: Play Integrity zarejestrowane, token debug `owner-laptop` (wartość u właściciela w menedżerze haseł); API `firebaseappcheck`, `playintegrity` włączone w obu projektach; prod: rejestracja po SHA klucza wydań + Play Console |
 | 8 | Firestore Native, reguły `deny all`, `config/runtime` | zrobione (bez indeksów/TTL) | 2026-11-17 | Bazy `(default)` w `europe-west4`, Native, PITR wyłączone, ochrona przed usunięciem w prod; reguły `deny all` z repo; `config/runtime` z bezpiecznymi wartościami; indeksy i TTL wstrzymane (O4) |
 | 9 | Vertex AI API, warunki przetwarzania danych (właściciel) | w toku | 2026-11-18 | API `aiplatform` włączone (etap 5); Privacy & Security: organ nadzorczy – Polska (UODO); SCC nie potwierdzane (adres rozliczeniowy w UE); SEC-15 otwarte |
-| 10 | `google-services.json` lokalnie i w CI | – | | |
+| 10 | `google-services.json` lokalnie i w CI | zrobione (CI – prośby GH-009, GH-010) | 2026-11-18 | Pliki lokalnie poza repo (`%USERPROFILE%.tamituirebase<env>`); klucz API Android dev ograniczony do pakietu + SHA-1; CI – sekrety przez Stewarda |
 
 ## Szczegóły etapów
 
