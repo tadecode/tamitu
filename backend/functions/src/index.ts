@@ -11,7 +11,15 @@ import {
   SAFE_RUNTIME_DEFAULTS,
   type RuntimeConfig,
 } from "./config.js";
-import type { ConsentType, ConsentWriter, LatestConsent, LatestConsents } from "./consents.js";
+import {
+  consentDocPath,
+  storedReceivedAt,
+  toStoredConsent,
+  type ConsentType,
+  type ConsentWriter,
+  type LatestConsent,
+  type LatestConsents,
+} from "./consents.js";
 import { budgetGuardCore, deleteAccountCore, generatePlanCore, recordConsentCore, type Deps } from "./endpoints.js";
 import { runGuarded } from "./handler.js";
 
@@ -65,18 +73,14 @@ async function loadLatestConsents(uid: string): Promise<LatestConsents> {
  */
 const writeConsent: ConsentWriter = async (uid, consentId, doc) => {
   const db = getFirestore();
-  const ref = db.doc(`users/${uid}/consents/${consentId}`);
+  const ref = db.doc(consentDocPath(uid, consentId));
   return db.runTransaction(async (tx) => {
     const existing = await tx.get(ref);
     if (existing.exists) {
-      const at = existing.get("receivedAt") as unknown;
-      return { receivedAt: at instanceof Timestamp ? at.toDate() : doc.receivedAt };
+      return { receivedAt: storedReceivedAt(existing.get("receivedAt"), doc.receivedAt) };
     }
-    tx.create(ref, {
-      ...doc,
-      clientAt: Timestamp.fromDate(doc.clientAt),
-      receivedAt: Timestamp.fromDate(doc.receivedAt),
-    });
+    // create() (not set()): never overwrites; concurrent first writes abort one transaction.
+    tx.create(ref, toStoredConsent(doc, (d) => Timestamp.fromDate(d)));
     return { receivedAt: doc.receivedAt };
   });
 };

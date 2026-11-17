@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   assertConsents,
   buildConsentDoc,
+  consentDocPath,
+  storedReceivedAt,
+  toStoredConsent,
   CLIENT_AT_MAX_SKEW_MS,
   currentVersionNumbers,
   isKnownVersion,
@@ -118,5 +121,37 @@ describe("buildConsentDoc (P3-04, clientAt ±24 h)", () => {
   it("exactly 24 h is still accepted", () => {
     expect(buildConsentDoc({ ...input, clientAt: "2026-11-16T10:00:00Z" }, now).clientAtCorrected).toBeUndefined();
     expect(CLIENT_AT_MAX_SKEW_MS).toBe(86_400_000);
+  });
+});
+
+describe("Firestore mapping of consent records (review PR #57 #4)", () => {
+  const now = new Date("2026-11-15T10:00:00Z");
+  const doc = buildConsentDoc(
+    { type: "privacy_policy", granted: true, policyVersion: "privacy-v1", lang: "en", clientAt: "2026-11-15T09:59:00Z" },
+    now,
+  );
+
+  it("path is users/{uid}/consents/{consentId}", () => {
+    expect(consentDocPath("u1", "c-1")).toBe("users/u1/consents/c-1");
+  });
+
+  it("stores both dates as timestamps and keeps all contract fields", () => {
+    const stored = toStoredConsent(doc, (d) => ({ ts: d.toISOString() }));
+    expect(stored).toEqual({
+      type: "privacy_policy",
+      granted: true,
+      policyVersion: "privacy-v1",
+      lang: "en",
+      clientAt: { ts: "2026-11-15T09:59:00.000Z" },
+      receivedAt: { ts: "2026-11-15T10:00:00.000Z" },
+    });
+  });
+
+  it("reads receivedAt from a Timestamp-like value, else falls back", () => {
+    const at = new Date("2026-11-14T08:00:00Z");
+    expect(storedReceivedAt({ toDate: () => at }, now)).toEqual(at);
+    expect(storedReceivedAt("2026-11-14T08:00:00Z", now)).toEqual(now);
+    expect(storedReceivedAt(undefined, now)).toEqual(now);
+    expect(storedReceivedAt({ toDate: () => new Date(NaN) }, now)).toEqual(now);
   });
 });

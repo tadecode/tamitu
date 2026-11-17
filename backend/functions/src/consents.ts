@@ -133,3 +133,26 @@ export function buildConsentDoc(input: ConsentInput, now: Date): ConsentDoc {
  * never overwrites the first record (append-only history, ADR-0005 pkt 3).
  */
 export type ConsentWriter = (uid: string, consentId: string, doc: ConsentDoc) => Promise<{ receivedAt: Date }>;
+
+/** Firestore path of a consent record (data model pkt 3). */
+export function consentDocPath(uid: string, consentId: string): string {
+  return `users/${uid}/consents/${consentId}`;
+}
+
+/**
+ * Stored shape: dates converted by `toTimestamp` (Firestore Timestamp in index.ts).
+ * Pure so the mapping is unit-tested without the emulator (review PR #57 #4).
+ */
+export function toStoredConsent<T>(doc: ConsentDoc, toTimestamp: (d: Date) => T) {
+  return { ...doc, clientAt: toTimestamp(doc.clientAt), receivedAt: toTimestamp(doc.receivedAt) };
+}
+
+/** receivedAt of an existing document (anything with toDate(), e.g. Timestamp), else fallback. */
+export function storedReceivedAt(value: unknown, fallback: Date): Date {
+  const toDate = (value as { toDate?: unknown } | null)?.toDate;
+  if (typeof toDate === "function") {
+    const d: unknown = toDate.call(value);
+    if (d instanceof Date && !Number.isNaN(d.getTime())) return d;
+  }
+  return fallback;
+}
