@@ -1,7 +1,7 @@
 # Bramki zatwierdzeń
 
 Na bramce orkiestrator przygotowuje raport (max ~15 linii), zapisuje go
-w `.farm/log/` i **zatrzymuje pracę** do decyzji człowieka.
+w `.farm/log/` (osobny plik wg `handoff.md`) i **zatrzymuje pracę** do decyzji człowieka.
 
 Format odpowiedzi człowieka: `ZATWIERDZAM` / `POPRAWKI: <uwagi>` / `ODRZUCAM`.
 

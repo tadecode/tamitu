@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   assertConsents,
+  buildConsentDoc,
+  CLIENT_AT_MAX_SKEW_MS,
   currentVersionNumbers,
   isKnownVersion,
   KNOWN_VERSIONS,
@@ -86,5 +88,35 @@ describe("consent decision (ADR-0012 pkt 3, 7)", () => {
     const withdrawn = { privacy: rec("privacy-v2"), ai: rec("ai-consent-v5", false) };
     expect(consentTypeOf(() => assertConsents(CURRENT, withdrawn))).toBe("ai_processing");
     expect(consentTypeOf(() => assertConsents(CURRENT, both("privacy-v2", "privacy-v5")))).toBe("ai_processing");
+  });
+});
+
+describe("buildConsentDoc (P3-04, clientAt ±24 h)", () => {
+  const now = new Date("2026-11-15T10:00:00Z");
+  const input = {
+    type: "ai_processing" as const,
+    granted: false,
+    policyVersion: "ai-consent-v1",
+    lang: "pl" as const,
+    clientAt: "2026-11-14T10:00:01Z",
+  };
+
+  it("keeps clientAt inside the window and sets receivedAt to server time", () => {
+    const d = buildConsentDoc(input, now);
+    expect(d).toEqual({ ...input, clientAt: new Date(input.clientAt), receivedAt: now });
+    expect("clientAtCorrected" in d).toBe(false);
+  });
+
+  it("replaces clientAt outside ±24 h with server time and flags it", () => {
+    for (const clientAt of ["2026-11-14T09:59:59Z", "2026-11-16T10:00:01Z"]) {
+      const d = buildConsentDoc({ ...input, clientAt }, now);
+      expect(d.clientAt).toEqual(now);
+      expect(d.clientAtCorrected).toBe(true);
+    }
+  });
+
+  it("exactly 24 h is still accepted", () => {
+    expect(buildConsentDoc({ ...input, clientAt: "2026-11-16T10:00:00Z" }, now).clientAtCorrected).toBeUndefined();
+    expect(CLIENT_AT_MAX_SKEW_MS).toBe(86_400_000);
   });
 });
