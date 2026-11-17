@@ -8,6 +8,8 @@ export interface HandlerContext {
   uidHash?: string | undefined;
   days?: number | undefined;
   requestBytes?: number | undefined;
+  /** Fixed code of a configuration error (e.g. "consent_versions_invalid"); never a value. */
+  configError?: string | undefined;
 }
 
 /**
@@ -39,5 +41,6 @@ function pick(ctx: HandlerContext) {
     ...(ctx.uidHash !== undefined ? { uidHash: ctx.uidHash } : {}),
     ...(ctx.days !== undefined ? { days: ctx.days } : {}),
     ...(ctx.requestBytes !== undefined ? { requestBytes: ctx.requestBytes } : {}),
+    ...(ctx.configError !== undefined ? { configError: ctx.configError } : {}),
   };
 }

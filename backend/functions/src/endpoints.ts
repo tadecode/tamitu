@@ -62,9 +62,10 @@ export async function generatePlanCore(req: CallableReq, deps: Deps, ctx: Handle
   assertRequestConfig(deps.config, runtime); // Aneks A pkt 3 (ii)
   assertDataPolicy(deps.config, runtime, caller.uid, request.testData);
   // ADR-0012 pkt 3-4: consents (privacy_policy, then ai_processing; N >= current) BEFORE quota
-  // reservation. Malformed/missing versions in config/runtime fail closed before any read.
-  currentVersionNumbers(runtime);
-  assertConsents(runtime, await deps.loadLatestConsents(caller.uid));
+  // reservation. Malformed/missing versions in config/runtime fail closed before any read and
+  // log the fixed code `configError` (never the values).
+  const current = currentVersionNumbers(runtime, ctx);
+  assertConsents(current, await deps.loadLatestConsents(caller.uid));
   if (!runtime.aiEnabled) throw new AppError("ai_unavailable");
   // TODO P3-05: quota reservation (limits.decideQuota), prompt, validation, retry.
   return deps.model.generate(request);
