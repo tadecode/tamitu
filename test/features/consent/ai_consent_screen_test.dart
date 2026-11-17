@@ -202,6 +202,18 @@ void main() {
     expect(results, [true]);
   });
 
+  testWidgets(
+    'BUG-4: unsupported_version -> "Update the app", nothing stored',
+    (t) async {
+      final env = TestEnv();
+      env.api.failures.add(const AppFailure(FailureKind.unsupportedVersion));
+      await openEk06(t, env, locale: 'en');
+      await tapKey(t, agree());
+      expect(find.byKey(const Key('updateApp')), findsOneWidget);
+      expect(await env.local.all('u1'), isEmpty);
+    },
+  );
+
   testWidgets('updated variant shows the intro (consent_required)', (t) async {
     await openEk06(t, TestEnv(), updated: true);
     expect(find.byKey(const Key('aiConsentUpdated')), findsOneWidget);

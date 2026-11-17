@@ -18,7 +18,8 @@ class AuthUser {
 /// Authentication port (ADR-0004). Implementations throw `AppFailure`
 /// (cancelled, offline, generic, ...) and never expose provider error messages.
 abstract interface class AuthGateway {
-  /// Session changes (Firebase `idTokenChanges`); emits the current state first.
+  /// Session changes (Firebase `idTokenChanges`, ADR-0004), de-duplicated by UID so a
+  /// token refresh is not a new session; emits the current state first.
   Stream<AuthUser?> sessionChanges();
 
   /// Current session, available offline (restored by the SDK after restart).
