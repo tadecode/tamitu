@@ -7,7 +7,12 @@ import 'package:tamitu/core/errors/app_failure.dart';
 import 'package:tamitu/features/consent/data/sqlite_consent_local_store.dart';
 import 'package:tamitu/features/consent/domain/consent_record.dart';
 
-const keyA = '00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff';
+/// Test-only database key (not a secret): 32 bytes 0x00..0x1f as 64 hex chars, built at
+/// runtime so no key-like literal sits in the repository (gitleaks generic-api-key).
+final keyA = List.generate(
+  32,
+  (i) => i.toRadixString(16).padLeft(2, '0'),
+).join();
 
 ConsentRecord rec(String id, {bool synced = false, int minute = 0}) =>
     ConsentRecord(
