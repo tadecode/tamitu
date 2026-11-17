@@ -84,3 +84,52 @@ export function assertConsents(current: CurrentVersions, latest: LatestConsents)
     throw new AppError("consent_required", { consentType: "ai_processing" });
   }
 }
+
+/** ±24 h window for the client clock (posrednik-api.md pkt 3). */
+export const CLIENT_AT_MAX_SKEW_MS = 24 * 60 * 60 * 1000;
+
+/** Document stored at users/{uid}/consents/{consentId} (docs/data/model-danych.md pkt 3). */
+export interface ConsentDoc {
+  type: ConsentType;
+  granted: boolean;
+  policyVersion: string;
+  lang: "pl" | "en";
+  clientAt: Date;
+  /** Present (true) only when clientAt was outside ±24 h and replaced by the server time. */
+  clientAtCorrected?: true;
+  receivedAt: Date;
+}
+
+/** Fields of a validated recordConsent request needed to build the stored document. */
+export interface ConsentInput {
+  type: ConsentType;
+  granted: boolean;
+  policyVersion: string;
+  lang: "pl" | "en";
+  clientAt: string;
+}
+
+/**
+ * Builds the document for a new consent record. clientAt outside ±24 h of the server time is
+ * replaced by the server time and flagged (contract pkt 3). receivedAt = server time.
+ */
+export function buildConsentDoc(input: ConsentInput, now: Date): ConsentDoc {
+  const client = new Date(input.clientAt);
+  const skewed = Number.isNaN(client.getTime()) || Math.abs(client.getTime() - now.getTime()) > CLIENT_AT_MAX_SKEW_MS;
+  return {
+    type: input.type,
+    granted: input.granted,
+    policyVersion: input.policyVersion,
+    lang: input.lang,
+    clientAt: skewed ? now : client,
+    ...(skewed ? { clientAtCorrected: true as const } : {}),
+    receivedAt: now,
+  };
+}
+
+/**
+ * Idempotent write by consentId (P3-04): creates users/{uid}/consents/{consentId} only when it does
+ * not exist and returns the stored receivedAt. A repeated consentId never creates a duplicate and
+ * never overwrites the first record (append-only history, ADR-0005 pkt 3).
+ */
+export type ConsentWriter = (uid: string, consentId: string, doc: ConsentDoc) => Promise<{ receivedAt: Date }>;

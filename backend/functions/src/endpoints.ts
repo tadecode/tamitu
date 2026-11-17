@@ -1,5 +1,5 @@
-// Function bodies with injected dependencies (testable without Firebase). Skeletons for P3-02:
-// validation + auth + fail-closed configuration are real; business logic returns not_implemented.
+// Function bodies with injected dependencies (testable without Firebase). P3-02 skeletons; P3-04 adds
+// the idempotent recordConsent write. Other business logic still returns not_implemented.
 import type { PlanModel } from "./ai.js";
 import {
   requireAppCheck,
@@ -15,7 +15,13 @@ import {
   type RuntimeConfig,
   type StaticConfig,
 } from "./config.js";
-import { assertConsents, currentVersionNumbers, type LatestConsents } from "./consents.js";
+import {
+  assertConsents,
+  buildConsentDoc,
+  currentVersionNumbers,
+  type ConsentWriter,
+  type LatestConsents,
+} from "./consents.js";
 import { AppError } from "./errors.js";
 import type { HandlerContext } from "./handler.js";
 import { shouldDisableAi } from "./limits.js";
@@ -34,6 +40,8 @@ export interface Deps {
   loadRuntime: () => Promise<RuntimeConfig>;
   /** Latest consent record per type (by receivedAt) for the caller; called only after the config check. */
   loadLatestConsents: (uid: string) => Promise<LatestConsents>;
+  /** Idempotent create of users/{uid}/consents/{consentId}; called only after auth and validation. */
+  writeConsent: ConsentWriter;
   pepper?: string | undefined;
   now: () => Date;
   model: PlanModel;
@@ -62,15 +70,31 @@ export async function generatePlanCore(req: CallableReq, deps: Deps, ctx: Handle
   return deps.model.generate(request);
 }
 
-export async function recordConsentCore(req: CallableReq, deps: Deps, ctx: HandlerContext): Promise<never> {
+export interface RecordConsentResponse {
+  consentId: string;
+  receivedAt: string;
+}
+
+/**
+ * P3-04: idempotent write by consentId (posrednik-api.md pkt 3). Order: token (checkRevoked, so a
+ * deleted user is rejected before any write - ADR-0002 Aneks A pkt 1) -> provider -> App Check ->
+ * validation (known versions, ADR-0012 pkt 2) -> write. No consent/version enforcement here
+ * (ADR-0012, option 4 rejected): this function is how a user accepts a policy.
+ */
+export async function recordConsentCore(
+  req: CallableReq,
+  deps: Deps,
+  ctx: HandlerContext,
+): Promise<RecordConsentResponse> {
   ctx.requestBytes = requestSizeBytes(req.data);
   const caller = await verifyCaller(req, deps.verifier);
   ctx.uidHash = uidHash(caller.uid, deps.pepper);
   requireGoogleProvider(caller);
   requireAppCheck(req, deps.config.enforceAppCheck);
-  parseRecordConsent(req.data);
-  // TODO P3-04: idempotent write to users/{uid}/consents/{consentId}.
-  throw new AppError("not_implemented");
+  const r = parseRecordConsent(req.data);
+  const doc = buildConsentDoc(r, deps.now());
+  const stored = await deps.writeConsent(caller.uid, r.consentId, doc);
+  return { consentId: r.consentId, receivedAt: stored.receivedAt.toISOString() };
 }
 
 export async function deleteAccountCore(req: CallableReq, deps: Deps, ctx: HandlerContext): Promise<never> {
