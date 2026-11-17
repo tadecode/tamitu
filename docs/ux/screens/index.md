@@ -5,7 +5,7 @@ Krok 2 zadania P3-14b (ux, 2026-11-16), wariant marki A „Lazur". Każdy ekran:
 | ID | Ekran | US | Przegląd security | Status |
 |---|---|---|---|---|
 | [EK-01](ek-01.md) | Start (bramka sesji) | US-001, 002, 003, 010 | tak (stan U12 → usunięcie konta) | **zatwierdzony v0.2** (po przeglądzie P3-14c, 2026-11-16) |
-| [EK-02](ek-02.md) | Ekran startowy: prywatność i logowanie | US-001, 003 | **tak** | **do ponownego zatwierdzenia** (v0.3 – ilustracja i logo od właściciela 2026-11-17; v0.2 zatwierdzona) |
+| [EK-02](ek-02.md) | Ekran startowy: prywatność i logowanie | US-001, 003 | **tak** | **zatwierdzony v0.4** (2026-11-17; v0.4 – ilustracja i logo od właściciela, znak słowny małymi literami, ciemne logo, 2026-11-17; v0.2 zatwierdzona) |
 | [EK-03](ek-03.md) | Ponowna akceptacja polityki | US-003 | **tak** | **zatwierdzony v0.2** (po przeglądzie P3-14c, 2026-11-16) |
 | [EK-04](ek-04.md) | Lista planów | US-008 | nie | zatwierdzony (MVP) |
 | [EK-05](ek-05.md) | Formularz podróży | US-004, 006 | tak (podpowiedzi o danych) | zatwierdzony (MVP) |
