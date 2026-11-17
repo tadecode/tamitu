@@ -11,6 +11,7 @@ vi.mock("firebase-functions/logger", () => ({
 
 import { stubModel } from "../src/ai.js";
 import { SAFE_RUNTIME_DEFAULTS, type RuntimeConfig } from "../src/config.js";
+import type { ConsentDoc } from "../src/consents.js";
 import { budgetGuardCore, deleteAccountCore, generatePlanCore, recordConsentCore, type Deps } from "../src/endpoints.js";
 import { runGuarded } from "../src/handler.js";
 import { uidHash } from "../src/logger.js";
@@ -50,6 +51,7 @@ function mkDeps(over: Partial<Deps> = {}, runtime: Partial<RuntimeConfig> = {}):
       privacy: { granted: true, policyVersion: "privacy-v1" },
       ai: { granted: true, policyVersion: "ai-consent-v1" },
     }),
+    writeConsent: async (_uid, _id, doc) => ({ receivedAt: doc.receivedAt }),
     now: () => NOW,
     model: stubModel,
     ...over,
@@ -177,13 +179,19 @@ describe("recordConsent and deleteAccount skeletons", () => {
     lang: "pl",
     clientAt: "2026-11-15T10:12:03Z",
   };
-  it("recordConsent validates, then not_implemented", async () => {
-    const go = (d: unknown, deps = mkDeps()) => runGuarded("recordConsent", (c) => recordConsentCore(req(d), deps, c));
-    expect(await code(go(consent))).toBe("not_implemented");
+  it("recordConsent rejects bad input and deleted users before any write", async () => {
+    const writeConsent = vi.fn(async (_u: string, _i: string, d: ConsentDoc) => ({ receivedAt: d.receivedAt }));
+    const go = (d: unknown, deps = mkDeps({ writeConsent })) =>
+      runGuarded("recordConsent", (c) => recordConsentCore(req(d), deps, c));
     expect(await code(go({ ...consent, type: "x" }))).toBe("invalid_argument");
     expect(await code(go({ ...consent, policyVersion: "ai-consent-v2" }))).toBe("invalid_argument"); // unknown (SEC-21)
-    const gone = mkDeps({ verifier: { verifyIdToken: async () => { throw new Error("user-not-found"); } } });
+    expect(await code(go({ ...consent, policyVersion: "privacy-v1" }))).toBe("invalid_argument"); // prefix != type
+    expect(await code(go({ ...consent, consentId: "not-a-uuid" }))).toBe("invalid_argument");
+    const gone = mkDeps({ writeConsent, verifier: { verifyIdToken: async () => { throw new Error("user-not-found"); } } });
     expect(await code(go(consent, gone))).toBe("unauthenticated");
+    expect(await code(go(consent, mkDeps({ writeConsent, config: { environment: "dev", enforceAppCheck: true, allowRealData: false } })))).toBe("no-error");
+    expect(await code(runGuarded("recordConsent", (c) => recordConsentCore(req(consent, { app: undefined }), mkDeps({ writeConsent }), c)))).toBe("app_check_failed");
+    expect(writeConsent).toHaveBeenCalledTimes(1);
   });
 
   it("deleteAccount requires a fresh login (auth_time <= 5 min)", async () => {
@@ -204,6 +212,86 @@ describe("recordConsent and deleteAccount skeletons", () => {
     expect(await code(go({ apiVersion: 1 }, other))).toBe("not_implemented");
     expect(await code(go({ apiVersion: 7 }, mkDeps()))).toBe("not_implemented");
     expect(await code(go({ apiVersion: 1 }, mkDeps(), { app: undefined }))).toBe("app_check_failed");
+  });
+});
+
+describe("recordConsent write (P3-04, idempotent by consentId)", () => {
+  const consent = {
+    apiVersion: 1,
+    consentId: "0d8f1c1e-33b8-4a3e-bf4a-0a3d8c1f9e22",
+    type: "privacy_policy",
+    granted: true,
+    policyVersion: "privacy-v1",
+    lang: "en",
+    clientAt: "2026-11-15T09:59:58Z",
+  };
+
+  /** In-memory twin of the Firestore transaction in index.ts: create only when absent. */
+  function memoryWriter() {
+    const docs = new Map<string, ConsentDoc>();
+    const writer = async (uid: string, id: string, doc: ConsentDoc) => {
+      const key = `users/${uid}/consents/${id}`;
+      const prev = docs.get(key);
+      if (prev) return { receivedAt: prev.receivedAt };
+      docs.set(key, doc);
+      return { receivedAt: doc.receivedAt };
+    };
+    return { docs, writer };
+  }
+
+  const call = (data: unknown, deps: Deps) =>
+    runGuarded("recordConsent", (c) => recordConsentCore(req(data), deps, c));
+
+  it("stores the record under users/{uid}/consents/{consentId} and returns receivedAt", async () => {
+    const m = memoryWriter();
+    const res = await call(consent, mkDeps({ writeConsent: m.writer }));
+    expect(res).toEqual({ consentId: consent.consentId, receivedAt: NOW.toISOString() });
+    expect([...m.docs.keys()]).toEqual([`users/owner/consents/${consent.consentId}`]);
+    expect(m.docs.get(`users/owner/consents/${consent.consentId}`)).toEqual({
+      type: "privacy_policy",
+      granted: true,
+      policyVersion: "privacy-v1",
+      lang: "en",
+      clientAt: new Date(consent.clientAt),
+      receivedAt: NOW,
+    });
+  });
+
+  it("a retry with the same consentId creates no duplicate and keeps the first receivedAt", async () => {
+    const m = memoryWriter();
+    await call(consent, mkDeps({ writeConsent: m.writer }));
+    const later = new Date(NOW.getTime() + 60_000);
+    const res = await call({ ...consent, granted: false }, mkDeps({ writeConsent: m.writer, now: () => later }));
+    expect(res.receivedAt).toBe(NOW.toISOString());
+    expect(m.docs.size).toBe(1);
+    expect(m.docs.get(`users/owner/consents/${consent.consentId}`)?.granted).toBe(true);
+    await call({ ...consent, consentId: "1d8f1c1e-33b8-4a3e-bf4a-0a3d8c1f9e22" }, mkDeps({ writeConsent: m.writer }));
+    expect(m.docs.size).toBe(2);
+  });
+
+  it("records are per user (uid from the verified token only)", async () => {
+    const m = memoryWriter();
+    const other = mkDeps({
+      writeConsent: m.writer,
+      verifier: { verifyIdToken: async () => ({ uid: "other", firebase: { sign_in_provider: "google.com" } }) },
+    });
+    await runGuarded("recordConsent", (c) => recordConsentCore(req(consent, { auth: { uid: "other" } }), other, c));
+    expect([...m.docs.keys()]).toEqual([`users/other/consents/${consent.consentId}`]);
+  });
+
+  it("does not require current consents (ADR-0012: this is how a policy is accepted)", async () => {
+    const loadLatestConsents = vi.fn(async () => ({}));
+    const loadRuntime = vi.fn(async () => SAFE_RUNTIME_DEFAULTS);
+    expect(await code(call(consent, mkDeps({ loadLatestConsents, loadRuntime })))).toBe("no-error");
+    expect(loadLatestConsents).not.toHaveBeenCalled();
+    expect(loadRuntime).not.toHaveBeenCalled();
+  });
+
+  it("a write failure is a bare internal error and nothing from the request is logged", async () => {
+    const failing = mkDeps({ writeConsent: async () => { throw new Error(`firestore ${CANARY}`); } });
+    expect(await code(call({ ...consent }, failing))).toBe("internal");
+    expect(JSON.stringify(logged)).not.toContain(CANARY);
+    expect(JSON.stringify(logged)).not.toContain(consent.consentId);
   });
 });
 
