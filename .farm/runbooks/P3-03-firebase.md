@@ -38,7 +38,7 @@ Wniosek: region `europe-west4` bez zmian. Korekta sformułowania ADR-0001 → py
 | 5 | Konta usług `fn-ai-plan`, `fn-consent`, `fn-account`, `fn-budget` | zrobione (bez wartości sekretu) | 2026-11-17 | `fn-ai` → **`fn-ai-plan`** (Google: ID konta 6–30 znaków; pytanie O2); sekret `UID_HASH_PEPPER` w `europe-west4` bez wersji – wartość dodaje właściciel |
 | 6 | Auth (tylko Google), aplikacje Android, SHA-1/SHA-256 | zrobione (prod bez SHA) | 2026-11-17 | Google włączone w obu projektach (inni dostawcy wyłączeni); aplikacje Android zarejestrowane; SHA klucza debug tylko w dev; prod czeka na klucz wydań / Play App Signing |
 | 7 | App Check (Play Integrity), tokeny debug poza repo | zrobione (dev); prod otwarte | 2026-11-17 | dev: Play Integrity zarejestrowane, token debug `owner-laptop` (wartość u właściciela w menedżerze haseł); API `firebaseappcheck`, `playintegrity` włączone w obu projektach; prod: rejestracja po SHA klucza wydań + Play Console |
-| 8 | Firestore Native, reguły `deny all`, `config/runtime` | – | | |
+| 8 | Firestore Native, reguły `deny all`, `config/runtime` | zrobione (bez indeksów/TTL) | 2026-11-17 | Bazy `(default)` w `europe-west4`, Native, PITR wyłączone, ochrona przed usunięciem w prod; reguły `deny all` z repo; `config/runtime` z bezpiecznymi wartościami; indeksy i TTL wstrzymane (O4) |
 | 9 | Vertex AI API, warunki przetwarzania danych (właściciel) | – | | |
 | 10 | `google-services.json` lokalnie i w CI | – | | |
 
@@ -133,3 +133,30 @@ $p='tamitu-dev-tadecode'; $b=New-Object byte[] 32; [Security.Cryptography.Random
 - Token debug `owner-laptop` (Manage debug tokens) – **wartość tylko w menedżerze haseł właściciela**; do buildu lokalnie `--dart-define=TAMITU_APP_CHECK_DEBUG_TOKEN=...` (`lib/app/bootstrap.dart`); do CI – sekret repo przez Stewarda (prośba GH, etap 10). Nowy token na każdą maszynę/CI; usuwanie tokenów przy odejściu osoby/wycieku.
 - Egzekwowanie w konsoli (Firestore/Functions) **niewłączone**: Functions egzekwują w kodzie (`ENFORCE_APP_CHECK`, ADR-0002 Aneks A pkt 3), Firestore ma `deny all`.
 - **prod: brak tokenów debug (zakaz, ADR-0003 Aneks A pkt 2, SEC-16).** Rejestracja Play Integrity w prod – po SHA-256 klucza podpisującego i połączeniu aplikacji z projektem w Google Play Console (Play Console → Test and release → App integrity → Play Integrity API → link Cloud project). Otwarte.
+
+### Etap 8 – Firestore (lokalizacja potwierdzona przez właściciela: „potwierdzam europe-west4")
+```
+gcloud firestore databases create --database=(default) --location=europe-west4 --type=firestore-native [--delete-protection | --no-delete-protection] --project=<P>
+cd backend && firebase deploy --only firestore:rules --project=<P>
+```
+| Projekt | Lokalizacja | Typ | Ochrona przed usunięciem | PITR |
+|---|---|---|---|---|
+| dev | `europe-west4` | Native | wyłączona | wyłączone |
+| prod | `europe-west4` | Native | **włączona** | wyłączone |
+
+- Reguły: `backend/firestore.rules` (`allow read, write: if false`) wdrożone w obu projektach.
+- **Nie wdrożono** `firestore:indexes` (indeks `consents` + polityki TTL `usage.updatedAt`, `usage_global.expireAt`) – pytanie O4 (TTL na `updatedAt` kasowałby licznik). Wdrożyć po poprawce, najpóźniej z P3-05: `firebase deploy --only firestore:indexes --project=<P>`.
+- `.firebaserc` w repo ma nadal placeholdery – polecenia używają `--project=<ID>`; uzupełnienie aliasów (`dev`, `prod`) to zmiana w `backend/` (mobile-dev).
+- Dokument `config/runtime` (oba projekty, zapis REST API jako właściciel):
+
+| Pole | Wartość |
+|---|---|
+| `aiEnabled` | `false` |
+| `allowRealData` | `false` (do SEC-15) |
+| `testUids` | `[]` – UID właściciela dopisać ręcznie w konsoli po pierwszym logowaniu (dana osobowa, nie do repo) |
+| `perUserDailyLimit` | `5` |
+| `globalDailyLimit` | `50` |
+| `policyVersionCurrent` | `privacy-v1` |
+| `aiConsentVersionCurrent` | `ai-consent-v1` |
+
+Zmiany `config/runtime` – tylko właściciel z 2FA (ADR-0002 Aneks A pkt 7, SEC-16).
