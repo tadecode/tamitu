@@ -1,6 +1,7 @@
 // Request validation per docs/api/posrednik-api.md and docs/api/schemas/*.json.
 // Validation errors expose ONLY field paths, never values (ADR-0002 Aneks A pkt 2).
 import { z } from "zod";
+import { isKnownVersion } from "./consents.js";
 import { AppError } from "./errors.js";
 import { warsawDay } from "./limits.js";
 
@@ -68,18 +69,33 @@ export const generatePlanRequestSchema = z.strictObject({
 });
 export type GeneratePlanRequest = z.infer<typeof generatePlanRequestSchema>;
 
-export const recordConsentRequestSchema = z.strictObject({
-  apiVersion: z.literal(API_VERSION),
-  consentId: z.string().regex(UUID_V4),
-  type: z.enum(["privacy_policy", "ai_processing"]),
-  granted: z.boolean(),
-  policyVersion: text(40),
-  lang: z.enum(["pl", "en"]),
-  clientAt: z.iso.datetime(),
-});
+export const recordConsentRequestSchema = z
+  .strictObject({
+    apiVersion: z.literal(API_VERSION),
+    consentId: z.string().regex(UUID_V4),
+    type: z.enum(["privacy_policy", "ai_processing"]),
+    granted: z.boolean(),
+    // ADR-0012 pkt 1-2 / SEC-21: pattern, prefix matching `type` and known list (refine below).
+    policyVersion: z.string().max(40),
+    lang: z.enum(["pl", "en"]),
+    clientAt: z.iso.datetime(),
+  })
+  .superRefine((r, ctx) => {
+    if (!isKnownVersion(r.type, r.policyVersion)) {
+      ctx.addIssue({ code: "custom", path: ["policyVersion"], message: "unknown_version" });
+    }
+  });
 export type RecordConsentRequest = z.infer<typeof recordConsentRequestSchema>;
 
-export const deleteAccountRequestSchema = z.strictObject({ apiVersion: z.literal(API_VERSION) });
+/**
+ * ADR-0011 pkt 4: deleteAccount accepts ANY apiVersion >= 1 (never unsupported_version), so the
+ * right to erasure does not depend on the app version. The current version is strict; fields a
+ * future version may add are ignored (deleteAccount acts only on the verified token).
+ */
+export const deleteAccountRequestSchema = z.union([
+  z.strictObject({ apiVersion: z.literal(API_VERSION) }),
+  z.object({ apiVersion: z.number().int().min(API_VERSION + 1) }),
+]);
 
 /** Budget notification payload (Pub/Sub); only the fields we need. */
 export const budgetNotificationSchema = z.object({
@@ -114,12 +130,21 @@ function addDays(day: string, n: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-/** Arrival date: real calendar date, not earlier than today-1 (Warsaw), not later than +2 years. */
+/** ADR-0011 pkt 3: lower bound relative to "today" in Europe/Warsaw (covers UTC-12..UTC+14). */
+export const ARRIVAL_MIN_OFFSET_DAYS = -2;
+/** Upper bound: "today + 2 years" (731 days covers a leap day). Unchanged. */
+export const ARRIVAL_MAX_OFFSET_DAYS = 731;
+
+/**
+ * Arrival date: real calendar date, not earlier than today-2 (Warsaw), not later than +2 years.
+ * The app validates stricter (from "yesterday" in the device time zone), so a valid form never
+ * gets invalid_argument here.
+ */
 export function checkArrivalDate(date: string, now: Date): void {
   const parsed = new Date(`${date}T00:00:00Z`);
   const real = !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === date;
   const today = warsawDay(now);
-  if (!real || date < addDays(today, -1) || date > addDays(today, 731)) {
+  if (!real || date < addDays(today, ARRIVAL_MIN_OFFSET_DAYS) || date > addDays(today, ARRIVAL_MAX_OFFSET_DAYS)) {
     throw new AppError("invalid_argument", { field: "trip.arrival.date" });
   }
 }
@@ -141,6 +166,7 @@ export function parseRecordConsent(data: unknown): RecordConsentRequest {
   return parseOrThrow(recordConsentRequestSchema, data);
 }
 
+/** No unsupported_version branch on purpose (ADR-0011 pkt 4); a bad shape -> invalid_argument. */
 export function parseDeleteAccount(data: unknown): void {
   if (requestSizeBytes(data) > MAX_REQUEST_BYTES) throw new AppError("invalid_argument", { field: "request" });
   parseOrThrow(deleteAccountRequestSchema, data);

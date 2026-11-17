@@ -38,7 +38,18 @@ function mkDeps(over: Partial<Deps> = {}, runtime: Partial<RuntimeConfig> = {}):
       verifyIdToken: async () => ({ uid: "owner", auth_time: NOW.getTime() / 1000 - 60, firebase: { sign_in_provider: "google.com" } }),
     },
     config: { environment: "dev", enforceAppCheck: true, allowRealData: false },
-    loadRuntime: async () => ({ ...SAFE_RUNTIME_DEFAULTS, aiEnabled: true, testUids: ["owner"], ...runtime }),
+    loadRuntime: async () => ({
+      ...SAFE_RUNTIME_DEFAULTS,
+      aiEnabled: true,
+      testUids: ["owner"],
+      policyVersionCurrent: "privacy-v1",
+      aiConsentVersionCurrent: "ai-consent-v1",
+      ...runtime,
+    }),
+    loadLatestConsents: async () => ({
+      privacy: { granted: true, policyVersion: "privacy-v1" },
+      ai: { granted: true, policyVersion: "ai-consent-v1" },
+    }),
     now: () => NOW,
     model: stubModel,
     ...over,
@@ -114,6 +125,48 @@ describe("generatePlan skeleton", () => {
   });
 });
 
+describe("generatePlan consents (ADR-0012 pkt 3-4, 7)", () => {
+  const run = (d: Deps) => runGuarded("generatePlan", (ctx) => generatePlanCore(req(planBody()), d, ctx));
+  const detailsOf = async (p: Promise<unknown>) => {
+    try {
+      await p;
+    } catch (e) {
+      return (e as { details?: Record<string, unknown> }).details;
+    }
+    return undefined;
+  };
+
+  it("no privacy record -> consent_required/privacy_policy, checked before aiEnabled (and quota)", async () => {
+    const d = mkDeps({ loadLatestConsents: async () => ({ ai: { granted: true, policyVersion: "ai-consent-v1" } }) }, { aiEnabled: false });
+    expect(await detailsOf(run(d))).toEqual({ code: "consent_required", consentType: "privacy_policy" });
+  });
+
+  it("older AI consent -> ai_processing; newer records -> accepted (reaches the stub)", async () => {
+    const old = mkDeps({}, { aiConsentVersionCurrent: "ai-consent-v2" });
+    expect(await detailsOf(run(old))).toEqual({ code: "consent_required", consentType: "ai_processing" });
+    const newer = mkDeps({
+      loadLatestConsents: async () => ({
+        privacy: { granted: true, policyVersion: "privacy-v3" },
+        ai: { granted: true, policyVersion: "ai-consent-v2" },
+      }),
+    });
+    expect(await code(run(newer))).toBe("not_implemented");
+  });
+
+  it("bad config/runtime versions fail closed without reading consents", async () => {
+    const loadLatestConsents = vi.fn(async () => ({}));
+    const d = mkDeps({ loadLatestConsents }, { policyVersionCurrent: "privacy-1" });
+    expect(await detailsOf(run(d))).toEqual({ code: "consent_required", consentType: "privacy_policy" });
+    expect(loadLatestConsents).not.toHaveBeenCalled();
+  });
+
+  it("consents are read only after validation and the data policy", async () => {
+    const loadLatestConsents = vi.fn(async () => ({}));
+    expect(await code(run(mkDeps({ loadLatestConsents }, { testUids: [] })))).toBe("test_data_only");
+    expect(loadLatestConsents).not.toHaveBeenCalled();
+  });
+});
+
 describe("recordConsent and deleteAccount skeletons", () => {
   const consent = {
     apiVersion: 1,
@@ -128,6 +181,7 @@ describe("recordConsent and deleteAccount skeletons", () => {
     const go = (d: unknown, deps = mkDeps()) => runGuarded("recordConsent", (c) => recordConsentCore(req(d), deps, c));
     expect(await code(go(consent))).toBe("not_implemented");
     expect(await code(go({ ...consent, type: "x" }))).toBe("invalid_argument");
+    expect(await code(go({ ...consent, policyVersion: "ai-consent-v2" }))).toBe("invalid_argument"); // unknown (SEC-21)
     const gone = mkDeps({ verifier: { verifyIdToken: async () => { throw new Error("user-not-found"); } } });
     expect(await code(go(consent, gone))).toBe("unauthenticated");
   });
@@ -137,6 +191,19 @@ describe("recordConsent and deleteAccount skeletons", () => {
     expect(await code(go(mkDeps()))).toBe("not_implemented");
     const stale = mkDeps({ verifier: { verifyIdToken: async () => ({ uid: "owner", auth_time: NOW.getTime() / 1000 - 3600 }) } });
     expect(await code(go(stale))).toBe("reauth_required");
+  });
+
+  it("deleteAccount does not require google.com nor reject a newer apiVersion (ADR-0011 pkt 4)", async () => {
+    const other = mkDeps({
+      verifier: {
+        verifyIdToken: async () => ({ uid: "owner", auth_time: NOW.getTime() / 1000 - 60, firebase: { sign_in_provider: "password" } }),
+      },
+    });
+    const go = (data: unknown, deps: Deps, over: Record<string, unknown> = {}) =>
+      runGuarded("deleteAccount", (c) => deleteAccountCore(req(data, over), deps, c));
+    expect(await code(go({ apiVersion: 1 }, other))).toBe("not_implemented");
+    expect(await code(go({ apiVersion: 7 }, mkDeps()))).toBe("not_implemented");
+    expect(await code(go({ apiVersion: 1 }, mkDeps(), { app: undefined }))).toBe("app_check_failed");
   });
 });
 
