@@ -1,18 +1,56 @@
 # Protokół przekazań
 
-Każde przekazanie pracy między agentami to wpis w `.farm/log/`
-w pliku `YYYY-MM-DD.md` (nowe wpisy na końcu).
+Każde przekazanie pracy między agentami to **osobny plik** w `.farm/log/` (decyzja właściciela 2026-11-17,
+żeby równoległe PR-y nie kolidowały we wspólnych plikach).
+
+## Konwencja pliku
+
+```
+.farm/log/<RRRR-MM-DD>/<HHMM>-<rola>-<zadanie>.md
+```
+
+- `<HHMM>` – godzina rozpoczęcia wpisu (24 h, bez dwukropka), `<rola>` – rola autora (kebab-case),
+  `<zadanie>` – id zadania lub krótki slug (np. `p3-04`, `conflicts`). Przykład:
+  `.farm/log/2026-11-17/1430-mobile-dev-p3-04.md`.
+- **Jeden wpis = jeden plik.** Autor tworzy nowy plik i nigdy nie edytuje cudzych wpisów ani wspólnego
+  pliku dnia. Poprawka własnego wpisu – tylko w tym samym PR-ze; później nowy wpis.
+- Stare pliki `.farm/log/<RRRR-MM-DD>.md` (do 2026-11-17 włącznie) zostają jako archiwum; nie dopisujemy do nich.
+  Dziennik dnia = zawartość katalogu `.farm/log/<RRRR-MM-DD>/` posortowana po nazwie.
 
 ## Format wpisu
 
 ```
-### HH:MM  <od-roli> → <do-roli>  |  <id zadania>
+# <HH:MM>  <od-roli> → <do-roli>  |  <id zadania>
 - Zrobione: <1–3 zdania>
 - Artefakty: <ścieżki plików>
 - Decyzje: <lub „brak"; ważne → ADR>
 - Do zrobienia przez odbiorcę: <konkretnie>
 - Pytania/blokady: <lub „brak">
+
+## Dla orkiestratora (backlog i pytania)
+- Backlog – status: <T-id: nowy status (np. in-progress → review)> lub „brak"
+- Backlog – nowe zadania: <id, tytuł, rola, zależności> lub „brak"
+- Pytania otwarte – nowe: <id, treść, do kogo> lub „brak"
+- Pytania otwarte – zamknięte: <id i rozstrzygnięcie> lub „brak"
 ```
+
+## Backlog i pytania otwarte (zmienia tylko orkiestrator)
+
+Role **nie edytują** `docs/backlog.md` ani `docs/open-questions.md` (to wspólne pliki, przyczyna większości
+konfliktów). Zmianę statusu zadania, nowe zadania i nowe pytania zgłaszają w sekcji „Dla orkiestratora”
+własnego pliku przekazania. Orkiestrator, **po merge** PR-ów, przenosi zgłoszenia zbiorczo do obu plików
+osobnym małym PR-em (`chore/backlog-<data>`), zapisując w dzienniku, z których plików przekazania pochodzą zmiany.
+Do czasu przeniesienia źródłem prawdy o statusie są pliki przekazania w `.farm/log/`.
+
+Zmiana uprawnień ról (`-Allow` w `.claude/agents/*.md`) oraz `CLAUDE.md` (zasady 2 i 12) czeka na właściciela:
+`.farm/requests/FARM-006-shared-files.md`.
+
+## Okres przejściowy
+
+Do czasu zatwierdzenia FARM-006 role mają jeszcze uprawnienia do `docs/backlog.md` i `docs/open-questions.md`.
+PR-y otwarte w dniu 2026-11-17 (#53, #54, P3-04, ADR platformy) mogą dokończyć pracę w starym formacie
+(wpis w `.farm/log/<data>.md`, edycja backlogu). Orkiestrator przy ich merge rozwiązuje konflikty i nie wymaga
+przepisywania. Od zatwierdzenia FARM-006 wszystkie nowe wpisy – tylko w nowym formacie.
 
 ## Brief orkiestratora dla roli (zlecenie)
 
