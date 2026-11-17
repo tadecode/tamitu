@@ -50,9 +50,6 @@ Wniosek: region `europe-west4` bez zmian. Korekta sformułowania ADR-0001 → py
 - `keytool`: `"C:\Program Files\Android\Android Studio\jbr\bin\keytool.exe"`.
 - Konto Google TadeCode: 2FA włączone (najlepiej klucz sprzętowy, T17).
 
-## Czego nie zrobiono / do zrobienia później
-- Test odbioru logów (ADR-0003 Aneks A pkt 1) – po pierwszym wdrożeniu funkcji.
-
 ### Uwagi do etapu 0
 - Windows PowerShell blokował `npm.ps1` (zasady wykonywania skryptów). Właściciel ustawił sam `RemoteSigned` dla `CurrentUser`; alternatywa bez zmiany: `npm.cmd`, `firebase.cmd`.
 - Okno uruchomione przez instalator Cloud SDK ma stary PATH – po instalacji otworzyć nowy terminal.
@@ -166,3 +163,35 @@ Zmiany `config/runtime` – tylko właściciel z 2FA (ADR-0002 Aneks A pkt 7, SE
 - „Standardowe klauzule umowne" (przycisk dla klientów z adresem rozliczeniowym poza EMEA) – **nie potwierdzono**: adres rozliczeniowy w Polsce, umowa z Google Cloud EMEA; ewentualna wątpliwość → lista do prawnika (S1).
 - Do odnotowania po lekturze właściciela: aneks o przetwarzaniu danych (CDPA), kontakty RODO, dokumentacja „data governance" Vertex (brak trenowania – ADR-0001 SEC-15 poz. 2), tabela „Data residency" (poz. 3, pytanie O1).
 - SEC-15 **pozostaje otwarte** do potwierdzenia wszystkich pozycji listy z ADR-0001; `ALLOW_REAL_DATA=false`.
+- 2026-11-18: lekturę CDPA, kontaktów RODO, „data governance" i „data residency" właściciel przełożył na później (pozycja 6 poniżej).
+
+### Etap 10 – `google-services.json` i klucze API
+- **Lokalnie (właściciel):** pliki poza repo, pobierane Firebase CLI:
+  `firebase apps:sdkconfig android <APP_ID> --project=<P> -o "%USERPROFILE%\.tamitu\firebase\<dev|prod>\google-services.json"`;
+  do buildu kopiowane do `android/app/src/<dev|prod>/google-services.json` (w `.gitignore`). Zawartość nigdy w czacie, repo ani logach.
+- **CI:** `.farm/requests/GH-009-ci-firebase-config-secrets.md` (sekrety `GOOGLE_SERVICES_JSON_DEV/PROD`, `TAMITU_APP_CHECK_DEBUG_TOKEN_CI` tylko dev);
+  wdrożenia: `.farm/requests/GH-010-wif-deploy.md` (WIF, `ci-deployer`, warunek repo/gałąź).
+- **Klucze API** (utworzone przez Firebase; każdy ograniczony do 27 API Firebase):
+
+| Projekt | Klucz | Ograniczenie aplikacji |
+|---|---|---|
+| dev | Android key (auto created by Firebase) | **`pl.tadecode.tamitu.dev` + SHA-1 klucza debug** (2026-11-18, REST `apikeys` z `updateMask=restrictions.androidKeyRestrictions` – lista API zachowana) |
+| prod | Android key (auto created by Firebase) | brak – dodać razem z SHA klucza wydań |
+| dev, prod | Browser key (auto created by Firebase) | brak; aplikacji web nie ma – propozycja usunięcia (decyzja security) |
+
+- Zawężenie listy API klucza Android (np. `identitytoolkit`, `securetoken`, `firebaseinstallations`, `firebaseappcheck`) – po teście na urządzeniu (security).
+
+## Czego nie zrobiono / do zrobienia później
+| # | Co | Kto | Kiedy |
+|---|---|---|---|
+| 1 | Test odbioru logów na wdrożonej funkcji (ADR-0003 Aneks A pkt 1) | qa / owner | po pierwszym wdrożeniu (P3-05) |
+| 2 | Klucz wydań lub Play App Signing → SHA w aplikacji prod, ograniczenie klucza API prod, Play Integrity w prod (+ połączenie projektu w Play Console) | owner, mobile-dev | przed testami prod / Play |
+| 3 | Wtyczka Gradle `google-services`, aliasy `.firebaserc`, `serviceAccount` w opcjach funkcji (SEC-20, nazwa `fn-ai-plan` – O2) | mobile-dev | przed P3-05 / testem P3-04 na urządzeniu |
+| 4 | Indeksy i TTL Firestore (`firestore:indexes`) po rozstrzygnięciu O4 | dba / mobile-dev | przed P3-05 |
+| 5 | `roles/run.invoker` dla `fn-budget` na usłudze `budgetGuard` | owner / steward | przy wdrożeniu P3-09 |
+| 6 | Lektura CDPA, kontakty RODO, data governance i data residency Vertex (SEC-15 poz. 2–3, O1); buforowanie Vertex (O5) | owner; security | przed realnymi danymi |
+| 7 | UID właściciela w `config/runtime.testUids` | owner (konsola) | po pierwszym logowaniu |
+| 8 | Decyzja o przejściu z okresu próbnego na konto płatne (Upgrade) | owner | przed 2027-02-16 |
+| 9 | Sekrety CI (GH-009), WIF (GH-010) | steward | po PR mobile-dev z wtyczką / przed automatycznym wdrażaniem |
+| 10 | Lista osób z dostępem do konsol Firestore/Auth (ADR-0003 Aneks A pkt 4): obecnie tylko właściciel | owner | dokumentacja operacyjna |
+| 11 | Propozycje: usunięcie kluczy Browser, wyłączenie nieużywanych API Hosting/Remote Config, limit wydatków Vertex (O3) | security / architect | P3-09 |
