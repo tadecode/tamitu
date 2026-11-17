@@ -37,7 +37,7 @@ Wniosek: region `europe-west4` bez zmian. Korekta sformułowania ADR-0001 → py
 | 4 | Kubełek logów UE 30 dni, sink, wykluczenie `_Default` | zrobione | 2026-11-17 | Kubełek `tamitu-logs` (`europe-west4`, 30 dni), sink `tamitu-eu-sink`, sink `_Default` wyłączony; test wpisu: UE 1 / `_Default` 0 w obu projektach |
 | 5 | Konta usług `fn-ai-plan`, `fn-consent`, `fn-account`, `fn-budget` | zrobione (bez wartości sekretu) | 2026-11-17 | `fn-ai` → **`fn-ai-plan`** (Google: ID konta 6–30 znaków; pytanie O2); sekret `UID_HASH_PEPPER` w `europe-west4` bez wersji – wartość dodaje właściciel |
 | 6 | Auth (tylko Google), aplikacje Android, SHA-1/SHA-256 | zrobione (prod bez SHA) | 2026-11-17 | Google włączone w obu projektach (inni dostawcy wyłączeni); aplikacje Android zarejestrowane; SHA klucza debug tylko w dev; prod czeka na klucz wydań / Play App Signing |
-| 7 | App Check (Play Integrity), tokeny debug poza repo | – | | |
+| 7 | App Check (Play Integrity), tokeny debug poza repo | zrobione (dev); prod otwarte | 2026-11-17 | dev: Play Integrity zarejestrowane, token debug `owner-laptop` (wartość u właściciela w menedżerze haseł); API `firebaseappcheck`, `playintegrity` włączone w obu projektach; prod: rejestracja po SHA klucza wydań + Play Console |
 | 8 | Firestore Native, reguły `deny all`, `config/runtime` | – | | |
 | 9 | Vertex AI API, warunki przetwarzania danych (właściciel) | – | | |
 | 10 | `google-services.json` lokalnie i w CI | – | | |
@@ -127,3 +127,9 @@ $p='tamitu-dev-tadecode'; $b=New-Object byte[] 32; [Security.Cryptography.Random
 - Odciski: `keytool -list -v -keystore %USERPROFILE%\.android\debug.keystore -alias androiddebugkey -storepass android` (hasło klucza debug jest standardowe, nie jest sekretem). Każdy deweloper/maszyna z innym kluczem debug → dodatkowy SHA w aplikacji dev (`firebase apps:android:sha:create <APP_ID> <SHA>`).
 - **Otwarte (prod):** klucz wydań (upload key) i/lub Play App Signing – decyzja właściciela; wtedy SHA-1/SHA-256 do aplikacji prod. `build.gradle.kts` podpisuje dziś `release` kluczem debug (`TODO`).
 - **Otwarte (mobile-dev):** w `android/` brak wtyczki Gradle `com.google.gms.google-services`; plik konfiguracyjny per flavor: `android/app/src/dev/google-services.json`, `android/app/src/prod/google-services.json` (niekomitowane, `.gitignore`). Identyfikator klienta web (`serverClientId`) – z tego pliku (`default_web_client_id`) albo `--dart-define`.
+
+### Etap 7 – App Check
+- dev (konsola, właściciel): App Check → Apps → `pl.tadecode.tamitu.dev` → Play Integrity (SHA-256 klucza debug z etapu 6) – „Registered". Fraud Defense (reCAPTCHA) – pominięte (podgląd, niepotrzebne na Androidzie).
+- Token debug `owner-laptop` (Manage debug tokens) – **wartość tylko w menedżerze haseł właściciela**; do buildu lokalnie `--dart-define=TAMITU_APP_CHECK_DEBUG_TOKEN=...` (`lib/app/bootstrap.dart`); do CI – sekret repo przez Stewarda (prośba GH, etap 10). Nowy token na każdą maszynę/CI; usuwanie tokenów przy odejściu osoby/wycieku.
+- Egzekwowanie w konsoli (Firestore/Functions) **niewłączone**: Functions egzekwują w kodzie (`ENFORCE_APP_CHECK`, ADR-0002 Aneks A pkt 3), Firestore ma `deny all`.
+- **prod: brak tokenów debug (zakaz, ADR-0003 Aneks A pkt 2, SEC-16).** Rejestracja Play Integrity w prod – po SHA-256 klucza podpisującego i połączeniu aplikacji z projektem w Google Play Console (Play Console → Test and release → App integrity → Play Integrity API → link Cloud project). Otwarte.
