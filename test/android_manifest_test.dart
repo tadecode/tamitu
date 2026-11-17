@@ -9,11 +9,47 @@ void main() {
   final gradle = File('android/app/build.gradle.kts').readAsStringSync();
 
   test('only the allowed permissions are declared', () {
-    final perms = RegExp(r'<uses-permission[^>]*android:name="([^"]+)"')
+    final perms = RegExp(r'<uses-permission[^>]*android:name="([^"]+)"[^>]*>')
         .allMatches(manifest)
+        .where((m) => !m.group(0)!.contains('tools:node="remove"'))
         .map((m) => m.group(1))
         .toSet();
     expect(perms, {'android.permission.INTERNET'});
+  });
+
+  test('library permissions are stripped from the merged manifest (P3-04)', () {
+    for (final p in [
+      'android.permission.ACCESS_NETWORK_STATE', // ADR-0011 pkt 2
+      'android.permission.WAKE_LOCK',
+      'android.permission.USE_BIOMETRIC',
+      'android.permission.USE_FINGERPRINT',
+      'com.google.android.c2dm.permission.RECEIVE',
+      'com.google.android.providers.gsf.permission.READ_GSERVICES',
+      'com.google.android.gms.permission.AD_ID',
+    ]) {
+      expect(
+        manifest,
+        contains('<uses-permission android:name="$p" tools:node="remove" />'),
+        reason: p,
+      );
+    }
+  });
+
+  test('merged release manifest (when built) has only INTERNET', () {
+    final dir = Directory('build/app/intermediates/merged_manifest');
+    if (!dir.existsSync()) return; // no Android build in this run
+    for (final f in dir.listSync(recursive: true).whereType<File>()) {
+      if (!f.path.endsWith('AndroidManifest.xml')) continue;
+      final perms = RegExp(r'uses-permission[^>]*android:name="([^"]+)"')
+          .allMatches(f.readAsStringSync())
+          .map((m) => m.group(1)!)
+          // androidx.core's own signature permission declared for the app itself.
+          .where(
+            (p) => !p.endsWith('.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION'),
+          )
+          .toSet();
+      expect(perms, {'android.permission.INTERNET'}, reason: f.path);
+    }
   });
 
   test('no location permissions', () {

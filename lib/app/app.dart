@@ -1,32 +1,39 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../core/ui/app_theme.dart';
 import '../l10n/app_localizations.dart';
-import 'home_screen.dart';
+import 'providers.dart';
+import 'router.dart';
 
-/// Root widget. Polish is the default locale (ADR-0006).
-class TamituApp extends StatelessWidget {
+/// Root widget. UI language: chosen in the app, else the device language if PL/EN,
+/// else English (ADR-0006; EK-02 data table).
+class TamituApp extends ConsumerWidget {
   const TamituApp({super.key});
 
-  /// Default language is Polish: any unsupported device locale falls back to
-  /// `pl` (the ARB template is `app_en.arb` because gen_l10n defaults are used).
-  static Locale _resolveLocale(Locale? locale, Iterable<Locale> supported) {
+  static Locale resolveLocale(Locale? device, Iterable<Locale> supported) {
     for (final s in supported) {
-      if (s.languageCode == locale?.languageCode) return s;
+      if (s.languageCode == device?.languageCode) return s;
     }
-    return const Locale('pl');
+    return const Locale('en');
   }
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final language = ref.watch(uiLanguageProvider);
+    return MaterialApp.router(
       onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
+      theme: AppTheme.lightTheme(),
+      darkTheme: AppTheme.darkTheme(),
+      themeMode: ThemeMode.system,
+      locale: language == null ? null : Locale(language),
       localizationsDelegates: const [
         AppLocalizations.delegate,
         ...GlobalMaterialLocalizations.delegates,
       ],
       supportedLocales: AppLocalizations.supportedLocales,
-      localeResolutionCallback: _resolveLocale,
-      home: const HomeScreen(),
+      localeResolutionCallback: resolveLocale,
+      routerConfig: ref.watch(routerProvider),
     );
   }
 }

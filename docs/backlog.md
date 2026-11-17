@@ -80,3 +80,5 @@ Zadanie przykładowe T-001 (szkielet Flutter) powstanie w fazie 3 po G2.
 **Decyzja właściciela 2026-11-16:** przed implementacją ekranów (P3-04, P3-06, P3-07) przechodzimy P3-14a..d; każde zadanie wykonuje osobny agent z właściwą rolą. P3-04, P3-06, P3-07 wstrzymane do P3-14d. Prace bez UI (SEC-18/19/21 w backendzie, SEC-24, zadania właściciela) idą równolegle.
 
 Wejścia z Aneksów A ADR (do uwzględnienia przy realizacji): SEC-03, SEC-04, SEC-07, SEC-09, P3-03 (konta usług `fn-ai`, `fn-consent`, `fn-account`, `fn-budget`; sink logów; tokeny debug App Check jako sekrety); P3-01/02/06 (kryteria SQLCipher, lockfile, `flutter_secure_storage`; ADR-0008, ADR-0005). Warunek: `ALLOW_REAL_DATA=false` do zamknięcia SEC-15.
+
+**P3-04 (2026-11-17, mobile-dev):** review – logowanie Google (adaptery Firebase + atrapy), zgody EK-01/02/03/06, katalog EK-16, idempotentny `recordConsent`; do zrobienia po P3-03: test na urządzeniu i emulatorze Firebase, magazyn zgód w bazie konta (P3-06), EK-14/EK-15 (pytania M3–M7).

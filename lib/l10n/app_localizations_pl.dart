@@ -17,4 +17,240 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get homeSubtitle => 'Zaplanuj podróż z pomocą AI.';
+
+  @override
+  String get commonLoading => 'Trwa…';
+
+  @override
+  String get commonLoadingLabel => 'Wczytywanie';
+
+  @override
+  String get commonRetry => 'Spróbuj ponownie';
+
+  @override
+  String get commonOfflineNotice =>
+      'Brak połączenia z internetem. Ta funkcja wymaga sieci.';
+
+  @override
+  String get commonOpensInBrowser => 'otwiera przeglądarkę';
+
+  @override
+  String get languageSwitchLabel => 'Język aplikacji';
+
+  @override
+  String get welcomeTagline =>
+      'Plan podróży dzień po dniu – tam i tu, w jednym miejscu.';
+
+  @override
+  String get welcomePrivacyTitle => 'Twoja prywatność';
+
+  @override
+  String get welcomePrivacyBody =>
+      'Plany zapisujemy tylko na tym telefonie. Aby ułożyć plan, wyślemy dane podróży do usługi AI – zapytamy Cię o zgodę przed pierwszym planem.';
+
+  @override
+  String get welcomeAdultsOnly => 'Tamitu jest dla osób pełnoletnich.';
+
+  @override
+  String consentPolicyCheckbox(String policyLink) {
+    return 'Potwierdzam zapoznanie się z $policyLink i akceptuję ją';
+  }
+
+  @override
+  String get consentPolicyLink => 'polityką prywatności';
+
+  @override
+  String get welcomeSignIn => 'Zaloguj przez Google';
+
+  @override
+  String get welcomeSignInHint =>
+      'Zaznacz akceptację polityki, aby się zalogować.';
+
+  @override
+  String get welcomeSigningIn => 'Logowanie…';
+
+  @override
+  String get welcomeSignInCancelled => 'Logowanie anulowane.';
+
+  @override
+  String get welcomeSignInError => 'Nie udało się zalogować. Spróbuj ponownie.';
+
+  @override
+  String get startAccountDeleted =>
+      'Konto i dane na tym urządzeniu zostały usunięte.';
+
+  @override
+  String get reconsentTitle => 'Nowa polityka prywatności';
+
+  @override
+  String get reconsentBody =>
+      'Zaktualizowaliśmy politykę prywatności. Aby dalej korzystać z Tamitu, zapoznaj się z nią i zaakceptuj. Twoje plany pozostają na tym urządzeniu.';
+
+  @override
+  String get reconsentLink => 'Przeczytaj politykę prywatności';
+
+  @override
+  String get reconsentBodyDataReset =>
+      'Dane na tym urządzeniu zostały wyczyszczone, więc potrzebujemy ponownie Twojej akceptacji polityki prywatności. Zapoznaj się z nią i zaakceptuj, aby korzystać z Tamitu.';
+
+  @override
+  String reconsentBodyDated(String date) {
+    return 'Zaktualizowaliśmy politykę prywatności ($date). Aby dalej korzystać z Tamitu, zapoznaj się z nią i zaakceptuj. Twoje plany pozostają na tym urządzeniu.';
+  }
+
+  @override
+  String get reconsentAccept => 'Akceptuję i przechodzę dalej';
+
+  @override
+  String get reconsentSaveError =>
+      'Nie udało się zapisać akceptacji. Spróbuj ponownie.';
+
+  @override
+  String get reconsentOffline =>
+      'Aby zaakceptować politykę, połącz się z internetem.';
+
+  @override
+  String get reconsentSignOut => 'Wyloguj';
+
+  @override
+  String get reconsentDeleteAccount => 'Usuń konto';
+
+  @override
+  String get aiConsentTitle => 'Zgoda na użycie AI';
+
+  @override
+  String get aiConsentIntro =>
+      'Plan układa model sztucznej inteligencji. Aby to zrobić, musimy wysłać do niego dane Twojej podróży.';
+
+  @override
+  String get aiConsentSendTitle => 'Co wysyłamy';
+
+  @override
+  String get aiConsentSendList =>
+      'Cel podróży, nazwę obiektu lub dzielnicę noclegu, liczbę dni, datę, godzinę i sposób dojazdu, lotnisko; preferencje (zainteresowania, budżet, tempo, liczbę osób) i język planu.';
+
+  @override
+  String get aiConsentNotSendTitle => 'Czego nie wysyłamy';
+
+  @override
+  String get aiConsentNotSendList =>
+      'Twojego e-maila, imienia i nazwiska, identyfikatora konta, lokalizacji ani numeru lotu.';
+
+  @override
+  String get aiConsentRecipientTitle => 'Kto otrzymuje dane';
+
+  @override
+  String get aiConsentRecipient =>
+      'Usługa AI Google Cloud (Vertex AI) w regionie UE. Nasz serwer pośredniczący przetwarza dane tylko w pamięci – nie zapisujemy ich ani nie logujemy.';
+
+  @override
+  String get aiConsentErrors =>
+      'Plan może zawierać błędy – sprawdzaj godziny otwarcia i dostępność miejsc.';
+
+  @override
+  String get aiConsentSensitive =>
+      'Nie wpisuj w formularzu pełnego adresu prywatnego, danych wrażliwych ani danych innych osób.';
+
+  @override
+  String get aiConsentWithdraw =>
+      'Zgodę możesz w każdej chwili wycofać w Ustawieniach → Prywatność. Tworzenie nowych planów zablokujemy od razu, a wycofanie zapiszemy na naszym serwerze, gdy tylko będzie połączenie. Zapisane plany pozostaną.';
+
+  @override
+  String get aiConsentController =>
+      'Administratorem Twoich danych jest TadeCode (kontakt: tamitu@tadecode.pl).';
+
+  @override
+  String get aiConsentUpdatedIntro =>
+      'Zmieniliśmy treść zgody na użycie AI. Przeczytaj ją i zdecyduj ponownie – do tego czasu nie ułożymy nowych planów.';
+
+  @override
+  String aiConsentPolicy(String policyLink) {
+    return 'Szczegóły w $policyLink.';
+  }
+
+  @override
+  String get aiConsentPolicyLink => 'polityce prywatności';
+
+  @override
+  String get aiConsentAgree => 'Zgadzam się';
+
+  @override
+  String get aiConsentDisagree => 'Nie zgadzam się';
+
+  @override
+  String get aiConsentSaveError =>
+      'Nie udało się zapisać zgody. Nic nie wysłaliśmy. Spróbuj ponownie.';
+
+  @override
+  String get aiConsentOffline => 'Aby wyrazić zgodę, połącz się z internetem.';
+
+  @override
+  String get aiConsentGivenSnack => 'Zgoda na AI wyrażona';
+
+  @override
+  String get errorGenericTitle => 'Coś poszło nie tak';
+
+  @override
+  String get errorGenericBody =>
+      'Spróbuj ponownie za chwilę. Twoje plany na tym urządzeniu nie zostały zmienione.';
+
+  @override
+  String get errorOfflineTitle => 'Brak połączenia';
+
+  @override
+  String get errorOfflineBody =>
+      'Sprawdź połączenie z internetem i spróbuj ponownie.';
+
+  @override
+  String get errorGenerateTitle => 'Nie udało się ułożyć planu';
+
+  @override
+  String get errorAiUnavailableBody =>
+      'Usługa AI jest chwilowo niedostępna. Ta próba nie wlicza się do limitu. Spróbuj ponownie za chwilę.';
+
+  @override
+  String get errorAiInvalidBody =>
+      'AI zwróciło niepełny plan, więc go nie zapisaliśmy. Ta próba nie wlicza się do limitu. Spróbuj ponownie.';
+
+  @override
+  String get errorTimeoutBody =>
+      'Tworzenie planu trwało zbyt długo. Ta próba mogła zostać wliczona do dzisiejszego limitu. Spróbuj ponownie.';
+
+  @override
+  String get errorLimitTitle => 'Dzisiejszy limit planów wykorzystany';
+
+  @override
+  String errorLimitBody(int limit, String time) {
+    String _temp0 = intl.Intl.pluralLogic(
+      limit,
+      locale: localeName,
+      other: '$limit planu',
+      many: '$limit planów',
+      few: '$limit plany',
+      one: '1 plan',
+    );
+    return 'Możesz utworzyć $_temp0 dziennie. Kolejne od jutra, od $time. Zapisane plany są nadal dostępne.';
+  }
+
+  @override
+  String get errorUpdateTitle => 'Zaktualizuj aplikację';
+
+  @override
+  String get errorUpdateBody =>
+      'Ta wersja Tamitu nie jest już obsługiwana. Zaktualizuj aplikację w Google Play, aby tworzyć plany. Zapisane plany są dostępne.';
+
+  @override
+  String get errorUpdateAction => 'Zaktualizuj aplikację';
+
+  @override
+  String get errorUnavailableForAccountBody =>
+      'Tworzenie planów jest chwilowo niedostępne. Spróbuj później.';
+
+  @override
+  String get errorSessionExpired =>
+      'Sesja wygasła. Zaloguj się ponownie – plany są na urządzeniu.';
+
+  @override
+  String get errorInvalidFormBody =>
+      'Sprawdź dane w formularzu i spróbuj ponownie.';
 }
