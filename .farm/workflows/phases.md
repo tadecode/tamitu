@@ -41,6 +41,15 @@
   przy werdykcie „zmiany wymagane” → zatwierdzenie i merge przez właściciela. Zadania z ekranami:
   dodatkowo `qa` weryfikuje kryteria akceptacji przed oznaczeniem `done`. PR-y z samą dokumentacją
   nie wymagają reviewer. Brak raportu reviewer = PR nie jest gotowy do merge.
+- **Bramka etykiet (stan docelowy po GH-008 i FARM-007; do tego czasu etykiety nadaje ręcznie właściciel):**
+  wymagany status check `review-gate` w ochronie `main`. PR zmieniający kod (`lib/`, `android/`, `backend/`, `test/`,
+  `integration_test/`, `pubspec.*`) wymaga etykiety `review:ok`; PR z ekranami (`lib/features/**` lub etykieta `ui`)
+  dodatkowo `qa:ok`; PR z samą dokumentacją pomija bramkę. `review:changes` / `qa:changes` blokują merge. Etykiety nadaje
+  rola (`gh pr edit <nr> --add-label …`, konto bota) po komentarzu z raportem i sprawdzeniu, że head PR-a się nie zmienił;
+  nowy push zdejmuje `*:ok` i wymaga ponownego przeglądu. Bramka jest proceduralna (to samo konto bota), więc nie zastępuje
+  zatwierdzenia właściciela. Szczegóły: `.farm/requests/GH-008-review-qa-gate.md`, `FARM-007-reviewer-qa-tools.md`.
+- **Nowa sesja reviewer/qa na każdy PR** (także na ponowny przegląd po poprawkach): czysty kontekst, poprzednie raporty
+  z `docs/reviews/` i `docs/qa/`, nie z pamięci rozmowy.
 - Do następnej fazy tylko po zatwierdzeniu bramki przez człowieka
   (dotyczy G1, G2, G5).
 - **Wspólne pliki (decyzja właściciela 2026-11-17):** żeby PR-y nie kolidowały, dziennik to osobne pliki
