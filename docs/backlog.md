@@ -53,11 +53,11 @@ Zadanie przykładowe T-001 (szkielet Flutter) powstanie w fazie 3 po G2.
 | P3-01 | Szkielet Flutter w korzeniu repozytorium (ADR-0009; flavory dev/prod, pakiet `pl.tadecode.tamitu`, manifest minimalny, l10n PL/EN, testy manifestu i tłumaczeń) | mobile-dev | review |
 | P3-02 | Szkielet `backend/` (Functions TS, reguły `deny all`, emulator, testy) | mobile-dev | review |
 | P3-03 | Projekty Firebase dev/prod, region, kubełek logów 30 dni, budżety, konta usług (prośba do Stewarda + właściciel) | steward/owner | todo |
-| P3-04 | Logowanie Google + zgody + `recordConsent` (US-001..003) | mobile-dev | todo |
-| P3-05 | `generatePlan` + walidator + zestaw ewaluacyjny PL/EN, wybór modelu (US-004..006, US-011) | mobile-dev/qa | todo |
-| P3-06 | Lokalna baza SQLCipher, lista/podgląd/usuwanie planów (US-008, US-009) | mobile-dev | todo |
+| P3-04 | Logowanie Google + zgody + `recordConsent` (US-001..003). **Wchodzi też (ADR-0011/0012):** zapis zgód w Firestore (idempotentny po `consentId`; walidacja wersji już w backendzie, gałąź `feat/p3-adr-0011-0012-backend`); klient: `consentId` we wpisie tymczasowym, ponowienia `recordConsent`, stałe wersji i daty polityki, klasyfikacja błędów sieci i `consent_required` (raport `docs/architecture/przeglad-ekranow-p3-14c.md` pkt 5) | mobile-dev | todo |
+| P3-05 | `generatePlan` + walidator + zestaw ewaluacyjny PL/EN, wybór modelu (US-004..006, US-011). **Wchodzi też (ADR-0011/0012):** sprawdzenie zgód w backendzie już jest (przed limitem), zostają rezerwacja limitu i testy na emulatorze (ADR-0012 pkt 7); klient: wysyłka oczekujących zgód przed `generatePlan`, mapowanie `consentType` → EK-03/EK-06 i „Zaktualizuj aplikację”, `testData` ze stałej `TAMITU_TEST_DATA` (raport `docs/architecture/przeglad-ekranow-p3-14c.md` pkt 5) | mobile-dev/qa | todo |
+| P3-06 | Lokalna baza SQLCipher, lista/podgląd/usuwanie planów (US-008, US-009). **Wchodzi też (ADR-0011 pkt 9, ADR-0010):** przepływ utraty klucza bazy (EK-03 wariant, zgoda AI „nie wyrażono”) z testem; `AppIcon` z pomiarem APK (raport `docs/architecture/przeglad-ekranow-p3-14c.md` pkt 5) | mobile-dev | todo |
 | P3-07 | Link Maps (+ lokalizacja zależnie od Q1) (US-007) | mobile-dev | todo (Q1: A, test C) |
-| P3-08 | `deleteAccount` + test E2E (US-010, SEC-07) | mobile-dev/qa | todo |
+| P3-08 | `deleteAccount` + test E2E (US-010, SEC-07). **Wchodzi też (ADR-0011 pkt 4, 8):** backend już przyjmuje każdą `apiVersion` ≥ 1 i nie wymaga `google.com`; klient: ponowne logowanie przed wywołaniem, przerwane usuwanie (`reload()`, „Dokończ / Anuluj”), test E2E z przerwaniem (raport `docs/architecture/przeglad-ekranow-p3-14c.md` pkt 5) | mobile-dev/qa | todo |
 | P3-09 | `budgetGuard` i wyłącznik kosztowy (SEC-09) | mobile-dev/owner | todo |
 | P3-10 | Weryfikacja cen modeli i kursu w cenniku Google (costs.md) – przed implementacją `generatePlan` | owner/security | todo |
 | P3-11 | Test wariantu C lokalizacji (link bez `origin`) na urządzeniu; ewentualny nowy ADR zastępujący (Q1) | mobile-dev/architect | todo (w ramach P3-07) |
