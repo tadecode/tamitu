@@ -1,14 +1,24 @@
-import '../../../core/errors/app_failure.dart';
-import '../domain/consent_ports.dart';
-import '../domain/consent_record.dart';
+import 'package:tamitu/core/errors/app_failure.dart';
+import 'package:tamitu/features/consent/domain/consent_ports.dart';
+import 'package:tamitu/features/consent/domain/consent_record.dart';
 
-/// Process-lifetime store, partitioned by UID (account isolation, N3).
-///
-/// Interim implementation until the encrypted account database (P3-06): records do
-/// not survive a restart, so after a restart EK-01 asks for the policy again (EK-03)
-/// - a safe default (never lets a user through without a known acceptance).
+/// Process-lifetime store, partitioned by UID (account isolation, N3). Test double only;
+/// the app uses `SqliteConsentLocalStore`.
 class InMemoryConsentLocalStore implements ConsentLocalStore {
   final _byUid = <String, Map<String, ConsentRecord>>{};
+
+  /// UIDs whose next [takeDataReset] returns true (simulates a lost database key).
+  final resetFor = <String>{};
+  int closeAllCalls = 0;
+
+  /// Number of next [all] calls that fail (simulates a database open error).
+  int failNextReads = 0;
+
+  @override
+  Future<bool> takeDataReset(String uid) async => resetFor.remove(uid);
+
+  @override
+  Future<void> closeAll() async => closeAllCalls++;
 
   @override
   Future<void> upsert(String uid, ConsentRecord record) async {
@@ -17,6 +27,10 @@ class InMemoryConsentLocalStore implements ConsentLocalStore {
 
   @override
   Future<List<ConsentRecord>> all(String uid) async {
+    if (failNextReads > 0) {
+      failNextReads--;
+      throw StateError('disk full');
+    }
     // Stable: equal clientAt keeps insertion order (later write = later record).
     final list = [...?_byUid[uid]?.values];
     final order = {for (final (i, r) in list.indexed) r.id: i};

@@ -1,0 +1,3 @@
+# Fałszywe alarmy gitleaks. Każdy wpis: odcisk + powód. Zatwierdza właściciel.
+# Stała testowa SQLCipher w teście (baza w katalogu tymczasowym), usunięta w późniejszym commicie PR #61.
+2357403e9f6acc500f2283005da1dc92aa911184:test/core/db/account_database_test.dart:generic-api-key:10

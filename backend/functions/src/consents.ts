@@ -50,29 +50,45 @@ export interface CurrentVersions {
   aiConsentVersionCurrent?: string | undefined;
 }
 
+/** Log code for a malformed consent version in config/runtime (ADR-0012 pkt 4). */
+export const CONSENT_VERSIONS_INVALID = "consent_versions_invalid";
+
+/** Current version numbers N from config/runtime. */
+export interface CurrentVersionNumbers {
+  privacy: number;
+  ai: number;
+}
+
 /**
  * Config check (ADR-0012 pkt 4): both versions in config/runtime must be well-formed,
- * otherwise fail-closed with consent_required (privacy_policy). Runs before any consent read.
+ * otherwise fail-closed with consent_required (privacy_policy) AND the fixed log code
+ * CONSENT_VERSIONS_INVALID in `log.configError` (review PR #51 #1) - so the owner can tell a
+ * configuration mistake from users without acceptance. The configured values are never logged
+ * nor sent to the client. Runs before any consent read.
  */
-export function currentVersionNumbers(current: CurrentVersions): { privacy: number; ai: number } {
+export function currentVersionNumbers(
+  current: CurrentVersions,
+  log?: { configError?: string | undefined },
+): CurrentVersionNumbers {
   const privacy = versionNumber("privacy_policy", current.policyVersionCurrent);
   const ai = versionNumber("ai_processing", current.aiConsentVersionCurrent);
   if (privacy === undefined || ai === undefined) {
+    if (log) log.configError = CONSENT_VERSIONS_INVALID;
     throw new AppError("consent_required", { consentType: "privacy_policy" });
   }
   return { privacy, ai };
 }
 
 /**
- * ADR-0012 pkt 3, in this order (after the config check above):
+ * ADR-0012 pkt 3, in this order (after the config check above, whose result is passed in -
+ * the check runs once, before the consent reads):
  *  a. latest privacy_policy record must exist and have N >= current; a record with
  *     granted=false is not an acceptance, so it is rejected too (fail-closed);
  *  b. latest ai_processing record must have granted=true and N >= current.
  * Records with a malformed or foreign-prefix version count as missing.
  * Throws consent_required with details.consentType; returns normally when both pass.
  */
-export function assertConsents(current: CurrentVersions, latest: LatestConsents): void {
-  const cur = currentVersionNumbers(current);
+export function assertConsents(cur: CurrentVersionNumbers, latest: LatestConsents): void {
   const p = latest.privacy;
   const pN = p ? versionNumber("privacy_policy", p.policyVersion) : undefined;
   if (p?.granted !== true || pN === undefined || pN < cur.privacy) {
@@ -133,3 +149,39 @@ export function buildConsentDoc(input: ConsentInput, now: Date): ConsentDoc {
  * never overwrites the first record (append-only history, ADR-0005 pkt 3).
  */
 export type ConsentWriter = (uid: string, consentId: string, doc: ConsentDoc) => Promise<{ receivedAt: Date }>;
+
+/** Firestore path of a consent record (data model pkt 3). */
+export function consentDocPath(uid: string, consentId: string): string {
+  return `users/${uid}/consents/${consentId}`;
+}
+
+/**
+ * Stored shape: dates converted by `toTimestamp` (Firestore Timestamp in index.ts).
+ * Pure so the mapping is unit-tested without the emulator (review PR #57 #4).
+ */
+export function toStoredConsent<T>(doc: ConsentDoc, toTimestamp: (d: Date) => T) {
+  return { ...doc, clientAt: toTimestamp(doc.clientAt), receivedAt: toTimestamp(doc.receivedAt) };
+}
+
+/** receivedAt of an existing document (anything with toDate(), e.g. Timestamp), else fallback. */
+export function storedReceivedAt(value: unknown, fallback: Date): Date {
+  const toDate = (value as { toDate?: unknown } | null)?.toDate;
+  if (typeof toDate === "function") {
+    const d: unknown = toDate.call(value);
+    if (d instanceof Date && !Number.isNaN(d.getTime())) return d;
+  }
+  return fallback;
+}
+
+/**
+ * Maps a stored consent document to the fields the check needs (review PR #51 #2). Missing
+ * document or wrong field types -> undefined, i.e. "no record" (fail-closed in assertConsents).
+ */
+export function latestConsentFromDoc(data: unknown): LatestConsent | undefined {
+  if (typeof data !== "object" || data === null) return undefined;
+  const d = data as Record<string, unknown>;
+  const granted = d["granted"];
+  const policyVersion = d["policyVersion"];
+  if (typeof granted !== "boolean" || typeof policyVersion !== "string") return undefined;
+  return { granted, policyVersion };
+}

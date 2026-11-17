@@ -1,7 +1,7 @@
 /// App-wide constants for consents and links (ADR-0011 pkt 1, ADR-0012, ADR-0006 Aneks A pkt 1).
 ///
 /// Changing the text of a consent in ANY language requires a new version here
-/// (test/consent_text_version_test.dart pins a hash of the texts per version).
+/// (`test/guards_test.dart` pins a fingerprint of the texts per version).
 abstract final class AppConstants {
   /// Version of the privacy policy built into this app (`privacy-vN`, ADR-0012 pkt 1).
   /// The server must know it before the app is released (ADR-0012 pkt 6).

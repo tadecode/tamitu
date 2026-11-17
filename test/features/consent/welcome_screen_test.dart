@@ -158,6 +158,21 @@ void main() {
     },
   );
 
+  testWidgets('BUG-5: the notice sits directly above the sign-in button', (
+    t,
+  ) async {
+    final env = TestEnv();
+    env.auth.nextSignInFailure = const AppFailure(FailureKind.offline);
+    await pumpApp(t, env);
+    await check(t);
+    await tapSignIn(t);
+    final notice = t.getRect(find.byKey(const Key('welcomeOffline')));
+    final checkbox = t.getRect(find.byType(Checkbox));
+    final button = t.getRect(signInButton());
+    expect(notice.top, greaterThan(checkbox.bottom));
+    expect(notice.bottom, lessThanOrEqualTo(button.top));
+  });
+
   testWidgets('other error: error notice without technical details', (t) async {
     final env = TestEnv();
     env.auth.nextSignInFailure = const AppFailure(FailureKind.generic);

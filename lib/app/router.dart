@@ -24,6 +24,7 @@ abstract final class Routes {
 String? sessionRedirect(SessionStatus status, String location) {
   switch (status) {
     case SessionLoading():
+    case SessionStorageError():
       return location == Routes.start ? null : Routes.start;
     case SessionSignedOut():
       return location == Routes.welcome ? null : Routes.welcome;

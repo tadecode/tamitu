@@ -13,6 +13,8 @@ export interface LogFields {
   requestBytes?: number;
   errorClass?: string;
   errorCode?: string;
+  /** Fixed configuration error code (ADR-0012 pkt 4), never a configured value. */
+  configError?: string;
 }
 
 const ALLOWED: ReadonlyArray<keyof LogFields> = [
@@ -25,6 +27,7 @@ const ALLOWED: ReadonlyArray<keyof LogFields> = [
   "requestBytes",
   "errorClass",
   "errorCode",
+  "configError",
 ];
 
 const MAX_STRING = 64;

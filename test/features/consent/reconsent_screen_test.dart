@@ -137,6 +137,26 @@ void main() {
     expect(env.auth.signOutCalls, 1);
   });
 
+  testWidgets(
+    'BUG-4: unsupported_version -> "Update the app" (Play), sign-out stays',
+    (t) async {
+      final env = signedInWithoutAcceptance();
+      env.api.failures.add(const AppFailure(FailureKind.unsupportedVersion));
+      await pumpApp(t, env, locale: 'en');
+      await checkAndAccept(t);
+      expect(find.byKey(const Key('updateApp')), findsOneWidget);
+      expect(find.text('Update the app'), findsOneWidget);
+      expect(
+        find.text("Couldn't save your acceptance. Please try again."),
+        findsNothing,
+      );
+      await t.tap(find.text('Update app'));
+      await t.pumpAndSettle();
+      expect(env.opened, [AppConstants.playStoreUrl]);
+      expect(find.text('Sign out'), findsOneWidget);
+    },
+  );
+
   testWidgets('data reset variant text', (t) async {
     final env = TestEnv();
     await t.pumpWidget(

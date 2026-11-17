@@ -32,6 +32,13 @@ class SessionNeedsPolicy extends SessionStatus {
   final bool dataReset;
 }
 
+/// The account database could not be opened (not a lost key): error with retry.
+class SessionStorageError extends SessionStatus {
+  const SessionStorageError(this.uid);
+
+  final String uid;
+}
+
 /// Signed in with a current acceptance -> EK-04.
 class SessionReady extends SessionStatus {
   const SessionReady(this.uid);
@@ -47,6 +54,9 @@ class SessionController extends Notifier<SessionStatus> {
   StreamSubscription<AuthUser?>? _sub;
   bool _signingIn = false;
   int _generation = 0;
+
+  /// Keeps the EK-03 data-reset variant until the policy is accepted again.
+  String? _dataResetFor;
 
   AuthGateway get _auth => ref.read(authGatewayProvider);
   ConsentService get _consents => ref.read(consentServiceProvider);
@@ -68,9 +78,23 @@ class SessionController extends Notifier<SessionStatus> {
       state = const SessionSignedOut();
       return;
     }
-    final needsPolicy = await _consents.needsPolicyReconsent(user.uid);
+    final SessionConsentState consent;
+    try {
+      consent = await _consents.onSessionStart(user.uid);
+    } catch (_) {
+      // Account database cannot be opened for another reason than a lost key (e.g. no
+      // space): retry, never delete data (EK-01, ADR-0011 pkt 9).
+      if (ref.mounted && gen == _generation) {
+        state = SessionStorageError(user.uid);
+      }
+      return;
+    }
     if (!ref.mounted || gen != _generation) return;
-    state = needsPolicy ? SessionNeedsPolicy(user.uid) : SessionReady(user.uid);
+    if (consent.dataReset) _dataResetFor = user.uid;
+    if (!consent.needsPolicy && _dataResetFor == user.uid) _dataResetFor = null;
+    state = consent.needsPolicy
+        ? SessionNeedsPolicy(user.uid, dataReset: _dataResetFor == user.uid)
+        : SessionReady(user.uid);
     // Retry unsynced consent records (ADR-0011 pkt 10); never blocks entering EK-04.
     unawaited(_syncInBackground(user.uid));
   }
@@ -91,15 +115,18 @@ class SessionController extends Notifier<SessionStatus> {
   }) async {
     _signingIn = true;
     try {
-      await _consents.stagePolicyAcceptance(consentId: consentId, lang: lang);
-      final user = await _auth.signInWithGoogle();
-      await _consents.adoptStagedPolicy(user.uid);
+      final AuthUser user;
+      try {
+        await _consents.stagePolicyAcceptance(consentId: consentId, lang: lang);
+        user = await _auth.signInWithGoogle();
+      } catch (e) {
+        await _consents.discardStagedPolicy();
+        if (e is AppFailure) rethrow;
+        throw const AppFailure(FailureKind.generic);
+      }
+      // Signed in: adoption happens in onSessionStart (also after a crash here).
       _signingIn = false;
       await _evaluate(user);
-    } catch (e) {
-      await _consents.discardStagedPolicy();
-      if (e is AppFailure) rethrow;
-      throw const AppFailure(FailureKind.generic);
     } finally {
       _signingIn = false;
     }
@@ -111,6 +138,7 @@ class SessionController extends Notifier<SessionStatus> {
   /// Sign out (US-002). Plans stay on the device (P3-06).
   Future<void> signOut() async {
     await _auth.signOut();
+    await _consents.onSignOut();
     await _evaluate(null);
   }
 

@@ -7,6 +7,7 @@ import '../../../core/errors/app_failure.dart';
 import '../../../core/ui/app_icon.dart';
 import '../../../core/ui/components.dart';
 import '../../../core/ui/tokens.dart';
+import '../../../core/ui/update_app_view.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../session/session_controller.dart';
 
@@ -86,6 +87,25 @@ class _ReconsentScreenState extends ConsumerState<ReconsentScreen> {
     );
     final failure = _failure;
 
+    if (failure?.kind == FailureKind.unsupportedVersion) {
+      // BUG-4: retrying cannot help – EK-16 "Update the app"; sign-out stays (QA9).
+      return Scaffold(
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          title: Semantics(header: true, child: Text(l10n.reconsentTitle)),
+        ),
+        body: SafeArea(
+          child: UpdateAppView(
+            secondary: widget.onSignOut == null
+                ? null
+                : TextButton(
+                    onPressed: widget.onSignOut,
+                    child: Text(l10n.reconsentSignOut),
+                  ),
+          ),
+        ),
+      );
+    }
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,

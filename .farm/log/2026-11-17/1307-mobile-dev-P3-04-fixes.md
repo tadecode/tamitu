@@ -1,0 +1,61 @@
+# 13:07  mobile-dev → orchestrator, reviewer, qa, security, architect  |  P3-04 (poprawki po przeglądzie PR #57 i weryfikacji QA)
+
+- Zrobione: poprawki z raportu reviewer (`docs/reviews/PR-57.md`, PR #59) i weryfikacji QA (`docs/qa/verify-p3-04.md`, PR #58) według decyzji właściciela („A, zleć mobile-dev poprawki”, wariant A dla QA3).
+  - **BUG-1, BUG-2, reviewer #1:** zgody trafiają do rdzenia zaszyfrowanej bazy konta (fundament P3-06). Rdzeń obejmuje: Drift bez generatora kodu + SQLCipher (opcja hooka `sqlite3` `source: sqlcipher`), plik `tamitu_<sha256(uid)[0..16]>.db` per konto, klucz 256 bit w `flutter_secure_storage`, tabelę `consents_local` v1 z `received_at`, `schema_meta` i wersjonowane migracje.
+    - Przy starcie wpis tymczasowy jest przejmowany i dosyłany (ADR-0011 pkt 10), a przy wylogowaniu czyszczony.
+    - Po restarcie nie powstaje nowy rekord `privacy_policy`.
+    - Start offline z aktualną akceptacją prowadzi do EK-04 (US-001 AC4).
+    - Utrata klucza: plik jest usuwany, powstaje pusta baza i pokazuje się EK-03 w wariancie „dane wyczyszczone”.
+    - Inny błąd otwarcia bazy: CMP-18 z ponowieniem, bez kasowania danych.
+  - **Reviewer #2:** dodany `firebase_app_check`. Aktywacja następuje przed pierwszym wywołaniem callable: Play Integrity w `prod`, dostawca debug w `dev`; token debug przychodzi z `--dart-define=TAMITU_APP_CHECK_DEBUG_TOKEN` i nie trafia do repozytorium. Komentarz w `callable_consent_api.dart` poprawiony.
+  - **Reviewer #3:** `TAMITU_FAKE_BACKEND` działa tylko w buildzie `dev` innym niż release; w pozostałych przypadkach start kończy się błędem.
+  - **Reviewer #5:** jedna synchronizacja zgód w locie na konto. `idTokenChanges().distinct()` – ADR-0004 bez zmian, odświeżenie tokenu nie uruchamia już ponownej oceny sesji.
+  - **Reviewer #4 (częściowo):** mapowanie dokumentu Firestore wydzielone do czystych funkcji z testami.
+  - **BUG-3:** `google_sign_in` `interrupted` oraz opis z „network” są pokazywane jako brak sieci. Do potwierdzenia na urządzeniu (SIGN-13).
+  - **BUG-4:** `unsupported_version` w EK-03 i EK-06 pokazuje „Zaktualizuj aplikację” z linkiem do Google Play; „Wyloguj” w EK-03 zostaje (QA9).
+  - **BUG-5:** komunikat w EK-02 stoi bezpośrednio nad przyciskiem.
+  - **BUG-6:** poprawiony odnośnik w komentarzu.
+- Artefakty:
+  - `lib/core/db/{account_database,account_databases}.dart`, `lib/features/consent/data/sqlite_consent_local_store.dart`
+  - `lib/features/consent/application/consent_service.dart`, `lib/features/session/{session_controller,session_gate_screen}.dart`
+  - `lib/app/{bootstrap,environment,router}.dart`, `lib/core/ui/update_app_view.dart`
+  - `lib/features/auth/data/firebase_auth_gateway.dart`, `lib/features/consent/presentation/*`
+  - `backend/functions/src/{consents,index}.ts`
+  - testy: `test/core/db/`, `test/features/session/{restart,gate_screen}_test.dart`, `test/features/consent/consent_service_sync_test.dart`, `test/app/environment_test.dart`, `test/features/auth/google_sign_in_errors_test.dart`, `backend/functions/test/consents.test.ts`
+  - `pubspec.yaml` / `pubspec.lock`: `drift`, `flutter_secure_storage`, `path_provider`, `firebase_app_check`, `crypto`
+- Testy:
+  - `flutter analyze` bez uwag, `dart format` bez zmian;
+  - `flutter test` 121 zielonych, w tym test restartu procesu (zapis → nowa instancja → odczyt) na prawdziwym SQLCipher na hoście oraz test, że plik bazy jest zaszyfrowany;
+  - backend: `vitest` 110, `tsc`, `eslint` zielone.
+  - Testy jak w przeglądzie: BUG-1 i BUG-2 → `restart_test.dart`; reviewer #5 → `consent_service_sync_test.dart`, który przy okazji wykrył zakleszczenie we własnej poprawce; BUG-3 → `google_sign_in_errors_test.dart`; BUG-4 → testy EK-03 i EK-06; BUG-5 → test położenia komunikatu; reviewer #2 i #3 → `environment_test.dart`.
+- Rozmiar APK (nowa zależność natywna):
+  - `flutter build apk --release --flavor prod --target-platform android-arm64`: **24,1 MB** wobec 18,8 MB przed poprawkami, czyli **+5,3 MB**.
+  - Prawie cały przyrost to `libsqlcipher.so` (5,26 MB na arm64, zawiera OpenSSL – build SQLCipher z `package:sqlite3`). Na każde dodatkowe ABI dochodzi podobna kwota (dotyczy uniwersalnego APK; AAB dzieli według ABI).
+  - Alternatywa do decyzji architekta: `source: sqlite3mc` (SQLite3MultipleCiphers, bez OpenSSL, zwykle mniejsze), zgodna z SQLCipher na poziomie formatu po konfiguracji. To zmienia „SQLCipher” z ADR-0005/0008, więc wymaga decyzji.
+  - Scalony manifest release nadal ma tylko `INTERNET` (test zielony po buildzie).
+- Decyzje:
+  - Drift bez generowanych tabel (surowy SQL) w rdzeniu; P3-06 może przejść na tabele generowane na tym samym pliku – migracja v2.
+  - `consentId` istniejący lokalnie nigdy nie jest nadpisywany przy przejmowaniu wpisu tymczasowego.
+  - Licencje: SQLCipher Community (BSD) i OpenSSL (Apache 2.0) – do ekranu licencji (EK-12) i przeglądu SEC-08.
+  - Binaria SQLCipher są pobierane w czasie buildu z wydań GitHub `simolus3/sqlite3.dart` i weryfikowane sha256 przypiętym w pakiecie – do oceny łańcucha dostaw przez security.
+- Do zrobienia przez odbiorcę:
+  - reviewer i QA: ponowny przegląd i weryfikacja PR #57; QA – lista ręczna z powtórką GATE-07 (restart).
+  - security: SEC-08 dla nowych zależności (`drift`, `sqlite3`/SQLCipher + OpenSSL, `flutter_secure_storage`, `path_provider`, `firebase_app_check`, `crypto`).
+  - architect: ewentualnie `sqlite3mc` zamiast SQLCipher (rozmiar); ustalenia reviewer #7 (`clientAtCorrected` w modelu danych) i #8 (ten sam `consentId` z inną treścią).
+- Pytania/blokady:
+  - **Odłożone – reviewer #6** (komunikat przy nieudanym otwarciu linku do polityki): katalog EK-16 nie ma tekstu dla tej sytuacji (`routeOpenError` należy do EK-09). Potrzebny tekst od ux, potem prosta zmiana.
+  - **Odłożone – reviewer #4 (emulator):** testy transakcji na emulatorze Firestore. Brak Firebase CLI i Javy na maszynie oraz projektów (P3-03); mapowanie jest już pokryte testami czystych funkcji.
+  - **Nie wykonane:** jednorazowy dialog EK-01 „Zapisane plany zostały usunięte” przy utracie klucza. Przepływ prowadzi od razu do EK-03 w wariancie „dane wyczyszczone”; dialog razem z P3-06 (listą planów).
+  - BUG-3 wymaga potwierdzenia na urządzeniu (Credential Manager nie ma kodu błędu sieci).
+  - SQLCipher loguje natywnie `sqlcipher_codec_ctx_set_error` przy próbie złego klucza – bez danych, ale do oceny pod SEC-29 na urządzeniu (logcat).
+
+## Dla orkiestratora (backlog i pytania)
+- Backlog – status: P3-04: review (poprawki po przeglądzie wniesione do PR #57). P3-06: rdzeń bazy konta (plik, klucz, migracje, `consents_local`) gotowy w P3-04 – pozostają tabele planów (migracja v2), dialog EK-01 „dane usunięte” i plan B rozmiaru.
+- Backlog – nowe zadania:
+  - ux: tekst komunikatu dla nieudanego otwarcia linku do polityki (EK-02/03/06; przegląd #6);
+  - architect: decyzja SQLCipher vs `sqlite3mc` (rozmiar +5,3 MB / ABI);
+  - qa/mobile-dev po P3-03: testy emulatora zapisu zgód i potwierdzenie BUG-3 na urządzeniu.
+- Pytania otwarte – nowe:
+  - M8 (architect): czy przy rozmiarze +5,3 MB / ABI zostajemy przy SQLCipher z OpenSSL, czy przechodzimy na SQLite3MultipleCiphers (`source: sqlite3mc`)?
+  - M9 (ux): tekst dla „nie udało się otworzyć polityki prywatności”.
+- Pytania otwarte – zamknięte: QA3 – wariant A (trwały zapis w rdzeniu bazy konta, decyzja właściciela).

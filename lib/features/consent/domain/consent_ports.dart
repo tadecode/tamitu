@@ -7,11 +7,16 @@ abstract interface class ConsentApi {
   Future<DateTime> recordConsent(ConsentRecord record);
 }
 
-/// Local consent records of ONE account (`consents_local`, ADR-0005 pkt 3).
-///
-/// The target implementation lives in the encrypted per-account database (Drift +
-/// SQLCipher) delivered with P3-06; until then [InMemoryConsentLocalStore] is used.
+/// Local consent records per account (`consents_local`, ADR-0005 pkt 3), stored in the
+/// encrypted account database (`SqliteConsentLocalStore`).
 abstract interface class ConsentLocalStore {
+  /// True once after the account database was unreadable and recreated empty
+  /// (ADR-0005 Aneks A pkt 2, ADR-0011 pkt 9): EK-03 "data reset" variant.
+  Future<bool> takeDataReset(String uid);
+
+  /// Closes open account databases (sign-out). Data stays on the device (N3).
+  Future<void> closeAll();
+
   /// Insert or replace by [ConsentRecord.id].
   Future<void> upsert(String uid, ConsentRecord record);
 
