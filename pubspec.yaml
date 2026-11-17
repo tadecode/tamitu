@@ -26,6 +26,11 @@ dependencies:
   firebase_auth: ^7.1.0
   cloud_functions: ^7.1.0
   google_sign_in: ^7.2.0
+  drift: ^2.35.4
+  flutter_secure_storage: ^11.2.0
+  path_provider: ^2.1.6
+  firebase_app_check: ^0.5.2
+  crypto: ^3.0.8
 
 dev_dependencies:
   flutter_test:
@@ -38,3 +43,10 @@ flutter:
   generate: true
   # Plain `flutter build apk` (CI) builds the dev flavor.
   default-flavor: dev
+
+# ADR-0005 / ADR-0008: SQLCipher build of SQLite for the encrypted account database
+# (package:sqlite3 hook option; binaries are checked against sha256 pinned in the package).
+hooks:
+  user_defines:
+    sqlite3:
+      source: sqlcipher

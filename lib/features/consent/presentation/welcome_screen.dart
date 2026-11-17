@@ -146,6 +146,19 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         ),
       ),
       const SizedBox(height: Space.s4),
+      ConsentCheckbox(
+        value: _accepted,
+        onChanged: _loading ? null : _setAccepted,
+        before: before,
+        linkText: l10n.consentPolicyLink,
+        after: after,
+        onOpenLink: _openPolicy,
+        linkHint: l10n.commonOpensInBrowser,
+        linkButtonText: l10n.reconsentLink,
+      ),
+    ];
+
+    final bottom = <Widget>[
       if (failure != null) ...[
         failure.kind == FailureKind.offline
             ? Notice(
@@ -164,19 +177,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
               ),
         const SizedBox(height: Space.s4),
       ],
-      ConsentCheckbox(
-        value: _accepted,
-        onChanged: _loading ? null : _setAccepted,
-        before: before,
-        linkText: l10n.consentPolicyLink,
-        after: after,
-        onOpenLink: _openPolicy,
-        linkHint: l10n.commonOpensInBrowser,
-        linkButtonText: l10n.reconsentLink,
-      ),
-    ];
-
-    final bottom = <Widget>[
       AppButton.filled(
         key: const Key('welcomeSignIn'),
         label: l10n.welcomeSignIn,

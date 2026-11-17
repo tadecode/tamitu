@@ -11,10 +11,11 @@ import 'package:tamitu/features/auth/data/fake_auth_gateway.dart';
 import 'package:tamitu/features/auth/domain/auth_gateway.dart';
 import 'package:tamitu/features/consent/application/consent_service.dart';
 import 'package:tamitu/features/consent/data/fake_consent_api.dart';
-import 'package:tamitu/features/consent/data/in_memory_consent_local_store.dart';
 import 'package:tamitu/features/consent/data/prefs_pending_policy_store.dart';
 import 'package:tamitu/features/consent/domain/consent_record.dart';
 import 'package:tamitu/l10n/app_localizations.dart';
+
+import 'fakes/in_memory_consent_local_store.dart';
 
 /// Deterministic UUID v4-shaped ids.
 String Function() idSequence() {

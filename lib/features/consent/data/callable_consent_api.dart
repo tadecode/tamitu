@@ -5,8 +5,10 @@ import '../../../core/errors/app_failure.dart';
 import '../domain/consent_ports.dart';
 import '../domain/consent_record.dart';
 
-/// `recordConsent` through the Cloud Functions SDK (ID token and App Check token are
-/// attached by the SDK). Region per posrednik-api.md.
+/// `recordConsent` through the Cloud Functions SDK. The SDK attaches the ID token, and
+/// the App Check token only after `FirebaseAppCheck.activate` (done in bootstrap before
+/// any callable; without it the server answers `app_check_failed`). Region per
+/// posrednik-api.md.
 class CallableConsentApi implements ConsentApi {
   CallableConsentApi(this._functions);
 

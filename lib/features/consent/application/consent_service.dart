@@ -25,6 +25,20 @@ enum AiConsentState {
   withdrawn,
 }
 
+/// What EK-01 needs from the consent records at session start.
+class SessionConsentState {
+  const SessionConsentState({
+    required this.needsPolicy,
+    required this.dataReset,
+  });
+
+  /// No local acceptance of the policy version built into the app -> EK-03.
+  final bool needsPolicy;
+
+  /// The account database was unreadable and recreated (EK-03 data-reset variant).
+  final bool dataReset;
+}
+
 /// Result of [ConsentService.syncPending].
 class SyncOutcome {
   const SyncOutcome({
@@ -90,14 +104,36 @@ class ConsentService {
   /// Sign-in failed or was cancelled: the temporary entry must not survive (CMP-09).
   Future<void> discardStagedPolicy() => _pending.clear();
 
-  /// After a successful sign-in in EK-02: the staged acceptance becomes a local record
-  /// of THIS account (unsynced). The staged entry stays until `recordConsent` succeeds
-  /// (ADR-0005 Aneks A pkt 4). Called only from the sign-in flow, so an entry staged by
-  /// someone else is never attached to a different account.
+  /// The staged acceptance becomes a local record of the signed-in account (unsynced),
+  /// unless that `consentId` is already stored (never overwrites a synced record). The
+  /// staged entry stays until `recordConsent` succeeds (ADR-0005 Aneks A pkt 4).
+  ///
+  /// Called after sign-in in EK-02 and at every session start (ADR-0011 pkt 10: the app
+  /// may have been killed between sign-in and adoption). It cannot reach another
+  /// account: the entry is cleared on failed sign-in and on sign-out ([onSignOut]).
   Future<void> adoptStagedPolicy(String uid) async {
     final staged = await _pending.read();
     if (staged == null) return;
-    await _local.upsert(uid, staged.toRecord());
+    final known = (await _local.all(uid)).any((r) => r.id == staged.consentId);
+    if (!known) await _local.upsert(uid, staged.toRecord());
+  }
+
+  /// Session start (EK-01): adopt a staged acceptance left by an interrupted sign-in,
+  /// then decide. Local and offline.
+  Future<SessionConsentState> onSessionStart(String uid) async {
+    final dataReset = await _local.takeDataReset(uid);
+    await adoptStagedPolicy(uid);
+    return SessionConsentState(
+      needsPolicy: await needsPolicyReconsent(uid),
+      dataReset: dataReset,
+    );
+  }
+
+  /// Sign-out: close the account database and drop a staged acceptance so it can never
+  /// be attached to the next account (QA5).
+  Future<void> onSignOut() async {
+    await _pending.clear();
+    await _local.closeAll();
   }
 
   // ---------------------------------------------------------------- EK-01
@@ -114,9 +150,23 @@ class ConsentService {
 
   // ---------------------------------------------------------------- sync
 
+  final _inFlight = <String, Future<SyncOutcome>>{};
+
   /// Sends unsynced local records, oldest first (start, before EK-06 and before
-  /// `generatePlan`). Stops at the first failure; never throws.
-  Future<SyncOutcome> syncPending(String uid) async {
+  /// `generatePlan`). Stops at the first failure; never throws. One sync per account at
+  /// a time: concurrent callers share the running one (review PR #57 #5, QA CONS-05).
+  Future<SyncOutcome> syncPending(String uid) {
+    final running = _inFlight[uid];
+    if (running != null) return running;
+    // Block body: returning the removed Future would make whenComplete await itself.
+    final next = _sync(uid).whenComplete(() {
+      _inFlight.remove(uid);
+    });
+    _inFlight[uid] = next;
+    return next;
+  }
+
+  Future<SyncOutcome> _sync(String uid) async {
     final pending = (await _local.all(uid)).where((r) => !r.synced).toList();
     var synced = 0;
     for (final r in pending) {

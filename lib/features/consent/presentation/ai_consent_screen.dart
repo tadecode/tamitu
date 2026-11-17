@@ -8,6 +8,7 @@ import '../../../core/errors/app_failure.dart';
 import '../../../core/ui/app_icon.dart';
 import '../../../core/ui/components.dart';
 import '../../../core/ui/tokens.dart';
+import '../../../core/ui/update_app_view.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../session/session_controller.dart';
 
@@ -107,6 +108,15 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
       ),
     );
 
+    if (failure?.kind == FailureKind.unsupportedVersion) {
+      // BUG-4 (also for EK-06): EK-16 "Update the app"; back = no decision.
+      return Scaffold(
+        appBar: AppBar(
+          title: Semantics(header: true, child: Text(l10n.aiConsentTitle)),
+        ),
+        body: const SafeArea(child: UpdateAppView()),
+      );
+    }
     return PopScope(
       canPop: !_saving,
       child: Scaffold(
