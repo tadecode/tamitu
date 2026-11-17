@@ -36,7 +36,7 @@ Wniosek: region `europe-west4` bez zmian. Korekta sformułowania ADR-0001 → py
 | 3 | Budżety 20/100 PLN, progi 50/90/100%, Pub/Sub `budget-alerts` | zrobione | 2026-11-17 | Budżety „tamitu-dev 20 PLN" i „tamitu-prod 100 PLN" (miesięczne, filtr na projekt, kredyty nieodliczane); prod + prognoza 100% i temat `budget-alerts`; „My First Project" odpięty od rozliczeń |
 | 4 | Kubełek logów UE 30 dni, sink, wykluczenie `_Default` | zrobione | 2026-11-17 | Kubełek `tamitu-logs` (`europe-west4`, 30 dni), sink `tamitu-eu-sink`, sink `_Default` wyłączony; test wpisu: UE 1 / `_Default` 0 w obu projektach |
 | 5 | Konta usług `fn-ai-plan`, `fn-consent`, `fn-account`, `fn-budget` | zrobione (bez wartości sekretu) | 2026-11-17 | `fn-ai` → **`fn-ai-plan`** (Google: ID konta 6–30 znaków; pytanie O2); sekret `UID_HASH_PEPPER` w `europe-west4` bez wersji – wartość dodaje właściciel |
-| 6 | Auth (tylko Google), aplikacje Android, SHA-1/SHA-256 | – | | |
+| 6 | Auth (tylko Google), aplikacje Android, SHA-1/SHA-256 | zrobione (prod bez SHA) | 2026-11-17 | Google włączone w obu projektach (inni dostawcy wyłączeni); aplikacje Android zarejestrowane; SHA klucza debug tylko w dev; prod czeka na klucz wydań / Play App Signing |
 | 7 | App Check (Play Integrity), tokeny debug poza repo | – | | |
 | 8 | Firestore Native, reguły `deny all`, `config/runtime` | – | | |
 | 9 | Vertex AI API, warunki przetwarzania danych (właściciel) | – | | |
@@ -114,3 +114,16 @@ Dodanie wartości sekretu (właściciel, PowerShell, osobno dla każdego projekt
 ```
 $p='tamitu-dev-tadecode'; $b=New-Object byte[] 32; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); $f=New-TemporaryFile; [IO.File]::WriteAllText($f,[Convert]::ToBase64String($b)); gcloud secrets versions add UID_HASH_PEPPER --project=$p --data-file=$f; Remove-Item $f; $b=$null
 ```
+
+### Etap 6 – Auth i aplikacje Android
+- Konsola (właściciel): Authentication → Sign-in method → Google → Enable; nazwa publiczna „Tamitu Dev" / „Tamitu"; e-mail pomocy = adres firmowy (widoczny dla użytkowników – przed testami zewnętrznymi rozważyć adres grupy, np. `pomoc@`). Bez Identity Platform. Weryfikacja przez Identity Toolkit API: `google.com enabled=True`, e-mail/telefon/anonimowy wyłączone (oba projekty).
+- Aplikacje (Firebase CLI, `firebase apps:create android`):
+
+| Projekt | Pakiet | App ID | SHA |
+|---|---|---|---|
+| dev | `pl.tadecode.tamitu.dev` | `1:660969630372:android:48e4768c86542f081cd431` | klucz debug właściciela: SHA-1 `8A:D7:C9:89:34:B9:08:2A:D6:F8:E3:8E:E8:9F:5C:73:02:E5:40:DC`, SHA-256 `86:3E:63:16:32:49:2C:AC:E0:B9:47:E3:9A:D8:B7:45:12:7F:2A:0B:84:D8:B4:E5:F4:30:C2:87:1E:10:EF:58` |
+| prod | `pl.tadecode.tamitu` | `1:41324867505:android:c983219aaa7a3c11449790` | **brak** – świadomie (nie dodajemy klucza debug do prod) |
+
+- Odciski: `keytool -list -v -keystore %USERPROFILE%\.android\debug.keystore -alias androiddebugkey -storepass android` (hasło klucza debug jest standardowe, nie jest sekretem). Każdy deweloper/maszyna z innym kluczem debug → dodatkowy SHA w aplikacji dev (`firebase apps:android:sha:create <APP_ID> <SHA>`).
+- **Otwarte (prod):** klucz wydań (upload key) i/lub Play App Signing – decyzja właściciela; wtedy SHA-1/SHA-256 do aplikacji prod. `build.gradle.kts` podpisuje dziś `release` kluczem debug (`TODO`).
+- **Otwarte (mobile-dev):** w `android/` brak wtyczki Gradle `com.google.gms.google-services`; plik konfiguracyjny per flavor: `android/app/src/dev/google-services.json`, `android/app/src/prod/google-services.json` (niekomitowane, `.gitignore`). Identyfikator klienta web (`serverClientId`) – z tego pliku (`default_web_client_id`) albo `--dart-define`.
