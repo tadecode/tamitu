@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { AppError } from "../src/errors.js";
-import { parseDeleteAccount, parseGeneratePlan, parseRecordConsent } from "../src/schemas.js";
+import { checkArrivalDate, parseDeleteAccount, parseGeneratePlan, parseRecordConsent } from "../src/schemas.js";
 
 const NOW = new Date("2026-11-15T10:00:00Z");
 
@@ -148,5 +148,31 @@ describe("deleteAccount request", () => {
     expect(() => parseDeleteAccount({ apiVersion: 1, x: 1 })).toThrow();
     expect(() => parseDeleteAccount({})).toThrow();
     for (const v of [0, 1.5, "2"]) expect(errOf(() => parseDeleteAccount({ apiVersion: v })).appCode).toBe("invalid_argument");
+  });
+});
+
+describe("arrival date window around midnight in Warsaw (review PR #51 #6)", () => {
+  const ok = (date: string, now: string) => () => checkArrivalDate(date, new Date(now));
+
+  it("winter (UTC+1): 23:30 UTC is already the next day in Warsaw", () => {
+    // 2026-11-15T23:30Z = 16.11 00:30 in Warsaw -> minimum is 14.11
+    expect(ok("2026-11-14", "2026-11-15T23:30:00Z")).not.toThrow();
+    expect(ok("2026-11-13", "2026-11-15T23:30:00Z")).toThrow();
+    // 22:59 UTC = 23:59 Warsaw on 15.11 -> minimum is 13.11
+    expect(ok("2026-11-13", "2026-11-15T22:59:00Z")).not.toThrow();
+  });
+
+  it("summer (UTC+2): 22:00 UTC is already the next day in Warsaw", () => {
+    // 2027-07-10T22:00Z = 11.07 00:00 in Warsaw -> minimum is 09.07
+    expect(ok("2027-07-09", "2027-07-10T22:00:00Z")).not.toThrow();
+    expect(ok("2027-07-08", "2027-07-10T22:00:00Z")).toThrow();
+    // 21:59 UTC = 23:59 Warsaw on 10.07 -> minimum is 08.07
+    expect(ok("2027-07-08", "2027-07-10T21:59:00Z")).not.toThrow();
+  });
+
+  it("DST change night (last Sunday of March 2027)", () => {
+    // 2027-03-28T00:30Z = 01:30 CET, 28.03 in Warsaw -> minimum 26.03
+    expect(ok("2027-03-26", "2027-03-28T00:30:00Z")).not.toThrow();
+    expect(ok("2027-03-25", "2027-03-28T00:30:00Z")).toThrow();
   });
 });

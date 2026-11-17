@@ -160,6 +160,10 @@ describe("generatePlan consents (ADR-0012 pkt 3-4, 7)", () => {
     const d = mkDeps({ loadLatestConsents }, { policyVersionCurrent: "privacy-1" });
     expect(await detailsOf(run(d))).toEqual({ code: "consent_required", consentType: "privacy_policy" });
     expect(loadLatestConsents).not.toHaveBeenCalled();
+    // ADR-0012 pkt 4 (review PR #51 #1): fixed configuration code in the log, never the value.
+    const fields = JSON.stringify(logged);
+    expect(fields).toContain('"configError":"consent_versions_invalid"');
+    expect(fields).not.toContain("privacy-1");
   });
 
   it("consents are read only after validation and the data policy", async () => {
@@ -338,7 +342,7 @@ describe("no content in logs (ADR-0002 Aneks A pkt 2)", () => {
   it("logs only allow-listed keys, with error class and code", async () => {
     await code(runGuarded("generatePlan", (ctx) => generatePlanCore(req(planBody()), mkDeps({ pepper: "p" }), ctx)));
     const fields = logged.flatMap((a) => a.filter((x): x is Record<string, unknown> => typeof x === "object" && x !== null));
-    const allowed = new Set(["fn", "result", "uidHash", "durationMs", "attempts", "days", "requestBytes", "errorClass", "errorCode"]);
+    const allowed = new Set(["fn", "result", "uidHash", "durationMs", "attempts", "days", "requestBytes", "errorClass", "errorCode", "configError"]);
     for (const f of fields) for (const k of Object.keys(f)) expect(allowed.has(k)).toBe(true);
     expect(fields[0]).toMatchObject({ fn: "generatePlan", result: "error", errorClass: "AppError", errorCode: "not_implemented", days: 4 });
     expect(fields[0]?.["uidHash"]).toBe(uidHash("owner", "p"));
