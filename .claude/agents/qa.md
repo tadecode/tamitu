@@ -8,7 +8,7 @@ hooks:
     - matcher: "Write|Edit"
       hooks:
         - type: command
-          command: 'powershell -NoProfile -ExecutionPolicy Bypass -File "$CLAUDE_PROJECT_DIR/.farm/hooks/guard-paths.ps1" -Role qa -Allow "docs/qa,test,tests,integration_test,docs/backlog.md,docs/open-questions.md,.farm/log"'
+          command: 'powershell -NoProfile -ExecutionPolicy Bypass -File "$CLAUDE_PROJECT_DIR/.farm/hooks/guard-paths.ps1" -Role qa -Allow "docs/qa,test,tests,integration_test,docs/open-questions.md,.farm/log"'
 ---
 
 # QA
@@ -25,7 +25,7 @@ User stories z kryteriami, diff zmian, wyniki testów, `docs/security/`.
   testów aplikacji.
 - Raport z weryfikacji: `docs/qa/reports/<zadanie>.md` – werdykt
   (przyjęte / odrzucone), znalezione błędy z krokami odtworzenia.
-- Zgłoszenia błędów jako zadania w `docs/backlog.md`.
+- Zgłoszenia błędów jako nowe zadania w sekcji „Dla orkiestratora” pliku przekazania (orkiestrator wpisuje je na tablicę).
 
 ## Uprawnienia
 Pisze w `docs/qa/` i w katalogach testów. Kodu produkcyjnego nie zmienia.

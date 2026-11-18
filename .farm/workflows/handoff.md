@@ -27,27 +27,28 @@ Każde przekazanie pracy między agentami to **osobny plik** w `.farm/log/` (dec
 - Do zrobienia przez odbiorcę: <konkretnie>
 - Pytania/blokady: <lub „brak">
 
-## Dla orkiestratora (backlog i pytania)
-- Backlog – status: <T-id: nowy status (np. in-progress → review)> lub „brak"
-- Backlog – nowe zadania: <id, tytuł, rola, zależności> lub „brak"
+## Dla orkiestratora (zadania i pytania)
+- Zadania – status: <ID: nowa kolumna (todo, doing, review, owner, done)> lub „brak"
+- Zadania – nowe: <id, tytuł, rola, zależności> lub „brak"
 - Pytania otwarte – nowe: <id, treść, do kogo> lub „brak"
 - Pytania otwarte – zamknięte: <id i rozstrzygnięcie> lub „brak"
 ```
 
-## Backlog i pytania otwarte (zmienia tylko orkiestrator)
+## Zadania i pytania otwarte (zmienia tylko orkiestrator)
 
-Role **nie edytują** `docs/backlog.md` ani `docs/open-questions.md` (to wspólne pliki, przyczyna większości
-konfliktów). Zmianę statusu zadania, nowe zadania i nowe pytania zgłaszają w sekcji „Dla orkiestratora”
-własnego pliku przekazania. Orkiestrator, **po merge** PR-ów, przenosi zgłoszenia zbiorczo do obu plików
-osobnym małym PR-em (`chore/backlog-<data>`), zapisując w dzienniku, z których plików przekazania pochodzą zmiany.
-Do czasu przeniesienia źródłem prawdy o statusie są pliki przekazania w `.farm/log/`.
+**Zadania i statusy są w Azure Boards** (od 2026-11-18; `docs/backlog.md` tylko wskazuje tablicę).
+Role nie piszą na tablicy ani w `docs/open-questions.md`: zmianę statusu, nowe zadania i nowe pytania
+zgłaszają w sekcji „Dla orkiestratora” własnego pliku przekazania. Orkiestrator **po merge** PR-a roli
+przenosi zgłoszenia zadań na tablicę (`.farm/ado/task.ps1`, bez PR-a), a pytania otwarte zbiorczo do
+`docs/open-questions.md` małym PR-em. Do czasu przeniesienia źródłem prawdy są pliki przekazania.
 
 Zmiana uprawnień ról (`-Allow` w `.claude/agents/*.md`) oraz `CLAUDE.md` (zasady 2 i 12) czeka na właściciela:
 `.farm/requests/FARM-006-shared-files.md`.
 
 ## Okres przejściowy
 
-Do czasu zatwierdzenia FARM-006 role mają jeszcze uprawnienia do `docs/backlog.md` i `docs/open-questions.md`.
+Do czasu zatwierdzenia FARM-006 role mają jeszcze uprawnienia do `docs/open-questions.md`
+(uprawnienia do `docs/backlog.md` zdjęte 2026-11-18 przy przejściu na Azure Boards).
 PR-y otwarte w dniu 2026-11-17 (#53, #54, P3-04, ADR platformy) mogą dokończyć pracę w starym formacie
 (wpis w `.farm/log/<data>.md`, edycja backlogu). Orkiestrator przy ich merge rozwiązuje konflikty i nie wymaga
 przepisywania. Od zatwierdzenia FARM-006 wszystkie nowe wpisy – tylko w nowym formacie.

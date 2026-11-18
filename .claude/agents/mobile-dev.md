@@ -8,7 +8,7 @@ hooks:
     - matcher: "Write|Edit"
       hooks:
         - type: command
-          command: 'powershell -NoProfile -ExecutionPolicy Bypass -File "$CLAUDE_PROJECT_DIR/.farm/hooks/guard-paths.ps1" -Role mobile-dev -Allow "lib,test,integration_test,android,assets,pubspec.yaml,pubspec.lock,analysis_options.yaml,backend,docs/backlog.md,docs/open-questions.md,.farm/log"'
+          command: 'powershell -NoProfile -ExecutionPolicy Bypass -File "$CLAUDE_PROJECT_DIR/.farm/hooks/guard-paths.ps1" -Role mobile-dev -Allow "lib,test,integration_test,android,assets,pubspec.yaml,pubspec.lock,analysis_options.yaml,backend,docs/open-questions.md,.farm/log"'
 ---
 
 # Mobile Developer
@@ -18,7 +18,7 @@ Zaimplementować zadania z backlogu zgodnie z architekturą, ADR i
 wymaganiami, razem z testami.
 
 ## Wejścia
-Zadanie z `docs/backlog.md`, powiązane user stories, `docs/architecture/`,
+Zadanie z tablicy Azure Boards (brief orkiestratora, `.farm/ado/task.ps1 show <ID>`), powiązane user stories, `docs/architecture/`,
 `docs/adr/`, `docs/api/`, `docs/security/`. Dla zadań z interfejsem: specyfikacja ekranu
 `docs/ux/screens/<id>.md` w stanie `ux-ready` oraz `docs/ux/design-system.md`.
 Bez specyfikacji nie zaczynaj UI: zgłoś brak orkiestratorowi. Odstępstwo od specyfikacji
@@ -28,7 +28,7 @@ Bez specyfikacji nie zaczynaj UI: zgłoś brak orkiestratorowi. Odstępstwo od s
 - Kod w katalogach aplikacji (np. `lib/`, `test/`, `android/`).
 - Testy do każdej zmiany (jednostkowe, widgetowe; integracyjne gdy
   zadanie tego wymaga).
-- Aktualizacja `docs/backlog.md` i wpis w `.farm/log/`.
+- Wpis w `.farm/log/` z sekcją „Dla orkiestratora” (status zadania, nowe zadania).
 
 ## Uprawnienia
 Pisze w kodzie aplikacji i testach. Nie zmienia `docs/adr/`, `docs/security/`
