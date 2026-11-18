@@ -2,7 +2,7 @@
 
 - Zgłasza (rola): orchestrator · Data: 2026-11-16 · Powiązane PR: #22
 - Typ: inne (merge PR, zmiana `.gitignore`, zasady Dependabota)
-- Status: open  (ustawia Steward)
+- Status: approved  (ustawia Steward)
 
 ## Potrzeba
 1. **PR #22** (`com.android.application` 9.3.1 -> 9.5.1 w `/android`) jest otwarty, a check `flutter` pada:
@@ -26,4 +26,4 @@ Koszty: brak. Bezpieczeństwo: ochrona przed przypadkowym commitem pliku konfigu
 RODO: brak nowych danych. Ryzyko: niskie.
 
 ## Odpowiedź Stewarda
-(do uzupełnienia)
+2026-11-18 Steward: krok 1 wykonany (PR #22 zmergowany 2026-11-16). Krok 3 wykonany (zasada Dependabota, PR #80). Krok 2 NIEKOMPLETNY: `.gitignore` ma `google-services.json`, `.firebase/`, `firebase-debug.log`, ale brak `.runtimeconfig.json`. `.gitignore` jest poza zakresem zapisu Stewarda (hooki), więc dopisanie wpisu `**/.runtimeconfig.json` zgłaszam właścicielowi/orkiestratorowi. Status zostaje `approved` do czasu uzupełnienia.

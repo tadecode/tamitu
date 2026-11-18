@@ -1,0 +1,108 @@
+name: review-gate
+
+# Bramka przegladu i QA (GH-008). PR z kodem wymaga etykiety `review:ok` (reviewer),
+# a PR zmieniajacy ekrany takze `qa:ok` (qa). Etykiety `review:changes` / `qa:changes` blokuja.
+# Bramka PROCEDURALNA: zatrzymuje pominiecie kroku przez pomylke, nie zlosliwe obejscie
+# (to samo konto bota otwiera PR i nadaje etykiety). Patrz .farm/requests/GH-008-review-qa-gate.md.
+#
+# Bezpieczenstwo: wyzwalacz `pull_request` (NIE `pull_request_target`), BEZ checkoutu kodu PR;
+# job czyta wylacznie metadane PR przez API i nie wykonuje niczego z PR.
+# Job uruchamia sie ZAWSZE (bez `paths:`), bo wymagana kontrola, ktora sie nie uruchomi,
+# blokuje PR na zawsze; decyzje "czy to PR z kodem" podejmuje skrypt.
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, labeled, unlabeled, ready_for_review]
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: review-gate-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review-gate:
+    name: review-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Sprawdz etykiety przegladu i QA
+        uses: actions/github-script@v7
+        env:
+          # Konta uprawnione do nadawania etykiet bramki; zmienna Actions GATE_LABELERS (lista po przecinku).
+          GATE_LABELERS: ${{ vars.GATE_LABELERS || 'tadecode-farm,tadecode' }}
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const number = context.payload.pull_request.number;
+            const labelers = process.env.GATE_LABELERS.split(',').map(s => s.trim()).filter(Boolean);
+
+            const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: number });
+
+            // Dependabot: bramka pominieta; obowiazuje zatwierdzenie wlasciciela i CI (dependabot-policy.md).
+            if (pr.user.login === 'dependabot[bot]') {
+              core.notice('PR Dependabota - bramka pominieta (zatwierdzenie wlasciciela i CI).');
+              return;
+            }
+
+            const files = await github.paginate(github.rest.pulls.listFiles, { owner, repo, pull_number: number, per_page: 100 });
+            const paths = files.map(f => f.filename).concat(files.map(f => f.previous_filename).filter(Boolean));
+            const isCode = p => /^(lib|android|backend|test|integration_test)\//.test(p) || /^pubspec\.(yaml|lock)$/.test(p);
+            const code = paths.some(isCode);
+            let labels = new Set(pr.labels.map(l => l.name));
+            const ui = paths.some(p => p.startsWith('lib/features/')) || labels.has('ui');
+
+            if (!code) {
+              core.notice('PR bez kodu - bramka pominieta.');
+              return;
+            }
+
+            const failures = [];
+
+            // Etykiety blokujace (od dowolnego konta).
+            for (const l of ['review:changes', 'qa:changes']) {
+              if (labels.has(l)) failures.push(`Etykieta ${l}: zmiany wymagane, popraw i popros o ponowny przeglad.`);
+            }
+
+            // Nowy push uniewaznia poprzednie werdykty ok.
+            if (context.payload.action === 'synchronize') {
+              for (const l of ['review:ok', 'qa:ok']) {
+                if (!labels.has(l)) continue;
+                labels.delete(l);
+                try {
+                  await github.rest.issues.removeLabel({ owner, repo, issue_number: number, name: l });
+                } catch (e) {
+                  core.warning(`Nie udalo sie zdjac ${l}: ${e.message}`);
+                }
+              }
+            }
+
+            // Etykieta ok liczy sie, gdy nadana przez uprawnione konto PO commicie head (ochrona przed wyscigiem z pushem).
+            const { data: commit } = await github.rest.git.getCommit({ owner, repo, commit_sha: pr.head.sha });
+            const headTime = new Date(commit.committer.date).getTime();
+            const events = await github.paginate(github.rest.issues.listEvents, { owner, repo, issue_number: number, per_page: 100 });
+
+            const validOk = (name) => {
+              if (!labels.has(name)) return `brak etykiety ${name}`;
+              const last = events.filter(e => e.event === 'labeled' && e.label && e.label.name === name).pop();
+              if (!last) return `etykieta ${name} bez zdarzenia nadania`;
+              if (!labelers.includes(last.actor && last.actor.login)) return `etykieta ${name} nadana przez konto spoza GATE_LABELERS (${last.actor && last.actor.login})`;
+              if (new Date(last.created_at).getTime() <= headTime) return `etykieta ${name} dotyczy starszej wersji PR (nadana przed commitem ${pr.head.sha.slice(0, 7)})`;
+              return null;
+            };
+
+            const r = validOk('review:ok');
+            if (r) failures.push(`Brak przegladu reviewer: ${r}.`);
+            if (ui) {
+              const q = validOk('qa:ok');
+              if (q) failures.push(`Brak weryfikacji qa: ${q}.`);
+            }
+
+            if (failures.length) {
+              core.setFailed(failures.join('\n'));
+            } else {
+              core.notice(`Bramka spelniona (kod: tak, ekrany: ${ui ? 'tak' : 'nie'}).`);
+            }
