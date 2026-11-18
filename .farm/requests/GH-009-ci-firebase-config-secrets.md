@@ -2,7 +2,7 @@
 
 - Zgłasza (rola): orchestrator (P3-03, decyzja właściciela 2026-11-18) · Data: 2026-11-18 · Powiązane zadanie/PR: P3-03 / #66; ADR-0003, SEC-01, SEC-16
 - Typ: secret + ci-change
-- Status: open  (ustawia Steward)
+- Status: approved  (ustawia Steward)
 
 ## Potrzeba
 Projekty Firebase `tamitu-dev-tadecode` i `tamitu-prod-tadecode` istnieją (P3-03). Plik `google-services.json` jest per flavor i
@@ -31,3 +31,14 @@ dostawcą debug App Check (flavor `dev`) potrzebny jest osobny token debug CI.
 Koszty: brak. · Bezpieczeństwo/RODO: klucz API Firebase nie jest sekretem w ścisłym sensie (jest w APK), ale repo jest publiczne – trzymamy poza repo; klucz ograniczony do API Firebase (P3-03). Token debug = obejście App Check w dev – tylko sekret, rotacja przy wycieku. · Ryzyko: niskie; zależne od PR mobile-dev (wtyczka Gradle).
 
 ## Odpowiedź Stewarda
+2026-11-18 Steward: prośba zgodna z polityką (wartości sekretów nie przeszły przez czat ani repo).
+Wykonane:
+- Środowisko GitHub `prod` z regułą „deployment branches: main” (bez wymaganych recenzentów; zatwierdzenie można dodać przy GH-010).
+- Sekrety dev ustawił właściciel: `GOOGLE_SERVICES_JSON_DEV`, `TAMITU_APP_CHECK_DEBUG_TOKEN_CI` (zweryfikowane `gh secret list`, same nazwy).
+- Zmiana CI (PR `chore/ci-gh-009-firebase-secrets`): krok zapisuje plik z sekretu dev do `android/app/src/dev/`, build `--flavor dev` bez flagi `allowMissingGoogleServices` (brak pliku = błąd, SEC-33). Bez sekretu (PR z forka, Dependabot) zostaje build z flagą z GH-011.
+
+Czeka:
+- `GOOGLE_SERVICES_JSON_PROD` w środowisku `prod` (właściciel, `--env prod`); żaden krok CI jeszcze go nie używa.
+- Token debug nie jest podpięty do buildu (tylko sekret); podepnę przy TEST-INT-CI.
+- Punkt 4 (wzorce gitleaks): `.gitleaks.toml` jest poza zakresem Stewarda; decyzja właściciela.
+Status: approved (do `done` po scaleniu PR i ustawieniu sekretu prod).
