@@ -12,7 +12,7 @@ Stan: 2026-11-15, wersja 0.2 (po G2; ADR zatwierdzone), autor: architect (przegl
 | Dane do AI (D6) | pamięć pośrednika w trakcie żądania; Vertex AI wg warunków dostawcy | po naszej stronie 0 | – (warunki dostawcy: SEC-15) |
 | Lokalizacja (D7) | nie zapisywana | 0 | – |
 | Nazwy w linku Maps (D8) | generowane na urządzeniu | 0 (link nie zapisywany ze współrzędnymi) | – |
-| Licznik użycia (D10) | Firestore `usage/{uid}` | bieżąca doba; TTL 30 dni od ostatniej aktualizacji | `deleteAccount`; TTL |
+| Licznik użycia (D10) | Firestore `usage/{uid}` | bieżąca doba; TTL 30 dni od ostatniej aktualizacji (polityka TTL na polu `expireAt` = ostatni zapis + 30 dni, decyzja O4; `model-danych.md` pkt 3) | `deleteAccount`; TTL |
 | Logi (D11) | Cloud Logging, kubełek UE | 30 dni, bez treści, UID jako HMAC | wygasają automatycznie (do 30 dni po usunięciu konta – opisać w polityce) |
 | Dane diagnostyczne (D12) | nie używane | – | – |
 | Kontakt/wnioski (D14) | skrzynka tamitu@tadecode.pl | wg [PRAWNIK] | ręcznie |
