@@ -53,7 +53,10 @@ class FirebaseEmulatorConfig {
   /// Must be a `demo-*` project: the emulators then never reach a real Google project.
   final String projectId;
 
-  /// Subject of the fake Google ID token (becomes the Firebase UID in the Auth emulator).
+  /// Subject of the fake Google ID token. It identifies the Google account in the Auth
+  /// emulator (`providerUserInfo.rawId`), **not** the Firebase UID: the emulator assigns
+  /// its own random `localId` (28 chars), stable only while the emulator's data lives
+  /// (one session unless `--import`/`--export-on-exit` is used). BUG-QA13-UID.
   final String testSub;
 
   static const allowedHosts = {'10.0.2.2', '127.0.0.1', 'localhost'};

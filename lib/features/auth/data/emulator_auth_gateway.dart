@@ -17,7 +17,10 @@ class EmulatorAuthGateway implements AuthGateway {
 
   final FirebaseAuth _auth;
 
-  /// Subject of the fake token = UID in the emulator (`TAMITU_EMULATOR_TEST_SUB`).
+  /// Subject of the fake token (`TAMITU_EMULATOR_TEST_SUB`). It selects the emulator's
+  /// Google account (`providerUserInfo.rawId`); the Firebase UID (`user.uid`) is a random
+  /// `localId` assigned by the emulator, reused for the same `sub` within one emulator
+  /// session (BUG-QA13-UID).
   final String testSub;
 
   @override

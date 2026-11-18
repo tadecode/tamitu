@@ -42,7 +42,10 @@ android/app/src/dev/google-services.json` pokazuje regułę). Po testach kopię 
   `-P tamitu.allowMissingGoogleServices=true` (np. `flutter build apk --debug -P tamitu.allowMissingGoogleServices=true`)
   zamienia błąd na ostrzeżenie. Służy kontroli „czy się składa” w CI (do czasu GH-009) i demo
   `TAMITU_FAKE_BACKEND`. Taki APK nie zaloguje się do Firebase. **Build wydaniowy z tą flagą jest
-  odrzucany** (zadanie Gradle zawierające `release`) – wydanie zawsze wymaga prawdziwego pliku.
+  odrzucany** – wydanie zawsze wymaga prawdziwego pliku. SEC-35: kontrola patrzy na **graf zadań**
+  Gradle (czy zaplanowano `process<Flavor>ReleaseGoogleServices`), a nie na nazwy z wiersza poleceń,
+  więc obejmuje też zadania zbiorcze (`assemble`, `build`, `bundle`) i flagę ustawioną w
+  `~/.gradle/gradle.properties` lub `ORG_GRADLE_PROJECT_…`.
   Zmienna środowiskowa `CI` nie ma już wpływu (przegląd PR #70, ustalenie #1).
 - Pliki w CI z sekretów repo – prośba GH-009 (Steward); flaga w kroku CI – prośba GH-011.
 - `serverClientId` dla Google Sign-In: `default_web_client_id` z pliku albo
@@ -71,8 +74,20 @@ flutter run --flavor dev --debug --dart-define=TAMITU_USE_FIREBASE_EMULATORS=tru
 - Ruch bez TLS jest dozwolony **tylko** w wariancie `devDebug` i tylko do `10.0.2.2`, `127.0.0.1`,
   `localhost` (`android/app/src/devDebug/`); `prod` i `release` dalej blokują cleartext.
 - Logowanie: zamiast wyboru konta Google aplikacja loguje się do emulatora Auth fałszywym
-  poświadczeniem Google (`EmulatorAuthGateway`, dostawca `google.com`, UID testowy
+  poświadczeniem Google (`EmulatorAuthGateway`, dostawca `google.com`, `sub` fałszywego tokenu
   `--dart-define=TAMITU_EMULATOR_TEST_SUB=...`, domyślnie `qa-emulator-user`). Żadnych prawdziwych kont.
+- **`sub` to nie UID** (BUG-QA13-UID): `sub` wyznacza konto Google w emulatorze
+  (`providerUserInfo.rawId`), a UID (`localId`, 28 znaków) nadaje emulator losowo. Ten sam `sub`
+  dostaje ten sam UID tylko w obrębie jednej sesji emulatora (albo między sesjami przy
+  `--import`/`--export-on-exit`). Do `config/runtime.testUids` wpisuj UID odczytany z emulatora,
+  nie wartość `sub` (Emulator UI jest wyłączone w `backend/firebase.json`; odczyt przez REST emulatora,
+  `localId` przy `rawId` = Twój `sub`):
+
+  ```powershell
+  (Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1/projects/demo-tamitu/accounts:query" -Headers @{ Authorization = "Bearer owner" } -ContentType "application/json" -Body '{"returnUserInfo":true}').userInfo | Select-Object localId, @{ n = "sub"; e = { $_.providerUserInfo[0].rawId } }
+  ```
+
+  Stały UID przez plik importu emulatora (`--import`) – możliwa przyszła zmiana (nie wdrożona).
 - App Check nie jest aktywowany w trybie emulatorów (emulator Functions go nie weryfikuje, a
   aktywacja łączyłaby się z produkcyjną usługą App Check).
 - Flaga w `prod` lub w buildzie release/profile przerywa start aplikacji (`StateError`); łączenie
