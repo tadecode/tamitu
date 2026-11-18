@@ -42,7 +42,10 @@ android/app/src/dev/google-services.json` pokazuje regułę). Po testach kopię 
   `-P tamitu.allowMissingGoogleServices=true` (np. `flutter build apk --debug -P tamitu.allowMissingGoogleServices=true`)
   zamienia błąd na ostrzeżenie. Służy kontroli „czy się składa” w CI (do czasu GH-009) i demo
   `TAMITU_FAKE_BACKEND`. Taki APK nie zaloguje się do Firebase. **Build wydaniowy z tą flagą jest
-  odrzucany** (zadanie Gradle zawierające `release`) – wydanie zawsze wymaga prawdziwego pliku.
+  odrzucany** – wydanie zawsze wymaga prawdziwego pliku. SEC-35: kontrola patrzy na **graf zadań**
+  Gradle (czy zaplanowano `process<Flavor>ReleaseGoogleServices`), a nie na nazwy z wiersza poleceń,
+  więc obejmuje też zadania zbiorcze (`assemble`, `build`, `bundle`) i flagę ustawioną w
+  `~/.gradle/gradle.properties` lub `ORG_GRADLE_PROJECT_…`.
   Zmienna środowiskowa `CI` nie ma już wpływu (przegląd PR #70, ustalenie #1).
 - Pliki w CI z sekretów repo – prośba GH-009 (Steward); flaga w kroku CI – prośba GH-011.
 - `serverClientId` dla Google Sign-In: `default_web_client_id` z pliku albo

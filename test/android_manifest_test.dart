@@ -70,6 +70,16 @@ void main() {
     expect(gradle, contains('minSdk = 26'));
   });
 
+  // SEC-33/SEC-35: the missing-google-services flag is refused for release builds based on
+  // the resolved task graph (covers `assemble`/`build`/`bundle`), not on command-line names.
+  test('google-services flag is guarded on the task graph', () {
+    expect(gradle, contains('tamitu.allowMissingGoogleServices'));
+    expect(gradle, contains('gradle.taskGraph.whenReady'));
+    expect(gradle, contains(r'Regex("process\\w*ReleaseGoogleServices")'));
+    expect(gradle, isNot(contains('startParameter.taskNames')));
+    expect(gradle, isNot(contains('System.getenv("CI")')));
+  });
+
   test('application id and flavors', () {
     expect(gradle, contains('applicationId = "pl.tadecode.tamitu"'));
     expect(gradle, contains('applicationIdSuffix = ".dev"'));

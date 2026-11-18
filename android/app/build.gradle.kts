@@ -13,16 +13,28 @@ plugins {
 // used by the CI "does it compile" step (and the fake-backend demo) until GH-009 provides the files
 // from secrets. It no longer depends on the CI environment variable and it is refused for release
 // builds: a release APK/AAB always needs the real file (it would crash on Firebase.initializeApp()).
+// SEC-35 (review PR #77 #1): the release check inspects the resolved task graph, not the command-line
+// task names, so aggregate tasks (`assemble`, `build`, `bundle`) and a property set in
+// ~/.gradle/gradle.properties or ORG_GRADLE_PROJECT_* are covered too: if any release variant's
+// google-services task (process<Flavor>ReleaseGoogleServices) is scheduled, the build fails.
 val allowMissingGoogleServices =
     providers.gradleProperty("tamitu.allowMissingGoogleServices").orNull == "true"
 
-if (allowMissingGoogleServices &&
-    gradle.startParameter.taskNames.any { it.contains("release", ignoreCase = true) }
-) {
-    throw GradleException(
-        "tamitu.allowMissingGoogleServices=true is allowed only for debug/profile builds; " +
-            "a release build requires android/app/src/<flavor>/google-services.json (SEC-33).",
-    )
+val releaseGoogleServicesTask = Regex("process\\w*ReleaseGoogleServices")
+val appProject = project
+
+gradle.taskGraph.whenReady {
+    if (!allowMissingGoogleServices) return@whenReady
+    val releaseTasks =
+        allTasks.filter { it.project == appProject && releaseGoogleServicesTask.matches(it.name) }
+    if (releaseTasks.isNotEmpty()) {
+        throw GradleException(
+            "tamitu.allowMissingGoogleServices=true is allowed only for debug/profile builds; " +
+                "a release build requires android/app/src/<flavor>/google-services.json " +
+                "(SEC-33/SEC-35). Release tasks in the graph: " +
+                releaseTasks.joinToString { it.path },
+        )
+    }
 }
 
 googleServices {

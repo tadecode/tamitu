@@ -166,14 +166,42 @@ void main() {
           .map((m) => m.group(1))
           .toSet();
       expect(domains, FirebaseEmulatorConfig.allowedHosts);
-      for (final set in ['main', 'debug', 'profile', 'dev', 'prod']) {
-        final dir = Directory('android/app/src/$set');
-        if (!dir.existsSync()) continue;
-        for (final f in dir.listSync(recursive: true).whereType<File>()) {
-          if (!f.path.endsWith('.xml')) continue;
+    });
+
+    // SEC-35 (review PR #77 #3): allowlist, not denylist – every source set except
+    // devDebug (also ones added later, e.g. release/, prodDebug/, devProfile/) is checked.
+    test('no source set other than devDebug has cleartext or the emulator '
+        'network config', () {
+      final sets = Directory('android/app/src')
+          .listSync()
+          .whereType<Directory>()
+          .map((d) => d.uri.pathSegments.where((s) => s.isNotEmpty).last)
+          .toSet();
+      expect(sets, containsAll(['main', 'devDebug']));
+      for (final set in sets.difference({'devDebug'})) {
+        for (final f in Directory(
+          'android/app/src/$set',
+        ).listSync(recursive: true).whereType<File>()) {
           expect(
-            f.readAsStringSync(),
+            f.uri.pathSegments.last,
+            isNot(startsWith('network_security_config_emulators')),
+            reason: f.path,
+          );
+          if (!f.path.endsWith('.xml')) continue;
+          final content = f.readAsStringSync();
+          expect(
+            content,
             isNot(contains('cleartextTrafficPermitted="true"')),
+            reason: f.path,
+          );
+          expect(
+            content,
+            isNot(contains('network_security_config_emulators')),
+            reason: f.path,
+          );
+          expect(
+            content,
+            isNot(contains('usesCleartextTraffic="true"')),
             reason: f.path,
           );
         }
