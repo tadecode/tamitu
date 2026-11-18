@@ -11,4 +11,4 @@ Zadanie ma ID w tytule (np. `P3-04: …`), tag `bk:<ID>`, tagi ról (`rola:mobil
 - **Role** zgłaszają zmiany w sekcji „Dla orkiestratora” pliku przekazania (`.farm/workflows/handoff.md`).
 - Treść (wymagania, ADR, specyfikacje, raporty, kod) zostaje w repo; zadanie na tablicy linkuje do plików i PR-ów.
 
-Stan sprzed migracji: [`docs/archive/backlog-2026-11-18.md`](archive/backlog-2026-11-18.md) (nie aktualizować).
+Stan sprzed migracji (tabela, nie aktualizować): [`docs/backlog.md` @ 77d2cc2](https://github.com/tadecode/tamitu/blob/77d2cc2/docs/backlog.md).
