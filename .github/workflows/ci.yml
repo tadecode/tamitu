@@ -94,8 +94,27 @@ jobs:
       - name: Testy
         if: steps.detect.outputs.flutter == 'true'
         run: flutter test
-      - name: Build APK (debug) - czy się składa
+      - name: Konfiguracja Firebase dev (google-services.json z sekretu)
+        id: gsj
         if: steps.detect.outputs.flutter == 'true'
+        env:
+          GOOGLE_SERVICES_JSON_DEV: ${{ secrets.GOOGLE_SERVICES_JSON_DEV }}
+        run: |
+          # Sekret niedostępny dla PR-ów z forków i Dependabota (domyślne zachowanie GitHub) - wtedy build bez pliku i z jawną flagą (GH-011).
+          # Plik jest w .gitignore, nie jest artefaktem; wartość nie jest wypisywana.
+          if [ -n "$GOOGLE_SERVICES_JSON_DEV" ]; then
+            mkdir -p android/app/src/dev
+            printf '%s' "$GOOGLE_SERVICES_JSON_DEV" | base64 -d > android/app/src/dev/google-services.json
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Brak sekretu GOOGLE_SERVICES_JSON_DEV (PR z forka lub Dependabot) - build bez pliku konfiguracji."
+          fi
+      - name: Build APK (debug, dev) - z konfiguracją Firebase
+        if: steps.detect.outputs.flutter == 'true' && steps.gsj.outputs.present == 'true'
+        # Bez flagi allowMissingGoogleServices: brak pliku ma zakończyć build błędem (SEC-33, GH-011).
+        run: flutter build apk --debug --flavor dev
+      - name: Build APK (debug) - czy się składa (bez sekretów)
+        if: steps.detect.outputs.flutter == 'true' && steps.gsj.outputs.present != 'true'
         run: flutter build apk --debug -P tamitu.allowMissingGoogleServices=true
 
   backend:
