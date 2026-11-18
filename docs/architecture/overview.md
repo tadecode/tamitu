@@ -73,7 +73,7 @@ Zasady przekrojowe: współrzędne istnieją wyłącznie w `maps_link` (zmienna 
 ## 4. Komponenty backendu (`backend/`)
 | Element | Odpowiedzialność |
 |---|---|
-| `generatePlan` (konto `fn-ai`) | token+App Check → istnienie użytkownika → walidacja wejścia → zgoda AI → `aiEnabled`/`ALLOW_REAL_DATA` (+ reguła sprzężenia z App Check) → limity → prompt → Vertex → walidacja wyniku → odpowiedź (ADR-0002) |
+| `generatePlan` (konto `fn-ai-plan`, ADR-0014) | token+App Check → istnienie użytkownika → walidacja wejścia → zgoda AI → `aiEnabled`/`ALLOW_REAL_DATA` (+ reguła sprzężenia z App Check) → limity → prompt → Vertex → walidacja wyniku → odpowiedź (ADR-0002) |
 | `recordConsent` (`fn-consent`) | istnienie użytkownika → dopisanie rekordu zgody (`users/{uid}/consents`) |
 | `deleteAccount` (`fn-account`) | świeże logowanie → usunięcie Firestore po UID → usunięcie użytkownika Auth → kontrolne powtórne usunięcie Firestore |
 | `budgetGuard` (`fn-budget`) | po alercie budżetu ustawia `aiEnabled=false`; bez dostępu do Auth |
