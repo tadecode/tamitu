@@ -86,11 +86,11 @@ Koszty poza zakresem: konto Google Play (jednorazowa opłata), domena/strona pol
 
 ## 6. Koszty testów i CI
 - Standardowe testy CI używają atrapy modelu – 0 wywołań.
-- **Test ARCH-01** (8 sond + 20 wywołań, 4 modele × 5 przypadków, jednorazowo, dev): najgorszy przypadek ok. 4,7 PLN, oczekiwany 1–3 PLN; limit 6 PLN, skrypt zatrzymuje się po 5 PLN szacunku (`arch-01-gemini-test.md` sekcja 3).
+- **Test ARCH-01** (8 sond + 20 wywołań, 4 modele × 5 przypadków, jednorazowo, dev): najgorszy przypadek ok. 4,7 PLN, oczekiwany 1–3 PLN; limit 6 PLN; próg zatrzymania skryptu `min(5 PLN, 14 PLN − zużycie dev)`, tak by zużycie dev łącznie z testem nie przekroczyło proponowanego spend cap `aiplatform` dev 15 PLN; wywołanie przerwane bez odpowiedzi liczone w wariancie najgorszym (`arch-01-gemini-test.md` sekcja 3).
 - Ewaluacja pełna (min. 20 przypadków × PL/EN = 40 wywołań, mieszane długości, bez myślenia) na jeden model: 3.8 Flash ok. 1,8 USD (≈ 7,3 PLN), 3.5 Flash ok. 2,2 USD (≈ 8,8 PLN), 3.5 Flash-Lite ok. 0,6 USD (≈ 2,4 PLN), 3.1 Flash-Lite ok. 0,37 USD (≈ 1,5 PLN). **Przebieg dla wszystkich czterech ≈ 20 PLN – cały budżet dev.** Zasada: ewaluacja jednego–dwóch modeli dziennie (najtańsze najpierw), ręcznie lub przy zmianie promptu, **maks. 1 przebieg dziennie na model**, w projekcie `dev`, dane syntetyczne; przed przebiegiem sprawdzić zużycie budżetu dev; spend cap dev 15 PLN (ADR-0014) może zatrzymać ewaluację w trakcie miesiąca – planować przebiegi na początek miesiąca lub tymczasowo podnieść budżet (decyzja właściciela).
 
 ## 7. Co najmocniej zmienia koszt
-1. Myślenie modelu: 3.8 Flash nie pozwala zejść poniżej `LOW`; każde 1 000 tokenów myślenia ≈ +0,033 PLN (3.8 Flash) na próbę – zmierzyć w ARCH-01.
+1. Myślenie modelu: 3.8 Flash nie pozwala zejść poniżej `LOW`; każde 1 000 tokenów myślenia ≈ +0,033 PLN (3.8 Flash) na próbę – zmierzyć w ARCH-01. Powyżej ok. 420 tokenów myślenia na plan typowy 3.8 Flash (od 2027) jest droższy niż 3.5 Flash bez myślenia – wybór według zmierzonego kosztu (`arch-01-gemini-test.md` sekcja 7).
 2. Klasa modelu: Flash vs Flash-Lite – różnica ok. 3–6× (sekcja 2).
 3. Koniec promocji 3.8 Flash 2026-12-31 – podwojenie stawki od 2027-01-01.
 4. Liczba dni i tempo (liniowo wyjście).

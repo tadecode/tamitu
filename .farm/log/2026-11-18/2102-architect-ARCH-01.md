@@ -13,6 +13,15 @@
   - qa – w planie ewaluacji uwzględnić koszt z `costs.md` sekcja 6 (najtańsze modele najpierw, 1–2 modele dziennie).
 - Pytania/blokady: brak blokad dla PR. Do weryfikacji w P3-10: kurs PLN/USD i VAT, SKU w Cloud Billing, mechanizm promocji 3.8 Flash („50% credits back" – czy budżety widzą cenę standardową).
 
+## Poprawki po przeglądzie (komentarz recenzenta w PR #96; zlecił orkiestrator za zgodą właściciela)
+- #1: rekomendacja według **zmierzonej** sumy `estPln` C1–C5; próg opłacalności 3.8 Flash ≈ 420 tokenów myślenia na plan typowy (od 2027) – `arch-01-gemini-test.md` sekcja 7, `costs.md` sekcja 7.
+- #2: wywołanie przerwane bez odpowiedzi liczone jako rozliczone w wariancie najgorszym (`timeout_or_network;cost_assumed_max`).
+- #3: W5 – zużycie dev + test ≤ 15 PLN (proponowany spend cap dev); próg skryptu `min(5, 14 − $devUsedPln)` sprawdzany przed każdym wywołaniem; zużycie dev > 9 PLN → test przełożyć.
+- #4: P-1 „LOW w 3.8 Flash = minimalne myślenie z ADR-0001 pkt 3" – do potwierdzenia przez właściciela.
+- #5: ponowienia 429/503 (maks. 2, odstęp 10 s i 30 s), punkt końcowy osobno dla każdego modelu z sondy, świeży token przed każdym modelem, twarda lista lokalizacji (`europe-west4`, `eu`), walidacja znaków sterujących i pustych pól.
+- Sprawdzenie: parser PowerShell 5.1 bez błędów; próbny przebieg z atrapą Vertex (bez sieci): sonda → `eu`, ponowienie 429, timeout, próg budżetu, lista lokalizacji, walidacja – zgodnie z opisem.
+- Owner: dodatkowo P-1 przy wyborze modelu.
+
 ## Źródła (odczyt 2026-11-18)
 - https://cloud.google.com/vertex-ai/generative-ai/pricing – tabela „Gemini 3 – Standard", stawki Global/Non-global, „Text output (response and reasoning)".
 - https://docs.cloud.google.com/vertex-ai/generative-ai/docs/models/gemini/3-8-flash (oraz `3-5-flash`, `3-5-flash-lite`, `3-1-flash-lite`) – „Supported regions", status, daty wycofania.
