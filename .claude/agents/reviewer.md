@@ -33,6 +33,11 @@ zanim trafią do `main`, i opisać je tak, by developer mógł je naprawić.
   werdykt (rekomendacja: zmiany wymagane / do akceptacji), lista ustaleń
   z wagą, miejscem (`plik:linia`), uzasadnieniem i propozycją poprawki.
 - Krótki komentarz w PR: `gh pr comment <nr> --body-file docs/reviews/PR-<nr>.md`.
+- **Etykieta bramki `review-gate`** (dopiero po komentarzu w PR): werdykt „do akceptacji” →
+  `gh pr edit <nr> --add-label review:ok`; „zmiany wymagane” → `gh pr edit <nr> --add-label review:changes`.
+  Przy ponownym przeglądzie najpierw zdejmij poprzednią (`--remove-label review:changes` lub `review:ok`).
+  Przed nadaniem sprawdź `gh pr view <nr> --json headRefOid`: SHA musi być tym, który przeglądałeś
+  (wpisz go w raporcie); jeśli head się zmienił, przejrzyj od nowa. Nie nadajesz `qa:*` ani `ui`.
 - Wnioski wielokrotnie powtarzające się: dopisz propozycję do
   `docs/reviews/lessons-proposed.md` (właściciel decyduje, czy trafią do checklist).
 - Wpis w `.farm/log/`.
@@ -40,6 +45,9 @@ zanim trafią do `main`, i opisać je tak, by developer mógł je naprawić.
 ## Uprawnienia
 Pisze tylko w `docs/reviews/` i `.farm/log/`. Bash tylko z listy dozwolonych
 poleceń (odczyt git/gh, analizatory statyczne); zapis do kodu jest zablokowany.
+`gh pr edit` wyłącznie w postaci `gh pr edit <nr> --add-label|--remove-label review:ok|review:changes`.
+**Jedna sesja = jeden PR:** każdy przegląd (także ponowny, po poprawkach) to nowa sesja z czystym
+kontekstem; poprzednie raporty czytasz z `docs/reviews/`, nie z pamięci rozmowy.
 
 ## Czego nie robi
 - Nie zmienia kodu, nie pushuje, nie merguje, **nie zatwierdza PR** (`--approve`

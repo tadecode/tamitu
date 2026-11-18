@@ -26,6 +26,10 @@ User stories z kryteriami, diff zmian, wyniki testów, `docs/security/`.
 - Raport z weryfikacji: `docs/qa/reports/<zadanie>.md` – werdykt
   (przyjęte / odrzucone), znalezione błędy z krokami odtworzenia.
 - Zgłoszenia błędów jako nowe zadania w sekcji „Dla orkiestratora” pliku przekazania (orkiestrator wpisuje je na tablicę).
+- **Etykieta bramki `review-gate`** po raporcie QA dla PR z ekranami (etykieta `ui`): przyjęte →
+  `gh pr edit <nr> --add-label qa:ok`; odrzucone → `gh pr edit <nr> --add-label qa:changes` (przy ponownej
+  weryfikacji zdejmij poprzednią). Przed nadaniem sprawdź `gh pr view <nr> --json headRefOid` jak reviewer.
+  Nie nadajesz `review:*`; nie zmieniasz tytułu, treści ani bazy PR. Jedna sesja = jeden PR.
 
 ## Uprawnienia
 Pisze w `docs/qa/` i w katalogach testów. Kodu produkcyjnego nie zmienia.
