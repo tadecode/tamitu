@@ -22,6 +22,20 @@ Firestore z GitHub Actions. **Nie pilne:** pierwsze wdrożenia (P3-05) może wyk
    (`permissions: id-token: write, contents: read`), ręczny lub po merge do `main`; prod tylko ze środowiska `prod` z akceptacją właściciela.
 3. Wdrożenie zależy od SEC-20 (`serviceAccount` w opcjach funkcji) i pytania O2 (`fn-ai-plan`).
 
+## Warunki z przeglądu SEC-17 (dopisał orchestrator 2026-11-18; `docs/security/review-SEC-17-iam.md`)
+Poniższe zastępują pkt 1 powyżej, jeśli się różnią.
+- **W-4 (WIF, warunek za słaby dla prod).** Nazwa repozytorium nie wystarcza (zmiana nazwy, ponowne użycie).
+  - Mapowanie atrybutów: `google.subject=assertion.sub`, `attribute.repository_id`, `attribute.repository_owner_id`, `attribute.ref`, `attribute.environment`, `attribute.workflow=assertion.job_workflow_ref`.
+  - Warunek **dev**: `assertion.repository_id=='<ID>' && assertion.repository_owner_id=='<ID_ORG>' && assertion.ref=='refs/heads/main'`.
+  - Warunek **prod**: jak dev **oraz** `assertion.environment=='prod' && assertion.job_workflow_ref=='tadecode/tamitu/.github/workflows/deploy.yml@refs/heads/main'`.
+  - `roles/iam.workloadIdentityUser` na `ci-deployer` tylko dla `principal://…/subject/repo:tadecode/tamitu:environment:prod` (prod) lub `principalSet://…/attribute.repository_id/<ID>` (dev), **nie** dla całej puli (`/*`).
+  - GitHub: środowisko `prod` z wymaganym zatwierdzeniem właściciela i regułą „deployment branches: main”; workflow bez `pull_request_target`; `permissions: id-token: write` tylko w zadaniu wdrożenia. ID repo i organizacji (liczby, nie sekrety): `gh api repos/tadecode/tamitu --jq '.id, .owner.id'`.
+- **Ś-3 (role `ci-deployer` do zawężenia przed prod).** Efektywne uprawnienia CI = suma ról `fn-*`; ryzyko akceptowalne tylko przy W-4.
+  - Start od: `roles/cloudfunctions.developer`, `roles/firebaserules.admin`, `roles/datastore.indexAdmin`, `roles/secretmanager.viewer`, `iam.serviceAccountUser` na 4 kontach `fn-*`.
+  - `roles/run.admin`, `roles/artifactregistry.writer`, `roles/cloudbuild.builds.editor` – prawdopodobnie zbędne (używa ich konto budowania); `run.admin` w prod tylko, jeśli Firebase CLI wymaga go do publicznego wywołania callable (alternatywa: `invoker` ustawiony przy pierwszym wdrożeniu przez właściciela).
+  - Próbne wdrożenie w dev, dodawanie ról tylko wskazanych przez błąd, każda dodana rola = wpis w tej prośbie.
+- **W-5 (powiązane):** `ci-deployer` **nie dostaje** `iam.serviceAccountUser` na koncie Compute – wdrożenie bez `serviceAccount` ma kończyć się błędem (techniczne wymuszenie SEC-20).
+
 ## Wpływ
 Koszty: brak (WIF bez opłat). · Bezpieczeństwo/RODO: brak długoterminowych poświadczeń; zakres ograniczony do repo/gałęzi. · Ryzyko: zbyt szerokie role `ci-deployer` – przegląd security (SEC-17) przed użyciem w prod.
 
