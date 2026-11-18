@@ -2,7 +2,7 @@
 
 - Zgłasza (rola): orchestrator (decyzja właściciela 2026-11-17) · Data: 2026-11-17 · Powiązane zadanie/PR: #57, #58, #59 (incydent), FARM-007
 - Typ: ci-change + branch-protection + labels
-- Status: approved  (ustawia Steward)
+- Status: done  (ustawia Steward)
 
 ## Potrzeba
 PR #57 (kod P3-04) został zmergowany mimo werdyktu „zmiany wymagane” od `reviewer` (#59) i `qa` (#58). Raport to tylko komentarz
@@ -91,3 +91,6 @@ Przyjęte ustawienia domyślne z rekomendacji prośby, do potwierdzenia przez w�
 Czeka:
 - po merge PR: dry-run `setup-github.ps1`, potem `-Apply` za zgodą właściciela (dodanie `review-gate` do wymaganych kontroli);
 - zmiana hooka reviewera i `reviewer.md` (FARM-007, poza zakresem Stewarda); bez niej reviewer nie nada etykiety przez `gh pr edit`.
+
+2026-11-18 Steward (aktualizacja): workflow na `main` (PR #81). Kontrola `review-gate` dodana do wymaganych kontroli `main` jednym wywołaniem API (zgoda właściciela w czacie), zweryfikowane odczytem; `strict=false` zachowane. Nie użyto `setup-github.ps1 -Apply`, bo skrypt ma `strict=true` i 5 kontroli: wymaga poprawki przez właściciela, inaczej następny `-Apply` cofnie ustawienia.
+Otwarte poza zakresem Stewarda: hook reviewera i `reviewer.md` (FARM-007), poprawka skryptu, potwierdzenie wyjątku Dependabota i wariantu etykiet (przyjęto domyślne). Do czasu FARM-007 etykiety `review:*` / `qa:*` nadaje właściciel lub bot ręcznie.
