@@ -119,7 +119,7 @@ Szczegóły: `docs/architecture/przeglad-ekranow-p3-14c.md`. Odpowiedzi na U3, U
 | Q7 | Szyfrowanie bazy lokalnej (SQLCipher, +kilka MB APK)? | tak | 0005 |
 | Q8 | minSdk 26 (Android 8.0)? | 26 | 0007 |
 | Q9 | Dowód zgód po usunięciu konta [PRAWNIK] | zapytać prawnika | 0004, 0005 |
-| Q10 | Plan Blaze (karta) i konto rozliczeniowe TadeCode; nazwy projektów (`tamitu-dev-…`, `tamitu-prod-…`) | potwierdzić | 0003 |
+| Q10 | Plan Blaze (karta) i konto rozliczeniowe TadeCode; nazwy projektów (`tamitu-dev-…`, `tamitu-prod-…`) | **zamknięte (P3-03, 2026-11-18):** konto rozliczeniowe założone; projekty `tamitu-dev-tadecode`, `tamitu-prod-tadecode` | 0003 |
 | Q11 | Warunki dostawcy AI (SEC-15): lista w ADR-0001; do tego czasu prod tylko z danymi testowymi | wypełnić przed realnymi danymi | 0001 |
 | Q12 | Anulowanie generowania nie zwraca slotu limitu, jeśli model już ruszył | tak | 0002 |
 
