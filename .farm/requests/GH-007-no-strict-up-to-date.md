@@ -2,7 +2,7 @@
 
 - Zgłasza (rola): orchestrator (decyzja właściciela) · Data: 2026-11-17 · Powiązane zadanie/PR: chore/conflicts, #41–#49
 - Typ: branch-protection
-- Status: open  (ustawia Steward)
+- Status: done  (ustawia Steward)
 
 ## Potrzeba
 Ochrona `main` wymaga, by gałąź PR była aktualna z `main` (strict). Po każdym merge wszystkie pozostałe PR-y wchodzą w stan BEHIND
@@ -26,4 +26,4 @@ działają na każdym PR. · Ryzyko: dwa PR-y zielone osobno mogą po scaleniu r
 poprawka lub revert osobnym PR-em. Ryzyko niskie dla obecnej skali.
 
 ## Odpowiedź Stewarda
-<wynik, polecenia wykonane, albo powód odrzucenia>
+2026-11-18 Steward: wykonane wcześniej, zweryfikowane odczytem: `gh api repos/tadecode/tamitu/branches/main/protection` zwraca `strict=false`, kontrole bez zmian (`farm-guards`, `conventions`, `secrets`, `flutter`, `backend`). Merge queue nie wdrażana (wystarczy wyłączenie strict, wg prośby).

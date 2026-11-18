@@ -2,7 +2,7 @@
 
 - Zgłasza (rola): właściciel (przez sesję budowy farmy) · Data: 2026-11-16 · Powiązane zadanie/PR: #34
 - Typ: ci-change
-- Status: approved  (ustawia Steward)
+- Status: done  (ustawia Steward)
 
 ## Potrzeba
 Kontrola `flutter` (wymagana na `main`) pomija kroki tylko dla PR-ów zmieniających wyłącznie `backend/`.
@@ -55,3 +55,5 @@ Koszty: mniej minut GitHub Actions (ok. 3–4 min na każdy PR z samą dokumenta
 w `git diff` (przeniesienie np. `lib/a.dart` -> `docs/` pokazuje obie ścieżki, więc nie pominie buildu).
 Filtr sprawdzony lokalnie na wszystkich przykładach z tabeli. Gałąź `chore/ci-gh-006-flutter-skip-docs`, PR do
 zatwierdzenia przez właściciela (CODEOWNERS `/.github/`). Sam PR zmienia `.github/`, więc przejdzie pełny przebieg.
+
+2026-11-18 Steward: wykonane, zweryfikowane odczytem. Zmiana jest na `main` (PR #80, `ci.yml`: `git diff --name-only --no-renames`, bez `paths:` w `on:`).

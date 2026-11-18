@@ -2,7 +2,7 @@
 
 - Zgłasza (rola): mobile-dev · Data: 2026-11-18 · Powiązane zadanie/PR: SEC-33 / PR `feat/SEC-33` (przegląd PR #70, ustalenie #1); poprzedza GH-009
 - Typ: ci-change
-- Status: open  (ustawia Steward)
+- Status: done  (ustawia Steward)
 
 ## Potrzeba
 SEC-33 usuwa z `android/app/build.gradle.kts` obejście braku `google-services.json` oparte na zmiennej `CI=true`.
@@ -30,3 +30,4 @@ Dziś CI nie ma plików (GH-009 jeszcze niewykonane), więc krok „czy się sk�
 Koszty: brak. · Bezpieczeństwo/RODO: wzmacnia kontrolę – build wydaniowy w CI bez prawdziwego pliku nie przejdzie. · Ryzyko: niskie; zgodne wstecz z `main`.
 
 ## Odpowiedź Stewarda
+2026-11-18 Steward: wykonane, zweryfikowane. `ci.yml` na `main` zawiera `flutter build apk --debug -P tamitu.allowMissingGoogleServices=true` (PR #80). Przy GH-009 flagę usunąć z joba z sekretami.
