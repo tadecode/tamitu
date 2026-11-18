@@ -110,6 +110,17 @@ Check 'reviewer bash: przekierowanie zablokowane' 2 (Run $ballow (B 'git diff > 
 Check 'reviewer bash: podstawienie $() zablokowane' 2 (Run $ballow (B 'cat $(echo a)') $rb)
 Check 'reviewer bash: nieznane polecenie zablokowane' 2 (Run $ballow (B 'curl https://x.io') $rb)
 Check 'reviewer bash: nieznany profil fail-closed' 2 (Run $ballow (B 'git diff') @('-Profile', 'nieznany'))
+# FARM-007: etykieta bramki review-gate
+Check 'reviewer bash: etykieta review:ok dozwolona' 0 (Run $ballow (B 'gh pr edit 12 --add-label review:ok') $rb)
+Check 'reviewer bash: etykieta review:changes dozwolona' 0 (Run $ballow (B 'gh pr edit 12 --add-label review:changes') $rb)
+Check 'reviewer bash: zdjęcie review:changes dozwolone' 0 (Run $ballow (B 'gh pr edit 12 --remove-label review:changes') $rb)
+Check 'reviewer bash: gh pr view headRefOid dozwolony' 0 (Run $ballow (B 'gh pr view 12 --json headRefOid') $rb)
+Check 'reviewer bash: etykieta qa:ok zablokowana' 2 (Run $ballow (B 'gh pr edit 12 --add-label qa:ok') $rb)
+Check 'reviewer bash: inna etykieta zablokowana' 2 (Run $ballow (B 'gh pr edit 12 --add-label bug') $rb)
+Check 'reviewer bash: zmiana tytułu PR zablokowana' 2 (Run $ballow (B 'gh pr edit 12 --title x') $rb)
+Check 'reviewer bash: etykieta z dodatkową flagą zablokowana' 2 (Run $ballow (B 'gh pr edit 12 --add-label review:ok --base dev') $rb)
+Check 'reviewer bash: dwie etykiety naraz zablokowane' 2 (Run $ballow (B 'gh pr edit 12 --add-label review:ok,qa:ok') $rb)
+Check 'reviewer bash: gh label create zablokowany' 2 (Run $ballow (B 'gh label create review:ok') $rb)
 
 # --- GitHub: zwykłe role (bez FARM_ROLE=steward) ---
 Check 'gh (rola): gh pr view dozwolony' 0 (Run $bash (B 'gh pr view 3') @())

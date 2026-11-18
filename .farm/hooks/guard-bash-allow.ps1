@@ -15,6 +15,8 @@ $profiles = @{
         '^git\s+branch\s+--show-current$',
         '^gh\s+pr\s+(view|diff|checks|list|status|comment|review)(\s|$)',
         '^gh\s+(run\s+(list|view)|issue\s+(view|list))(\s|$)',
+        # etykieta bramki review-gate (FARM-007): tylko review:ok / review:changes, jedna flaga, PR po numerze
+        '^gh\s+pr\s+edit\s+\d+\s+--(add|remove)-label\s+review:(ok|changes)$',
         '^(flutter|dart)\s+analyze(\s|$)',
         '^dart\s+format\s+.*--output=none(\s|$)',
         '^(dart|flutter)\s+pub\s+(deps|outdated)(\s|$)',
@@ -26,7 +28,8 @@ $deny = @{
     reviewer = @(
         @{ p = '^gh\s+pr\s+review\b.*(--approve|-a(\s|$))'; m = 'recenzent nie zatwierdza PR - robi to właściciel.' },
         @{ p = '^gh\s+pr\s+review\b.*(--request-changes|-r(\s|$))'; m = 'recenzent zgłasza ustalenia komentarzem, bez blokowania merge przez GitHub.' },
-        @{ p = '^git\s+(branch|log|show)\b.*(-D|--delete|--output)'; m = 'polecenie modyfikujące.' }
+        @{ p = '^git\s+(branch|log|show)\b.*(-D|--delete|--output)'; m = 'polecenie modyfikujące.' },
+        @{ p = '^gh\s+pr\s+edit\b(?!\s+\d+\s+--(add|remove)-label\s+review:(ok|changes)$)'; m = 'recenzent zmienia w PR tylko etykietę review:ok / review:changes (FARM-007).' }
     )
 }
 
