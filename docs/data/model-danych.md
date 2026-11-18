@@ -1,6 +1,6 @@
 # Model danych – Tamitu (MVP)
 
-Stan: 2026-11-16, wersja 0.4 (ADR-0011: `consentId` w tymczasowym wpisie zgody; `consents_local.received_at` – UX17; ADR-0012: format wersji zgód); wcześniej 0.2 (po G2; ADR zatwierdzone), autor: architect (przegląd Security: `docs/security/przeglad-adr.md`). Powiązane: ADR-0005, `docs/security/personal-data-register.md` (kody D1..D16), `przechowywanie-i-retencja.md`, `docs/api/posrednik-api.md`.
+Stan: 2026-11-18, wersja 0.5 (ARCH-02, decyzja O4: TTL licznika `usage/{uid}` na nowym polu `expireAt` zamiast `updatedAt`, `docs/data/schema/firestore-ttl-indexes.md`); wcześniej 0.4 (ADR-0011: `consentId` w tymczasowym wpisie zgody; `consents_local.received_at` – UX17; ADR-0012: format wersji zgód); wcześniej 0.2 (po G2; ADR zatwierdzone), autor: architect (przegląd Security: `docs/security/przeglad-adr.md`). Powiązane: ADR-0005, `docs/security/personal-data-register.md` (kody D1..D16), `przechowywanie-i-retencja.md`, `docs/api/posrednik-api.md`.
 Zasada: dane podróży tylko lokalnie; po stronie chmury wyłącznie zgody (D3), licznik (D10), konfiguracja (bez danych osobowych) i konto Auth (D1).
 
 ## 1. Wartości wyliczeniowe (wspólne dla aplikacji i serwera)
@@ -90,11 +90,18 @@ Wszystkie zapisy i odczyty wyłącznie z funkcji (Admin SDK); klient nie ma dost
 | Ścieżka | Pola | Rejestr | Retencja |
 |---|---|---|---|
 | `users/{uid}/consents/{consentId}` | `type` (`privacy_policy`\|`ai_processing`), `granted` (bool), `policyVersion` (string), `lang` (`pl`\|`en`), `clientAt` (timestamp), `receivedAt` (timestamp serwera) | D3 | do usunięcia konta; dowód usuwany z kontem (Q9; [PRAWNIK] do potwierdzenia, ewentualna zmiana nowym ADR). Brak TTL – tworzenie dokumentów dla nieistniejącego UID blokuje sprawdzenie istnienia użytkownika (ADR-0002, Aneks A pkt 1) |
-| `usage/{uid}` | `day` (`YYYY-MM-DD`, Europe/Warsaw), `count` (int), `updatedAt` (timestamp, polityka TTL 30 dni) | D10 | jeden dokument na konto, nadpisywany co dobę; TTL 30 dni od ostatniej aktualizacji; kasowany z kontem |
-| `usage_global/{day}` | `count`, `expireAt` (TTL 7 dni) | brak danych osobowych | 7 dni |
+| `usage/{uid}` | `day` (`YYYY-MM-DD`, Europe/Warsaw), `count` (int), `updatedAt` (timestamp serwera ostatniego zapisu; diagnostyka, **bez** polityki TTL i bez indeksu), `expireAt` (Timestamp = `updatedAt` + 30 dni, ustawiany przy każdym zapisie – rezerwacja i zwrot slotu; **polityka TTL**) | D10 | jeden dokument na konto, nadpisywany co dobę; TTL na `expireAt`, czyli usunięcie ok. 30 dni (+ do ok. 24 h opóźnienia TTL) po ostatnim zapisie; kasowany z kontem. Okres 30 dni może się zmienić (O4-b, decyzja security) – zmienia się wtedy tylko stała w kodzie, nie schemat |
+| `usage_global/{day}` | `count` (int), `expireAt` (Timestamp = czas serwera ostatniego zapisu + 7 dni, ustawiany przy każdym zapisie; **polityka TTL**) | brak danych osobowych | ok. 7 dni od ostatniego zapisu danej doby |
 | `config/runtime` | `aiEnabled`, `allowRealData` (domyślnie `false`; zmienia wyłącznie właściciel wg procedury z Aneksu A ADR-0001), `perUserDailyLimit` (5), `globalDailyLimit` (50), `testUids[]` (UID właściciela do czasu SEC-15; dostęp tylko właściciel z 2FA), `policyVersionCurrent` (format `privacy-vN`, start `privacy-v1`), `aiConsentVersionCurrent` (format `ai-consent-vN`, start `ai-consent-v1`; obie porównywane „≥ bieżąca", brak/zły format → fail-closed, ADR-0012) | brak danych osobowych (UID testowych kont właściciela) | stała |
 
 Indeksy: `consents` – zapytanie „ostatnia zgoda danego typu": indeks złożony (`type` rosnąco, `receivedAt` malejąco) w `firestore.indexes.json`.
+
+Retencja przez TTL (decyzja O4, wariant A – `docs/data/schema/firestore-ttl-indexes.md`; `backend/firestore.indexes.json` po O4-1):
+- Polityki TTL wyłącznie na `usage.expireAt` i `usage_global.expireAt`; oba pola wyłączone z indeksów jednopolowych (`fieldOverrides`, `indexes: []`). `users/{uid}/consents` i `config` – bez TTL.
+- TTL Firestore usuwa dokument, gdy znacznik w polu TTL jest w przeszłości, więc pole TTL musi wskazywać przyszłość. TTL na `updatedAt` (stan do v0.4) zerowałby licznik w trakcie doby – niedopuszczalny.
+- `expireAt` musi mieć typ Timestamp (Admin SDK); dokument bez pola lub z innym typem nie jest usuwany. `now` = czas serwera funkcji, nie klienta. Okresy 30 d / 7 d jako nazwane stałe w kodzie funkcji (P3-05).
+- `expireAt` i `updatedAt` to metadane retencji, nie nowa kategoria danych (D10 bez nowego wpisu w rejestrze).
+- Stan wdrożenia: polityki TTL w `tamitu-dev-tadecode` i `tamitu-prod-tadecode` czekają na właściciela (O4-2, `firestore-ttl-indexes.md` pkt 6). Emulator Firestore nie wykonuje TTL.
 
 Firebase Auth (D1): rekord użytkownika (UID, e-mail, nazwa, dostawca) – zarządzany przez Google; aplikacja używa tylko UID.
 
