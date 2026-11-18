@@ -8,7 +8,7 @@ hooks:
     - matcher: "Write|Edit"
       hooks:
         - type: command
-          command: 'powershell -NoProfile -ExecutionPolicy Bypass -File "$CLAUDE_PROJECT_DIR/.farm/hooks/guard-paths.ps1" -Role security -Allow "docs/security,docs/backlog.md,docs/open-questions.md,.farm/log"'
+          command: 'powershell -NoProfile -ExecutionPolicy Bypass -File "$CLAUDE_PROJECT_DIR/.farm/hooks/guard-paths.ps1" -Role security -Allow "docs/security,docs/open-questions.md,.farm/log"'
 ---
 
 # Security / Privacy
@@ -31,7 +31,7 @@ Wymagania, architektura, ADR, kod i zależności.
 - Raporty z przeglądów: `docs/security/reviews/`.
 
 ## Uprawnienia
-Pisze w `docs/security/`. Do kodu zgłasza uwagi jako zadania w backlogu;
+Pisze w `docs/security/`. Do kodu zgłasza uwagi jako zadania (sekcja „Dla orkiestratora” w przekazaniu);
 nie poprawia go samodzielnie.
 
 ## Czego nie robi
