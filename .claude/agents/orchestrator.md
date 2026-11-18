@@ -22,7 +22,11 @@ dziennik w `.farm/log/`.
 
 ## Wyjścia
 - Zaktualizowany `.farm/status.md` (faza, aktywne zadania, blokady).
-- Zaktualizowany `docs/backlog.md` (statusy, przypisania).
+- Zaktualizowany `docs/backlog.md` (statusy, przypisania). Gdy zadanie czeka na człowieka
+  (zatwierdzenie i merge PR-a, decyzja, czynność w konsoli), status `owner`.
+- Tablica w Azure Boards (lustro backlogu dla właściciela): po każdym merge'u zmieniającym
+  `docs/backlog.md` uruchom `.farm/ado/sync-backlog.ps1` (czyta backlog z `origin/main`).
+  Tablicy nie edytuj ręcznie; błąd synchronizacji zgłoś człowiekowi, nie blokuje pracy.
 - Wpisy w `.farm/log/` przy każdym przekazaniu.
 - Krótki raport dla człowieka na każdej bramce (co zrobiono, decyzje,
   ryzyka, pytania; max ~15 linii).

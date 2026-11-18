@@ -1,6 +1,8 @@
 # Backlog
 
-Statusy: `todo` · `in-progress` · `review` · `done` · `blocked`
+Statusy: `todo` · `in-progress` · `review` · `done` · `blocked` · `owner` (czeka na właściciela: merge, decyzja, konsola)
+
+Lustro dla właściciela: tablica Azure Boards https://dev.azure.com/tadecode/Tamitu/_boards/board/t/Tamitu%20Team/Issues (synchronizacja .farm/ado/sync-backlog.ps1, nie edytować ręcznie).
 
 Faza 2 zakończona (G2 zatwierdzona 2026-11-15). Faza 3: zadania P3-01..09 gotowe do realizacji; SEC-* wg wejść w ADR.
 
