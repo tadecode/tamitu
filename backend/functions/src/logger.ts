@@ -47,8 +47,25 @@ export function logEvent(fields: LogFields): void {
   platformLogger.info("fn_event", sanitizeFields(fields));
 }
 
+/**
+ * Severity of a failed call (QA P3-04 r3, OBS-1). Expected client errors from the contract
+ * (AppError: consent_required, invalid_argument, unauthenticated, ...) are WARNING, so ordinary
+ * refusals do not look like outages in Cloud Logging / Error Reporting and carry no stack trace
+ * (logger.error appends one). ERROR only for server-side faults: anything that is not an AppError
+ * (returned to the client as a bare `internal`) and the contract codes that mean the server failed.
+ */
+export type FailureSeverity = "WARNING" | "ERROR";
+
+const SERVER_FAULT_CODES: ReadonlySet<string> = new Set(["internal", "ai_invalid_response"]);
+
+export function failureSeverity(errorClass: string | undefined, errorCode: string | undefined): FailureSeverity {
+  return errorClass === "AppError" && !SERVER_FAULT_CODES.has(errorCode ?? "") ? "WARNING" : "ERROR";
+}
+
 export function logFailure(fields: LogFields): void {
-  platformLogger.error("fn_error", sanitizeFields(fields));
+  const entry = sanitizeFields(fields);
+  if (failureSeverity(fields.errorClass, fields.errorCode) === "WARNING") platformLogger.warn("fn_error", entry);
+  else platformLogger.error("fn_error", entry);
 }
 
 /** HMAC-SHA256 of the UID with a secret pepper (Secret Manager); undefined when pepper missing. */
