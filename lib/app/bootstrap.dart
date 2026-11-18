@@ -19,6 +19,7 @@ import '../features/consent/data/prefs_pending_policy_store.dart';
 import '../features/consent/data/sqlite_consent_local_store.dart';
 import '../features/consent/domain/consent_ports.dart';
 import 'environment.dart';
+import 'firebase_emulators.dart';
 import 'providers.dart';
 
 /// Demo build without Firebase: `--dart-define=TAMITU_FAKE_BACKEND=true`, allowed only
@@ -44,12 +45,25 @@ Future<List<Override>> bootstrapOverrides() async {
     flavor: appFlavor,
     releaseMode: kReleaseMode,
   );
+  assertFirebaseEmulatorsAllowed(
+    requested: useFirebaseEmulators,
+    fakeBackendRequested: fakeBackend,
+    flavor: appFlavor,
+    debugMode: kDebugMode,
+  );
   final prefs = SharedPreferencesAsync();
   final AuthGateway auth;
   final ConsentApi api;
   if (fakeBackend) {
     auth = FakeAuthGateway();
     api = FakeConsentApi();
+  } else if (useFirebaseEmulators) {
+    // QA13: local Auth/Functions emulators, demo project, no App Check (debug dev only).
+    final (emulatorAuth, emulatorApi) = await connectFirebaseEmulators(
+      FirebaseEmulatorConfig.fromEnvironment(),
+    );
+    auth = emulatorAuth;
+    api = emulatorApi;
   } else {
     // Firebase options come from google-services.json per flavor (P3-03); without it
     // initialisation fails and the app cannot sign in (by design: no keys in the repo).
