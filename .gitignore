@@ -15,6 +15,7 @@ backend/functions/node_modules/
 firebase-debug.log
 firestore-debug.log
 ui-debug.log
+**/.runtimeconfig.json
 
 # Lokalne ustawienia Claude Code
 .claude/settings.local.json
