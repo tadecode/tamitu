@@ -76,7 +76,7 @@ Ustalone przez właściciela: administrator TadeCode bez IOD (dane firmy – do 
 | Konto Auth (D1) | Do usunięcia konta |
 | Plany lokalne (D4, D5, D9) | Do usunięcia planu/konta/odinstalowania aplikacji |
 | Zgody (D3) | Do usunięcia konta; ewentualnie minimalny dowód dłużej – S3 |
-| Licznik użycia (D10) | Jeden dokument `usage/{uid}`, TTL 30 dni od ostatniej aktualizacji (+ opóźnienie TTL), kasowanie z kontem |
+| Licznik użycia (D10) | Jeden dokument `usage/{uid}`, TTL na `expireAt` (= ostatnia aktualizacja + 30 dni; + do ok. 24 h opóźnienia TTL), kasowanie z kontem. TTL niewdrożony do O4-2. Decyzja O4-b: docelowo `resetAt` + 2 dni (rejestr D10) |
 | Logi (D11) | 30 dni, własny kubełek w UE, bez treści, UID jako HMAC (ustalone, S7); logi audytu administracyjnego 400 dni bez danych użytkowników; adres IP w logach żądań |
 | Zgody (D3) po usunięciu konta | Q9: domyślnie 0 (usuwane z kontem); archiwum tylko po decyzji [PRAWNIK] |
 | Zapytania do AI | Po naszej stronie 0; po stronie dostawcy – S5 |
