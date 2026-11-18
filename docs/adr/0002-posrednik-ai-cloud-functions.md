@@ -86,3 +86,6 @@ Wspólny wrapper loggera z listą dozwolonych pól: znacznik czasu, nazwa funkcj
 
    Dokładne role IAM (predefiniowane lub niestandardowe) – zadanie P3-03; Firestore nie rozróżnia kolekcji w IAM, więc granularność wynika z podziału kodu i testu przeglądu uprawnień; do rozważenia role niestandardowe. Pieprz `uidHash` jest wspólny dla logów i **nie jest** używany do ewentualnego archiwum zgód (Q9, 2-3); rotacja przy podejrzeniu wycieku.
 7. **Pozostałe uwagi Security:** `testUids` w `config/runtime` to dane osobowe właściciela – dostęp do konsoli tylko właściciel z 2FA (2-8); flaga `testData` nie jest zabezpieczeniem samym w sobie (2-9); test kodowania procentowego nazw w linku Maps i odrzucania sekwencji markdown-linków w odpowiedzi modelu (2-10, SEC-06).
+
+## Odnośniki późniejsze (dopisane, treść ADR bez zmian)
+- **2026-11-18 – ADR-0014 (proponowany):** konto usługi `fn-ai` → **`fn-ai-plan`** (Google wymaga ID konta 6–30 znaków; konto utworzone w P3-03 pod tą nazwą). Po zatwierdzeniu ADR-0014 nazwa `fn-ai-plan` obowiązuje zamiast `fn-ai` w sekcji „Tożsamości (IAM)" i w Aneksie A pkt 6; role bez zmian. Pytanie O2.
