@@ -7,7 +7,7 @@ Backlog: T-<id> · Issue: #<numer>
 ## Definicja ukończenia
 - [ ] Kryteria akceptacji spełnione (US-<id>)
 - [ ] Testy dodane i zielone (CI)
-- [ ] Dokumentacja i `docs/backlog.md` zaktualizowane, wpis w `.farm/log/`
+- [ ] Dokumentacja zaktualizowana, wpis w `.farm/log/` (z sekcją „Dla orkiestratora” dla tablicy zadań)
 - [ ] Raport QA: `docs/qa/reports/<zadanie>.md` (werdykt: przyjęte)
 
 ## Prywatność i bezpieczeństwo (RODO)

@@ -117,7 +117,8 @@ switch ($Command) {
         $w = Get-Task (Get-AdoIndex)
         $tags = @($w.fields.'System.Tags' -split ';\s*' | Where-Object { $_ -and $_ -ne 'zablokowane' })
         if ($Command -eq 'block') { $tags += 'zablokowane' }
-        $null = Update-AdoItem $w.id @(New-AdoPatch 'System.Tags' ($tags -join '; '))
+        # `add` na System.Tags dopisuje tagi; usuniecie wymaga `replace`.
+        $null = Update-AdoItem $w.id @(@{ op = 'replace'; path = '/fields/System.Tags'; value = ($tags -join '; ') })
         if ($Arg) { Add-Comment $w.id "$(if ($Command -eq 'block') { 'Zablokowane' } else { 'Odblokowane' }): $Arg" }
         "${Id}: $Command"
     }

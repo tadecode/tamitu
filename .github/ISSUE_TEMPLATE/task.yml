@@ -1,5 +1,5 @@
 name: Zadanie (backlog)
-description: Zadanie dla roli agenta, odpowiada wpisowi w docs/backlog.md
+description: Zadanie dla roli agenta (zadania farmy są w Azure Boards; ten szablon tylko wyjątkowo)
 title: "T-<id>: <tytuł>"
 labels: ["task"]
 body:

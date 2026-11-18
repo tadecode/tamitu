@@ -22,6 +22,7 @@ $AdoColumnAlias = @{
 $AdoEpics = @{
     'P2' = 'Faza 2: Projekt'; 'P3' = 'Faza 3: Implementacja'; 'SEC' = 'Bezpieczeństwo (SEC)'
     'GH' = 'Infrastruktura i CI (Steward)'; 'O' = 'Pytania otwarte'; 'REV' = 'Przeglądy kodu'
+    'QA' = 'Testy i QA'; 'TEST' = 'Testy integracyjne i CI'; 'OBS' = 'Obserwowalność'; 'ARCH' = 'Architektura'
 }
 
 $script:AdoToken = (& az account get-access-token --resource 499b84ac-1321-427f-aa17-267ca6975798 --query accessToken -o tsv)
