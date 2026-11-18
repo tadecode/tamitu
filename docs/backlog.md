@@ -22,7 +22,7 @@ Faza 2 zakończona (G2 zatwierdzona 2026-11-15). Faza 3: zadania P3-01..09 gotow
 | SEC-06 | Walidator wejścia/wyjścia AI, testy prompt injection | security | blocked | T4, T5 | |
 | SEC-07 | Usuwanie konta i danych po UID + test E2E | security | blocked | T14, T24, US-010 | wejście: test ze starym tokenem, osierocony plik bazy (przeglad-adr 2-1, 5-2) |
 | SEC-08 | Audyt zależności w CI | security | blocked | T16 | |
-| SEC-09 | Alerty budżetowe i wyłącznik kosztowy (właściciel) | owner | blocked | T3, T26 | wejście: alert na wyczerpanie limitu globalnego (przeglad-adr 2-5) |
+| SEC-09 | Alerty budżetowe i wyłącznik kosztowy (właściciel) | owner | in-progress | T3, T26 | wejście: alert na wyczerpanie limitu globalnego (przeglad-adr 2-5); P3-03: budżety 20/100 PLN i alerty (temat `budget-alerts`) gotowe, zostaje `budgetGuard` w P3-09 |
 | SEC-10 | Weryfikacja lokalizacji przetwarzania i transferów Firebase/Google Cloud/Vertex AI w dokumentacji Google | security | todo | S2, P2-03, T29 | faza 2; zakres rozszerzony: Error Reporting, App Check/Play Integrity, Secret Manager, Vertex (model docelowy) |
 | SEC-11 | Wymagania prywatności dla preferencji: lista predefiniowana, walidacja serwerowa, zakaz logowania, zgoda AI | security/architect | blocked | T4, T22, R16, N11 | czeka na N11 |
 | SEC-12 | Lokalizacja dokładna: manifest bez tła, jednorazowy odczyt bez zapisu/logów, test braku persystencji | developer/QA | blocked | T11, T12, R12, US-007 | faza 3 |
@@ -30,10 +30,10 @@ Faza 2 zakończona (G2 zatwierdzona 2026-11-15). Faza 3: zadania P3-01..09 gotow
 | SEC-14 | Teksty zgód i polityka prywatności PL/EN, zapis języka w wersji zgody | analyst/owner | blocked | T15, T23, US-003 | weryfikacja [PRAWNIK]; potrzebne dane firmy (S1); wersja zgody powiązana z treścią (przeglad-adr 6-3) |
 | SEC-15 | Potwierdzenie warunków dostawcy AI (DPA, UE, bez trenowania) zapisane w ADR przed realnymi danymi | architect/owner | blocked | S5, T13, P2-01 | warunek wstępny; lista rozszerzona o poz. 7-12 (przeglad-adr pkt 1) |
 | SEC-16 | Procedura przełączenia `ALLOW_REAL_DATA` i zmian `config/runtime`; dostęp do konsoli; tokeny debug App Check | owner/security/architect | blocked | T27, ADR-0001/0002 | przed SEC-15; wejście z P2-08 |
-| SEC-17 | Role kont usług per funkcja, ograniczenie WIF (repo/gałąź), przegląd IAM | steward/devops | blocked | T28, ADR-0002/0003 | przy P3-03 |
+| SEC-17 | Role kont usług per funkcja, ograniczenie WIF (repo/gałąź), przegląd IAM | steward/devops | in-progress | T28, ADR-0002/0003 | przy P3-03; konta i role utworzone (runbook `.farm/runbooks/P3-03-firebase.md`), przegląd security trwa (gałąź `docs/SEC-17`); WIF – GH-010 |
 | SEC-18 | `consumeAppCheckToken` dla `generatePlan` i `enforceAppCheck` w opcjach SDK; sprawdzić w emulatorze, czy SDK loguje własne ostrzeżenia App Check poza wrapperem | mobile-dev/security | todo | T3, T27, ADR-0002 | przegląd 2026-11-16 P-1; przed P3-05 |
 | SEC-19 | `classifyError`: lista dozwolonych wzorców dla `errorCode`/`errorClass` (inaczej `unknown`) + test | mobile-dev | todo | T7, T25 | przegląd 2026-11-16 P-2; `errors.ts:53-59`; przed P3-05 |
-| SEC-20 | Zakaz wdrożenia bez kont usług per funkcja (`serviceAccount` w opcjach funkcji; `fn-ai`, `fn-consent`, `fn-account`, `fn-budget`) | mobile-dev/steward | todo | T28, ADR-0002 Aneks A pkt 6 | przegląd 2026-11-16 P-3; razem z P3-03/SEC-17; `index.ts:50-56` |
+| SEC-20 | Zakaz wdrożenia bez kont usług per funkcja (`serviceAccount` w opcjach funkcji; `fn-ai`, `fn-consent`, `fn-account`, `fn-budget`) | mobile-dev/steward | todo | T28, ADR-0002 Aneks A pkt 6 | przegląd 2026-11-16 P-3; razem z P3-03/SEC-17; `index.ts:50-56`; realizuje mobile-dev na `feat/SEC-20` razem z wtyczką `google-services` i `.firebaserc`; `fn-ai` → `fn-ai-plan` (O2) |
 | SEC-21 | Walidacja tekstów: NFC i odrzucenie Unicode Cc/Cf/Zl/Zp w `text()`; `policyVersion` wzorzec i lista znanych wersji; testy | mobile-dev | todo | T4, przeglad-adr 6-3 | przegląd 2026-11-16 P-4; `schemas.ts:26-35,76`; powiązane z SEC-06 |
 | SEC-22 | Granice `perUserDailyLimit`/`globalDailyLimit` (poza zakresem -> domyślne) i wydzielenie `loadRuntime` parsowania z `index.ts` do `config.ts` z testami | mobile-dev | todo | T3, T26 | przegląd 2026-11-16 P-5; `index.ts:26-37` |
 | SEC-23 | Test ciągu kontrolnego w emulatorze/projekcie dev (grep logów, `_Default` vs kubełek UE, Error Reporting); wzmocnić asercję braku UID w logach (`endpoints.test.ts:191`) | security/qa | todo | T7, T25, przeglad-adr 2-2, 3-1 | przegląd 2026-11-16 U-1; część SEC-04 |
@@ -52,7 +52,7 @@ Zadanie przykładowe T-001 (szkielet Flutter) powstanie w fazie 3 po G2.
 |---|---|---|---|
 | P3-01 | Szkielet Flutter w korzeniu repozytorium (ADR-0009; flavory dev/prod, pakiet `pl.tadecode.tamitu`, manifest minimalny, l10n PL/EN, testy manifestu i tłumaczeń) | mobile-dev | review |
 | P3-02 | Szkielet `backend/` (Functions TS, reguły `deny all`, emulator, testy) | mobile-dev | review |
-| P3-03 | Projekty Firebase dev/prod, region, kubełek logów 30 dni, budżety, konta usług (prośba do Stewarda + właściciel) | steward/owner | todo |
+| P3-03 | Projekty Firebase dev/prod, region, kubełek logów 30 dni, budżety, konta usług (prośba do Stewarda + właściciel) | steward/owner | review | PR #66; otwarte pozycje: `.farm/runbooks/P3-03-firebase.md`, tabela „Czego nie zrobiono” |
 | P3-04 | Logowanie Google + zgody + `recordConsent` (US-001..003). **Wchodzi też (ADR-0011/0012):** zapis zgód w Firestore (idempotentny po `consentId`; walidacja wersji już w backendzie, gałąź `feat/p3-adr-0011-0012-backend`); klient: `consentId` we wpisie tymczasowym, ponowienia `recordConsent`, stałe wersji i daty polityki, klasyfikacja błędów sieci i `consent_required` (raport `docs/architecture/przeglad-ekranow-p3-14c.md` pkt 5) | mobile-dev | todo |
 | P3-05 | `generatePlan` + walidator + zestaw ewaluacyjny PL/EN, wybór modelu (US-004..006, US-011). **Wchodzi też (ADR-0011/0012):** sprawdzenie zgód w backendzie już jest (przed limitem), zostają rezerwacja limitu i testy na emulatorze (ADR-0012 pkt 7); klient: wysyłka oczekujących zgód przed `generatePlan`, mapowanie `consentType` → EK-03/EK-06 i „Zaktualizuj aplikację”, `testData` ze stałej `TAMITU_TEST_DATA` (raport `docs/architecture/przeglad-ekranow-p3-14c.md` pkt 5) | mobile-dev/qa | todo |
 | P3-06 | Lokalna baza SQLCipher, lista/podgląd/usuwanie planów (US-008, US-009). **Wchodzi też (ADR-0011 pkt 9, ADR-0010):** przepływ utraty klucza bazy (EK-03 wariant, zgoda AI „nie wyrażono”) z testem; `AppIcon` z pomiarem APK (raport `docs/architecture/przeglad-ekranow-p3-14c.md` pkt 5) | mobile-dev | todo |
@@ -70,6 +70,13 @@ Zadanie przykładowe T-001 (szkielet Flutter) powstanie w fazie 3 po G2.
 | P3-14e | Wymagania dla „Usuń wszystkie plany" (U7; US-009/US-002), wyboru motywu (UX4) i zapamiętania trybu trasy (UX11); sprawdzić wpływ na rejestr danych (security) | analyst | todo |
 | P3-14f | Zmiany ekranów: EK-09 (zapamiętany tryb), EK-12 (motyw, język), EK-13/EK-12 („Usuń wszystkie plany" z potwierdzeniem), EK-04/EK-13 (informacja „plany tylko na tym urządzeniu"); potem ponowne zatwierdzenie właściciela | ux | todo (po P3-14e) |
 | P3-14g | Ustawienia lokalne (motyw, tryb trasy) i masowe usuwanie planów w modelu danych/ADR-0005 (bez nowych danych osobowych?) | architect | todo |
+| GH-009 | Sekrety i konfiguracja CI dla Firebase (prośba `.farm/requests/GH-009-ci-firebase-config-secrets.md`) | steward | todo | po wtyczce `google-services` (SEC-20, mobile-dev) |
+| GH-010 | Workload Identity Federation do wdrażania (prośba `.farm/requests/GH-010-wif-deploy.md`) | steward | todo | przed automatycznym wdrażaniem; SEC-17 |
+| O4 | TTL `usage`: pole `expireAt` zamiast `updatedAt` w `firestore.indexes.json` i `docs/data/model-danych.md` (open-questions O4) | dba | todo | przed P3-05; do tego czasu wdrażane tylko reguły |
+| O1 | ADR-0001 „przetwarzanie ML w UE” zamiast `europe-west4` (open-questions O1) | architect | todo | gałąź `docs/ADR-0001-annex`; SEC-10, SEC-15 |
+| O2 | Nazwa konta usług `fn-ai-plan` w ADR-0002 Aneks A pkt 6 (open-questions O2) | architect | todo | gałąź `docs/ADR-0001-annex`; SEC-20 |
+| O3 | Limit wydatków Gemini/Vertex jako warstwa wyłącznika kosztowego (open-questions O3) | architect | todo | gałąź `docs/ADR-0001-annex`; SEC-09, P3-09 |
+| O5 | Wyłączenie buforowania Vertex AI (`cacheConfig.disableCache`) w dev i prod, opis w polityce (open-questions O5) | security | todo | przed P3-05; SEC-15, D6 |
 | REV-01 | Przegląd wsteczny PR #51 (ADR-0011 pkt 3–5, ADR-0012) wg kroku przeglądu; raport `docs/reviews/PR-51.md` | reviewer | w toku |
 | REV-02 | Przegląd wsteczny PR #15 i #17 (szkielety) | reviewer | propozycja – do decyzji właściciela |
 

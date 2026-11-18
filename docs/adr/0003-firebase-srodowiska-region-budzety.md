@@ -53,3 +53,7 @@ Security sprawdza w dokumentacji Google m.in.: lokalizację danych Firebase Auth
 4. **Dostęp (3-6).** Lista osób z dostępem do konsol Firestore/Auth w dokumentacji operacyjnej (konsola = UID i e-maile wszystkich użytkowników); dostęp do danych na wniosek – procedura właściciela (S9).
 5. **Wyłącznik kosztowy (3-7).** `budgetGuard` jest powiadomieniem opóźnionym, nie twardym limitem; ryzyko rezydualne zaakceptowane, łagodzone limitami (ADR-0002 Aneks A pkt 5).
 6. **Zadania właściciela przed fazą 3:** założenie konta rozliczeniowego TadeCode/planu Blaze i projektów `tamitu-dev-…`, `tamitu-prod-…` (Q10); ustawienie budżetów i alertów (Q3).
+
+## Odnośniki późniejsze (dopisane, treść ADR bez zmian)
+- **2026-11-18 – ADR-0001 Aneks B (proponowany):** region `europe-west4` dla Vertex AI oznacza region **wywołania**; gwarancja przetwarzania ML dla modeli Flash obejmuje UE (multi-region `eu`), nie wyłącznie Holandię. Pozostałe usługi (Functions, Firestore, logi, Secret Manager) – bez zmian. Pytanie O1.
+- **2026-11-18 – ADR-0014 (proponowany):** (a) nazwa konta `fn-ai-plan` (O2); (b) spend cap Cloud Billing wyłącznie na `aiplatform` (prod 80 PLN, dev 15 PLN – propozycja) jako warstwa obok `budgetGuard`; bez capu na Functions/Cloud Run. Uzupełnia sekcję „Budżety i alerty" i Aneks A pkt 5 (O3).
