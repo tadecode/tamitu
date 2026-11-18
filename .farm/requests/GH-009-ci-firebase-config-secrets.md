@@ -24,7 +24,8 @@ dostawcą debug App Check (flavor `dev`) potrzebny jest osobny token debug CI.
 2. **Zmiana CI (po PR mobile-dev z wtyczką):** krok przed `flutter build` dekoduje sekret do `android/app/src/<flavor>/google-services.json`
    (bez `echo` wartości, `::add-mask::` niepotrzebne dla pliku, brak artefaktu z plikiem); token debug przez `--dart-define` tylko dla `dev`.
    Joby z PR-ów z forków nie dostają sekretów (domyślne zachowanie GitHub) – build w takim przypadku pomija krok lub używa `TAMITU_FAKE_BACKEND`.
-3. Skan sekretów (SEC-01, gitleaks): wzorce na `google-services.json` i tokeny debug App Check – potwierdzić, że są.
+3. **Warunek z przeglądu PR #70 (ustalenie #1, `docs/reviews/PR-70.md`):** obejście braku `google-services.json` w buildzie ma działać tylko przez jawną flagę `-Ptamitu.allowMissingGoogleServices=true` w kroku CI „czy się składa” albo wyłącznie dla wariantów debug – **nie** przez zmienną `CI`; przed buildem wydaniowym w CI plik z sekretu jest wymagany. Poprawka w `android/app/build.gradle.kts`: zadanie SEC-33 (mobile-dev); Steward dodaje flagę w kroku CI i wykonuje prośbę po SEC-33.
+4. Skan sekretów (SEC-01, gitleaks): wzorce na `google-services.json` i tokeny debug App Check – potwierdzić, że są.
 
 ## Wpływ
 Koszty: brak. · Bezpieczeństwo/RODO: klucz API Firebase nie jest sekretem w ścisłym sensie (jest w APK), ale repo jest publiczne – trzymamy poza repo; klucz ograniczony do API Firebase (P3-03). Token debug = obejście App Check w dev – tylko sekret, rotacja przy wycieku. · Ryzyko: niskie; zależne od PR mobile-dev (wtyczka Gradle).
