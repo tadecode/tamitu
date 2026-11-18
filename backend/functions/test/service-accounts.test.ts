@@ -6,7 +6,18 @@ vi.mock("firebase-admin/auth", () => ({ getAuth: vi.fn() }));
 vi.mock("firebase-admin/firestore", () => ({ getFirestore: vi.fn(), Timestamp: { fromDate: vi.fn() } }));
 
 import * as functions from "../src/index.js";
-import { SERVICE_ACCOUNTS, serviceAccountEmail, serviceAccountFor, type FunctionName } from "../src/service-accounts.js";
+import { SERVICE_ACCOUNTS, serviceAccountFor, type FunctionName } from "../src/service-accounts.js";
+
+/**
+ * Full e-mail of the account in a project, as the Firebase CLI expands the `<name>@` shorthand.
+ * Test-only (review PR #70 #4b: not used by production code); documents the runbook addresses.
+ */
+function serviceAccountEmail(fn: FunctionName, projectId: string): string {
+  if (!/^[a-z][a-z0-9-]{4,28}[a-z0-9]$/.test(projectId)) {
+    throw new Error("invalid project id");
+  }
+  return `${SERVICE_ACCOUNTS[fn]}@${projectId}.iam.gserviceaccount.com`;
+}
 
 interface EndpointLike {
   __endpoint?: { serviceAccountEmail?: unknown; region?: unknown };
@@ -44,6 +55,12 @@ describe("SEC-20: dedicated service account per function", () => {
     expect(serviceAccountEmail("budgetGuard", "tamitu-prod-tadecode")).toBe(
       "fn-budget@tamitu-prod-tadecode.iam.gserviceaccount.com",
     );
+  });
+
+  it("account ids meet Google's rule (6-30 chars, lowercase, digits, hyphens)", () => {
+    for (const id of Object.values(SERVICE_ACCOUNTS)) {
+      expect(id).toMatch(/^[a-z][a-z0-9-]{4,28}[a-z0-9]$/);
+    }
   });
 
   it("rejects malformed project ids", () => {
