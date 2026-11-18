@@ -1,0 +1,11 @@
+# 11:00  orchestrator → owner, mobile-dev, qa, architect, security, steward  |  backlog po fali 2 (PR #72–#74)
+- Zrobione: `docs/backlog.md` i `docs/open-questions.md` zaktualizowane wg PR #73 (O4, dba) i #74 (QA P3-04 r3) oraz raportu SEC-17. P3-04 → done (warunkowo) wg decyzji właściciela 2026-11-18 („Tak, przyjmij warunkowo”; werdykt `docs/qa/verify-p3-04-r3.md`). O4 → done, w open-questions zamknięte (wariant A). Nowe zadania: O4-1, O4-2, QA13, OBS-1, TEST-INT-CI, QA-P3-04-DEV (blocked), SEC-32, ARCH-01, ARCH-02, SEC-34. P3-05 dopisane: `expireAt` (pkt 3.2) + recenzja dba, SEC-32, warunki startu. Nowe pytania: O4-b (security), O6 (owner/[PRAWNIK]), O7 (orchestrator). W `GH-010` dopisane W-4, Ś-3 (i powiązane W-5).
+- Artefakty: docs/backlog.md, docs/open-questions.md, .farm/requests/GH-010-wif-deploy.md
+- Decyzje: brak własnych; P3-04 przyjęte przez właściciela (czat).
+- Do zrobienia przez odbiorcę:
+  - mobile-dev: `feat/SEC-33` (w toku) obejmuje SEC-33, O4-1, QA13, OBS-1; osobno TEST-INT-CI (z Stewardem)
+  - owner: O4-2 po O4-1; sterownik hypervisora/telefon, token debug App Check dla QA, konto testowe; O6 (umowa Google), SEC-31
+  - qa: QA-P3-04-DEV po spełnieniu zależności
+  - architect: ARCH-01, ARCH-02; security: SEC-34, decyzja O4-b
+  - steward: GH-010 z W-4/Ś-3 (przy realizacji)
+- Pytania/blokady: brak blokad. Uwaga: hook `guard-paths` zablokował zapis pomocniczego skryptu w katalogu tymczasowym sesji (poza projektem); edycje wykonano bezpośrednio w plikach repozytorium.
