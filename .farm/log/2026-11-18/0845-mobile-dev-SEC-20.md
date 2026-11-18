@@ -1,0 +1,12 @@
+# 08:45  mobile-dev → orchestrator, reviewer, steward, security, owner  |  SEC-20
+- Zrobione: każda Cloud Function ma własne konto usług w opcjach (`generatePlan` → `fn-ai-plan`, `recordConsent` → `fn-consent`, `deleteAccount` → `fn-account`, `budgetGuard` → `fn-budget`; wartość `<nazwa>@` – Firebase CLI dokleja ID projektu docelowego przy wdrożeniu), test vitest sprawdza wszystkie eksportowane funkcje (konto, region `europe-west4`, brak funkcji bez konta, unikalność). `backend/.firebaserc`: `dev`/`default` → `tamitu-dev-tadecode`, `prod` → `tamitu-prod-tadecode`. Android: wtyczka `com.google.gms.google-services` 4.5.0 dla flavorów dev/prod; pliki `google-services.json` poza repo (`android/app/src/<dev|prod>/`, `.gitignore`), opis w `android/FIREBASE.md`.
+- Artefakty: backend/functions/src/service-accounts.ts, backend/functions/src/index.ts, backend/functions/test/service-accounts.test.ts, backend/.firebaserc, android/settings.gradle.kts, android/app/build.gradle.kts, android/.gitignore, android/FIREBASE.md
+- Decyzje: brak pliku `google-services.json` = **błąd buildu** lokalnie (`missingGoogleServicesStrategy = ERROR`); tylko w CI (`CI=true`) lub z `-Ptamitu.allowMissingGoogleServices=true` ostrzeżenie (WARN) – CI składa APK bez żadnej konfiguracji i kluczy (bez atrapy pliku), lokalnie nie powstanie po cichu APK bez Firebase. Konto w funkcji przez skrót `<nazwa>@` zamiast wpisanego adresu – jeden kod dla dev i prod. Alias `default` = dev (pomyłkowe `firebase deploy` bez `--project` trafia do dev).
+- Do zrobienia przez odbiorcę: steward – GH-009 (sekrety `GOOGLE_SERVICES_JSON_DEV/PROD` → zapis do `android/app/src/<flavor>/` przed buildem; wtedy APK w CI z konfiguracją); wdrażający (owner/CI WIF GH-010) – `iam.serviceAccountUser` na kontach `fn-*`; orchestrator – uzupełnić runbook P3-03 (etap 6 „Otwarte (mobile-dev)”, etap 8 `.firebaserc`, lista „Czego nie zrobiono” poz. 3) – poza moimi uprawnieniami; owner – test P3-04 na urządzeniu: skopiować pliki do `android/app/src/<flavor>/` wg `android/FIREBASE.md`.
+- Pytania/blokady: brak. O2 (zmiana nazwy `fn-ai` → `fn-ai-plan` w ADR-0002 Aneks A pkt 6 i SEC-20) – nadal po stronie architekta; kod używa `fn-ai-plan`.
+
+## Dla orkiestratora (backlog i pytania)
+- Backlog – status: SEC-20: todo → review (PR z gałęzi `feat/SEC-20`); w opisie SEC-20 nazwa `fn-ai` → `fn-ai-plan` (O2)
+- Backlog – nowe zadania: brak (GH-009 już jest – po tym PR-ze można go wykonać)
+- Pytania otwarte – nowe: brak
+- Pytania otwarte – zamknięte: brak (O2 zamyka architekt w ADR)
