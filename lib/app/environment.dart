@@ -33,3 +33,32 @@ void assertFakeBackendAllowed({
     );
   }
 }
+
+/// Local Firebase emulators (`TAMITU_USE_FIREBASE_EMULATORS=true`, QA13) are allowed only
+/// in a `dev` **debug** build: never in `prod`, never in release or profile (a profile
+/// build is close to release and must talk to the real backend).
+bool firebaseEmulatorsAllowed({
+  required String? flavor,
+  required bool debugMode,
+}) => flavor == 'dev' && debugMode;
+
+/// Throws when the emulators were requested where they are not allowed, or together
+/// with the fake backend (two different test backends at once is a mistake).
+void assertFirebaseEmulatorsAllowed({
+  required bool requested,
+  required bool fakeBackendRequested,
+  required String? flavor,
+  required bool debugMode,
+}) {
+  if (!requested) return;
+  if (!firebaseEmulatorsAllowed(flavor: flavor, debugMode: debugMode)) {
+    throw StateError(
+      'TAMITU_USE_FIREBASE_EMULATORS is allowed only in debug dev builds',
+    );
+  }
+  if (fakeBackendRequested) {
+    throw StateError(
+      'TAMITU_USE_FIREBASE_EMULATORS and TAMITU_FAKE_BACKEND are exclusive',
+    );
+  }
+}

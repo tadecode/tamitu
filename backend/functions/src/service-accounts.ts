@@ -22,11 +22,3 @@ export type FunctionName = keyof typeof SERVICE_ACCOUNTS;
 export function serviceAccountFor(fn: FunctionName): string {
   return `${SERVICE_ACCOUNTS[fn]}@`;
 }
-
-/** Full e-mail of the account in a given project (tests, docs, IAM tooling). */
-export function serviceAccountEmail(fn: FunctionName, projectId: string): string {
-  if (!/^[a-z][a-z0-9-]{4,28}[a-z0-9]$/.test(projectId)) {
-    throw new Error("invalid project id");
-  }
-  return `${SERVICE_ACCOUNTS[fn]}@${projectId}.iam.gserviceaccount.com`;
-}

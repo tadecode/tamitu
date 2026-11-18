@@ -5,15 +5,25 @@ plugins {
     id("com.google.gms.google-services")
 }
 
-// google-services.json is NOT in the repository (public repo, P3-03 etap 10): the owner copies it to
-// android/app/src/dev/ and android/app/src/prod/ (see android/FIREBASE.md). A missing file fails the
-// build (ERROR), so a developer never gets an APK silently built without Firebase config.
-// Exception: CI (GitHub Actions sets CI=true) or -Ptamitu.allowMissingGoogleServices=true only WARN,
-// so the "does it compile" check runs without any Firebase config or keys until GH-009 provides
-// the files from repository secrets. Such an APK cannot sign in (Firebase.initializeApp fails).
+// google-services.json is NOT in the repository (public repo, P3-03 etap 10): the owner keeps it in
+// %USERPROFILE%\.tamitu\firebase\<env>\ and copies it to android/app/src/<flavor>/ (android/FIREBASE.md).
+// A missing file fails the build (ERROR), so an APK is never built silently without Firebase config.
+// SEC-33 (review PR #70 #1): the only exception is the explicit project property
+//   flutter build apk --debug -P tamitu.allowMissingGoogleServices=true
+// used by the CI "does it compile" step (and the fake-backend demo) until GH-009 provides the files
+// from secrets. It no longer depends on the CI environment variable and it is refused for release
+// builds: a release APK/AAB always needs the real file (it would crash on Firebase.initializeApp()).
 val allowMissingGoogleServices =
-    providers.environmentVariable("CI").orNull == "true" ||
-        providers.gradleProperty("tamitu.allowMissingGoogleServices").orNull == "true"
+    providers.gradleProperty("tamitu.allowMissingGoogleServices").orNull == "true"
+
+if (allowMissingGoogleServices &&
+    gradle.startParameter.taskNames.any { it.contains("release", ignoreCase = true) }
+) {
+    throw GradleException(
+        "tamitu.allowMissingGoogleServices=true is allowed only for debug/profile builds; " +
+            "a release build requires android/app/src/<flavor>/google-services.json (SEC-33).",
+    )
+}
 
 googleServices {
     missingGoogleServicesStrategy =
