@@ -1,6 +1,6 @@
 # Zasady przechowywania, retencji i usuwania danych – Tamitu (MVP)
 
-Stan: 2026-11-15, wersja 0.2 (po G2; ADR zatwierdzone), autor: architect (przegląd Security: `docs/security/przeglad-adr.md`). Źródła: `docs/security/personal-data-register.md` (0.2), `privacy-checklist.md` pkt 5–6, ADR-0003/0004/0005. Okresy oznaczone [PRAWNIK] czekają na poradę.
+Stan: 2026-11-18, wersja 0.3 (O4-b: retencja licznika D10 skrócona do ok. 3 dni od ostatniego użycia; uzasadnienie: `docs/security/personal-data-register.md`, sekcja „Retencja licznika użycia (D10, O4-b)”); wcześniej 0.2 (2026-11-15, po G2; ADR zatwierdzone), autor: architect (przegląd Security: `docs/security/przeglad-adr.md`). Źródła: `docs/security/personal-data-register.md` (0.2), `privacy-checklist.md` pkt 5–6, ADR-0003/0004/0005. Okresy oznaczone [PRAWNIK] czekają na poradę.
 
 ## 1. Retencja i miejsce
 | Dane (rejestr) | Miejsce | Retencja | Usunięcie |
@@ -12,7 +12,7 @@ Stan: 2026-11-15, wersja 0.2 (po G2; ADR zatwierdzone), autor: architect (przegl
 | Dane do AI (D6) | pamięć pośrednika w trakcie żądania; Vertex AI wg warunków dostawcy | po naszej stronie 0 | – (warunki dostawcy: SEC-15) |
 | Lokalizacja (D7) | nie zapisywana | 0 | – |
 | Nazwy w linku Maps (D8) | generowane na urządzeniu | 0 (link nie zapisywany ze współrzędnymi) | – |
-| Licznik użycia (D10) | Firestore `usage/{uid}` | bieżąca doba; TTL 30 dni od ostatniej aktualizacji (polityka TTL na polu `expireAt` = ostatni zapis + 30 dni, decyzja O4; `model-danych.md` pkt 3) | `deleteAccount`; TTL |
+| Licznik użycia (D10) | Firestore `usage/{uid}` | bieżąca doba; TTL do ok. 3 dni od ostatniego użycia + do ok. 24 h opóźnienia TTL (polityka TTL na polu `expireAt` = `max(resetAt(now) + 2 d, now + 2 d)`, `resetAt` = koniec doby Europe/Warsaw; decyzja O4 i O4-b – skrócenie z 30 dni zatwierdzone przez właściciela 2026-11-18; `model-danych.md` pkt 3) | `deleteAccount`; TTL |
 | Logi (D11) | Cloud Logging, kubełek UE | 30 dni, bez treści, UID jako HMAC | wygasają automatycznie (do 30 dni po usunięciu konta – opisać w polityce) |
 | Dane diagnostyczne (D12) | nie używane | – | – |
 | Kontakt/wnioski (D14) | skrzynka tamitu@tadecode.pl | wg [PRAWNIK] | ręcznie |
