@@ -76,7 +76,7 @@ Ustalone przez właściciela: administrator TadeCode bez IOD (dane firmy – do 
 | Konto Auth (D1) | Do usunięcia konta |
 | Plany lokalne (D4, D5, D9) | Do usunięcia planu/konta/odinstalowania aplikacji |
 | Zgody (D3) | Do usunięcia konta; ewentualnie minimalny dowód dłużej – S3 |
-| Licznik użycia (D10) | Jeden dokument `usage/{uid}`, TTL na `expireAt` (= ostatnia aktualizacja + 30 dni; + do ok. 24 h opóźnienia TTL), kasowanie z kontem. TTL niewdrożony do O4-2. Decyzja O4-b: docelowo `resetAt` + 2 dni (rejestr D10) |
+| Licznik użycia (D10) | Jeden dokument `usage/{uid}`, TTL na `expireAt` = `max(resetAt(now) + 2 d, now + 2 d)`, czyli do ok. 3 dni od ostatniego użycia + do ok. 24 h opóźnienia TTL – w polityce „do 4 dni od ostatniego użycia” (O4-b, zatwierdził właściciel 2026-11-18; rejestr D10); kasowanie z kontem. TTL niewdrożony do O4-2 |
 | Logi (D11) | 30 dni, własny kubełek w UE, bez treści, UID jako HMAC (ustalone, S7); logi audytu administracyjnego 400 dni bez danych użytkowników; adres IP w logach żądań |
 | Zgody (D3) po usunięciu konta | Q9: domyślnie 0 (usuwane z kontem); archiwum tylko po decyzji [PRAWNIK] |
 | Zapytania do AI | Po naszej stronie 0; po stronie dostawcy – S5 |
@@ -119,7 +119,8 @@ Docelowy adres: `tadecode.pl/tamitu/prywatnosc` (musi być publiczny przed testa
    - dane podróży (cel, daty, nocleg, godzina i lotnisko przylotu/przyjazdu) – ułożenie planu; w MVP zapisywane tylko na Twoim urządzeniu;
    - preferencje podróży (zainteresowania, budżet, tempo zwiedzania, liczba osób) i język planu – dopasowanie planu; zapisywane na Twoim urządzeniu; wysyłane do AI razem z danymi podróży, za Twoją zgodą;
    - zgody (rodzaj, wersja, język, data) – wykazanie, że je wyraziłeś; zapisujemy minimalny rekord (identyfikator konta, wersja, wartość, data) także na serwerze;
-   - licznik użycia i logi techniczne (bez treści formularza; identyfikator konta w postaci skrótu; przechowywane 30 dni) – limity kosztowe, bezpieczeństwo;
+   - licznik użycia (dzienna liczba wygenerowanych planów powiązana z identyfikatorem konta; przechowywany do 4 dni od ostatniego użycia) – limity kosztowe, bezpieczeństwo;
+   - logi techniczne (bez treści formularza; identyfikator konta w postaci skrótu; przechowywane 30 dni) – diagnostyka, bezpieczeństwo;
    - lokalizacja dokładna – tylko gdy wybierzesz „moja lokalizacja"; odczytujemy ją jednorazowo, nie zapisujemy i nie wysyłamy na nasze serwery ani do AI; współrzędne trafiają do Google Maps (odrębny administrator) w linku trasy.
 3. **Przekazanie do modelu AI:** dane podróży i preferencje (bez Twojego e-maila, nazwy, identyfikatora konta, lokalizacji i numeru lotu) są przekazywane przez nasz serwer pośredniczący (przetwarza je w pamięci, nie zapisuje i nie loguje) do [Google Cloud Vertex AI / Gemini, region UE – po potwierdzeniu SEC-15] w celu wygenerowania planu, na podstawie Twojej zgody; [informacja o braku trenowania na danych, DPA oraz o ewentualnym krótkotrwałym buforowaniu/monitoringu nadużyć u dostawcy i jego okresie – po potwierdzeniu S5/SEC-15]. Nie wpisuj pełnego adresu prywatnego noclegu. Nie wpisuj w pola formularza danych wrażliwych ani danych innych osób. Plan może zawierać błędy.
 4. **Podstawy prawne:** wykonanie umowy (art. 6 ust. 1 lit. b), zgoda (lit. a) dla AI i lokalizacji, uzasadniony interes (lit. f) dla limitów i logów – [do potwierdzenia przez prawnika].
@@ -127,7 +128,7 @@ Docelowy adres: `tadecode.pl/tamitu/prywatnosc` (musi być publiczny przed testa
 6. **Transfery poza EOG:** [opis wg S2/SEC-10 i warunków Google; Firebase Authentication nie ma wyboru regionu – możliwe przetwarzanie poza UE]. Dane aplikacji (zgody, licznik, logi) przechowujemy w regionie UE (`europe-west4`, Holandia) [do potwierdzenia].
 6a. **Logi i infrastruktura:** logi techniczne (bez treści formularza; identyfikator konta w postaci skrótu; adres IP w logach żądań) 30 dni w UE; logi administracyjne konta Google Cloud do 400 dni (bez danych użytkowników); ochrona przed nadużyciami (Firebase App Check / Google Play Integrity) [opis po SEC-10].
 6b. **Przechowywanie na urządzeniu:** plany i preferencje w zaszyfrowanej bazie lokalnej; kopia zapasowa Androida wyłączona (utrata telefonu = utrata planów); plany zostają na urządzeniu po wylogowaniu do czasu usunięcia planu/konta lub odinstalowania.
-7. **Okres przechowywania:** wg tabeli w pkt 6 listy (logi 30 dni; po usunięciu konta zapis zgód: [okres wg prawnika]).
+7. **Okres przechowywania:** wg tabeli w pkt 6 listy (licznik użycia do 4 dni od ostatniego użycia; logi 30 dni; po usunięciu konta zapis zgód: [okres wg prawnika]).
 8. **Twoje prawa:** dostęp, sprostowanie, usunięcie, ograniczenie, sprzeciw, przenoszenie (jeśli dotyczy), cofnięcie zgody w każdej chwili; skarga do Prezesa UODO. Jak skorzystać: w aplikacji (Ustawienia -> Prywatność, Usuń konto) lub e-mailem na tamitu@tadecode.pl (dostęp do danych na wniosek; nie ma eksportu w aplikacji).
 9. **Usunięcie konta:** w aplikacji (Ustawienia -> Usuń konto) oraz instrukcja na stronie [adres].
 10. **Bezpieczeństwo:** szyfrowane połączenia, brak haseł, ograniczone uprawnienia, limity.
