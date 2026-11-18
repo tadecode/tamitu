@@ -40,3 +40,9 @@ Poniższe zastępują pkt 1 powyżej, jeśli się różnią.
 Koszty: brak (WIF bez opłat). · Bezpieczeństwo/RODO: brak długoterminowych poświadczeń; zakres ograniczony do repo/gałęzi. · Ryzyko: zbyt szerokie role `ci-deployer` – przegląd security (SEC-17) przed użyciem w prod.
 
 ## Odpowiedź Stewarda
+2026-11-18 Steward: prośba zgodna z polityką; decyzja właściciela (czat): najpierw tylko dev, wdrożenia ręczne.
+Dane (odczyt `gh api`): `repository_id=1458544274`, `repository_owner_id=148259836` (właściciel to konto użytkownika, nie organizacja).
+Wykonane: workflow `.github/workflows/deploy.yml` (PR `chore/ci-gh-010-deploy-dev`): `workflow_dispatch`, wybór `firestore:rules` / `firestore:indexes` / `functions`, tylko projekt `tamitu-dev-tadecode`, tylko z `main`, `id-token: write` wyłącznie w jobie wdrożeniowym, bez `pull_request_target`, `google-github-actions/auth@v3`, `firebase-tools@15.34.2`.
+Czeka (właściciel, GCP): pula WIF `github`, dostawca `tamitu-repo` z warunkiem repo/właściciel/`refs/heads/main`, konto `ci-deployer`, powiązanie `workloadIdentityUser` na `principalSet` po `repository_id`, role startowe wg Ś-3, bez `serviceAccountUser` na koncie Compute (W-5).
+Czeka (Steward, po potwierdzeniu GCP): zmienne Actions `GCP_WIF_PROVIDER_DEV`, `GCP_DEPLOYER_SA_DEV`; próbne wdrożenie reguł w dev; każda dodana rola = wpis tutaj.
+Prod: poza zakresem tej odpowiedzi (osobny krok po próbie w dev, z warunkami W-4 dla prod i zatwierdzeniem w środowisku `prod`).
