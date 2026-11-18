@@ -2,6 +2,26 @@ plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+    id("com.google.gms.google-services")
+}
+
+// google-services.json is NOT in the repository (public repo, P3-03 etap 10): the owner copies it to
+// android/app/src/dev/ and android/app/src/prod/ (see android/FIREBASE.md). A missing file fails the
+// build (ERROR), so a developer never gets an APK silently built without Firebase config.
+// Exception: CI (GitHub Actions sets CI=true) or -Ptamitu.allowMissingGoogleServices=true only WARN,
+// so the "does it compile" check runs without any Firebase config or keys until GH-009 provides
+// the files from repository secrets. Such an APK cannot sign in (Firebase.initializeApp fails).
+val allowMissingGoogleServices =
+    providers.environmentVariable("CI").orNull == "true" ||
+        providers.gradleProperty("tamitu.allowMissingGoogleServices").orNull == "true"
+
+googleServices {
+    missingGoogleServicesStrategy =
+        if (allowMissingGoogleServices) {
+            com.google.gms.googleservices.GoogleServicesPlugin.MissingGoogleServicesStrategy.WARN
+        } else {
+            com.google.gms.googleservices.GoogleServicesPlugin.MissingGoogleServicesStrategy.ERROR
+        }
 }
 
 android {

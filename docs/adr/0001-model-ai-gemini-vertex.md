@@ -66,3 +66,36 @@ Zmiany nie zmieniają decyzji (model, region, abstrakcja); doprecyzowują warunk
 3. **Treść pól `lodging`/`destination` (1-3).** Do formularza i zgody AI trafia pomoc: „Nazwa obiektu lub dzielnica (nie wpisuj pełnego adresu prywatnego)" – wymaganie dla Analityka/UI (poza zakresem architekta); brak walidacji blokującej.
 4. **Zmiana dostawcy modelu (1-6)** = nowy wpis w rejestrze danych, nowe DPA i nowa wersja zgody AI.
 5. **Ceny:** patrz ramka „UWAGA" wyżej i `costs.md` – niezweryfikowane do czasu zadania weryfikacyjnego przed fazą 3.
+
+## Aneks B (2026-11-18, po P3-03): zakres przetwarzania ML i cykl życia modeli
+- Status aneksu: **proponowany** – wymaga zatwierdzenia przez właściciela (bramka „architektura"); do tego czasu obowiązuje treść wyżej, a `ALLOW_REAL_DATA=false` i tak blokuje realne dane.
+- Autor (rola): architect. Źródło: pytanie O1 (`docs/open-questions.md`, sekcja „Konfiguracja środowisk (P3-03)"), runbook `.farm/runbooks/P3-03-firebase.md` („Weryfikacja regionu").
+- Aneks **koryguje opis faktów** w pkt 1 decyzji i w pozycji 3 listy SEC-15. Nie zmienia wyboru dostawcy, klasy modelu, regionu wywołania ani abstrakcji.
+
+### Fakty (dokumentacja Google, sprawdzone 2026-11-18)
+| # | Fakt | Źródło |
+|---|---|---|
+| F1 | Tabela „Data residency" Vertex AI: dla wszystkich modeli Flash (`gemini-2.5-flash`, `gemini-2.5-flash-lite`, `gemini-3.1-flash-lite`, `gemini-3.5-flash`, `gemini-3.5-flash-lite`, `gemini-3.6/3.7/3.8-flash`) gwarancja przetwarzania ML jest w multi-regionie **UE** (`eu`); kolumna „Holandia" (`europe-west4`) jest pusta – **brak gwarancji przetwarzania ML w Holandii**. | https://docs.cloud.google.com/vertex-ai/generative-ai/docs/learn/data-residency |
+| F2 | Multi-region `eu` obejmuje wyłącznie państwa członkowskie UE (bez Wielkiej Brytanii i Szwajcarii). Regionalne punkty końcowe UE utrzymują przetwarzanie ML w jurysdykcji odpowiadającej regionowi (dla Europy: UE lub kraj – zależnie od modelu). Punkt `global` nie daje żadnej gwarancji lokalizacji. | jw. |
+| F3 | Sam punkt końcowy nie jest gwarancją lokalizacji; rozstrzyga tabela „Data residency". | https://docs.cloud.google.com/vertex-ai/generative-ai/docs/learn/locations |
+| F4 | `gemini-2.5-flash` i `gemini-2.5-flash-lite` mają datę wycofania **2026-10-20** (już minęła); następcy wg Google: `gemini-3.8-flash`, `gemini-3.5-flash`, `gemini-3.5-flash-lite`. Modele GA z oknem ≥ 12 mies.: `gemini-3.8-flash` (wycofanie 2027-09-02 lub później), `gemini-3.5-flash` (2027-05-19 lub później), `gemini-3.5-flash-lite` (2027-07-21 lub później), `gemini-3.1-flash-lite` (2027-05-07 lub później). Krótkie okno: `gemini-3.6-flash` (2026-11-19), `gemini-3.7-flash` (2027-01-28). | https://docs.cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versions |
+| F5 | Lista regionów przetwarzania ML na stronie modelu `gemini-2.5-flash` nie wymienia `europe-west4` (tylko multi-region UE, `europe-west2`, `-west3`, `-west9`). Czy wybrany model 3.x jest **obsługiwany** na punkcie `europe-west4`, nie udało się potwierdzić z treści dokumentacji. | https://docs.cloud.google.com/vertex-ai/generative-ai/docs/models/gemini/2-5-flash |
+
+### Decyzja (korekta)
+1. **Pkt 1 decyzji – nowe brzmienie zakresu:** pośrednik wywołuje Vertex AI z regionu `europe-west4` przez **regionalny punkt końcowy `europe-west4`**; **przetwarzanie ML odbywa się w granicach UE (multi-region `eu`), bez gwarancji, że wyłącznie w Holandii**. W dokumentach dla użytkownika (zgoda AI, polityka, Data Safety) piszemy „przetwarzanie w Unii Europejskiej", nie „w Holandii". Region funkcji, Firestore, logów i sekretu – bez zmian (`europe-west4`, ADR-0003).
+2. **Dopuszczalne punkty końcowe:** `europe-west4` (domyślny) albo multi-region `eu` – oba dają tę samą gwarancję (F1, F2). `eu` stosujemy tylko wtedy, gdy wybrany model nie jest obsługiwany na `europe-west4` (wynik testu z pkt 4). Zakaz punktu `global`, innych regionów spoza UE i Gemini Developer API – bez zmian. Walidacja startu (przegląd Security 1-1) akceptuje dokładnie te dwie wartości.
+3. **Model (doprecyzowanie pkt 2):** kandydaci do ewaluacji to wyłącznie modele GA z wycofaniem ≥ 6 mies. po planowanym starcie testów i z gwarancją UE w tabeli „Data residency": `gemini-3.5-flash`, `gemini-3.8-flash` (klasa Flash), `gemini-3.5-flash-lite`, `gemini-3.1-flash-lite` (Flash-Lite). `gemini-2.5-*` (wycofane) oraz `gemini-3.6-flash`, `gemini-3.7-flash` (krótkie okno) – wykluczone. Kryterium wyboru (≥ 95% przypadków, najtańszy) – bez zmian.
+4. **Test przed P3-05 (mobile-dev/qa, dev, dane syntetyczne):** jedno wywołanie wybranego `AI_MODEL_ID` na `europe-west4`; wynik (obsługiwany / błąd „model not found in location") zapisać w runbooku P3-03. Gdy nieobsługiwany – konfiguracja `eu` w obu środowiskach (pkt 2).
+5. **Lista SEC-15, pozycja 3 – nowe brzmienie:** „Wybrany model ma w tabeli »Data residency« gwarancję przetwarzania ML w UE (multi-region `eu`) i jest wywoływany z punktu `europe-west4` lub `eu`". Stan: **częściowo potwierdzone przez architekta** (F1 dla wszystkich kandydatów z pkt 3); do potwierdzenia przez Security dla ostatecznie wybranego modelu (SEC-15 pozostaje otwarte).
+6. **Ceny i koszty:** scenariusze A i C w szacunku kosztów nazywają modele wycofane (F4). Liczby pozostają szacunkiem rzędu wielkości; tabela w `docs/architecture/costs.md` zostanie przeliczona dla kandydatów z pkt 3 w zadaniu ewaluacji modelu (P3), razem z weryfikacją cennika. Aneks nie zwiększa kosztu.
+
+### Wpływ na `docs/security/` (zgłoszone do Security, bez edycji – katalog Security)
+- `personal-data-register.md`, D6: „punkt regionalny `europe-west4`" → dopisać „przetwarzanie ML w UE (multi-region `eu`), bez gwarancji NL".
+- `privacy-checklist.md`: pkt Vertex AI (punkt `europe-west4` **lub** `eu`), pkt „Transfery poza EOG" – AI: „w UE", nie „Holandia" (Holandia zostaje dla Firestore i logów).
+- `przeglad-adr.md` 1-1 i lista SEC-15 poz. 3 – nowe brzmienie z pkt 5.
+- O5 (buforowanie Vertex do 24 h): dokumentacja „Data residency" nie podaje lokalizacji bufora – pytanie do SEC-15 poz. 4.
+
+### Konsekwencje
+**Pozytywne:** opis zgodny z gwarancją Google (UE), brak zmiany infrastruktury; usunięte ryzyko wyboru wycofanego modelu.
+**Negatywne / ryzyka:** przetwarzanie może odbywać się w innym państwie UE niż dane w spoczynku (bez wpływu na transfer poza EOG); zależność od testu obsługi modelu w `europe-west4`.
+**Dane osobowe:** zakres D6 bez zmian; zmienia się opis miejsca przetwarzania (UE). Wymaga aktualizacji opisu w rejestrze i polityce (Security).

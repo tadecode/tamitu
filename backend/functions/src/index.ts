@@ -23,6 +23,7 @@ import {
 } from "./consents.js";
 import { budgetGuardCore, deleteAccountCore, generatePlanCore, recordConsentCore, type Deps } from "./endpoints.js";
 import { runGuarded } from "./handler.js";
+import { serviceAccountFor } from "./service-accounts.js";
 
 const REGION = "europe-west4";
 const UID_PEPPER = defineSecret("UID_HASH_PEPPER");
@@ -108,20 +109,29 @@ const callableOptions = {
   secrets: [UID_PEPPER],
 };
 
-export const generatePlan = onCall(callableOptions, (req: CallableRequest) =>
-  runGuarded("generatePlan", (ctx) => generatePlanCore(req, deps(), ctx)),
+export const generatePlan = onCall(
+  { ...callableOptions, serviceAccount: serviceAccountFor("generatePlan") },
+  (req: CallableRequest) => runGuarded("generatePlan", (ctx) => generatePlanCore(req, deps(), ctx)),
 );
 
-export const recordConsent = onCall(callableOptions, (req: CallableRequest) =>
-  runGuarded("recordConsent", (ctx) => recordConsentCore(req, deps(), ctx)),
+export const recordConsent = onCall(
+  { ...callableOptions, serviceAccount: serviceAccountFor("recordConsent") },
+  (req: CallableRequest) => runGuarded("recordConsent", (ctx) => recordConsentCore(req, deps(), ctx)),
 );
 
-export const deleteAccount = onCall(callableOptions, (req: CallableRequest) =>
-  runGuarded("deleteAccount", (ctx) => deleteAccountCore(req, deps(), ctx)),
+export const deleteAccount = onCall(
+  { ...callableOptions, serviceAccount: serviceAccountFor("deleteAccount") },
+  (req: CallableRequest) => runGuarded("deleteAccount", (ctx) => deleteAccountCore(req, deps(), ctx)),
 );
 
 export const budgetGuard = onMessagePublished(
-  { topic: "budget-alerts", region: REGION, maxInstances: 1, memory: "256MiB" },
+  {
+    topic: "budget-alerts",
+    region: REGION,
+    maxInstances: 1,
+    memory: "256MiB",
+    serviceAccount: serviceAccountFor("budgetGuard"),
+  },
   (event) =>
     runGuarded("budgetGuard", async () => {
       budgetGuardCore(event.data.message.json);
