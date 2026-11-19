@@ -19,7 +19,7 @@ zostać zmergowany bez pozytywnego werdyktu reviewer (a dla ekranów także qa),
 | `review:changes` | reviewer: „zmiany wymagane” (blokuje) | reviewer |
 | `qa:ok` | qa: kryteria akceptacji spełnione | qa |
 | `qa:changes` | qa: odrzucone (blokuje) | qa |
-| `ui` | PR zmienia ekrany; wymusza `qa:ok` także poza `lib/features/**` | autor PR / orchestrator |
+| `ui` | PR zmienia ekrany; wymusza `qa:ok` także poza ścieżkami UI (GH-012). Recenzent dodaje `ui`, gdy zmiana w `data`/`domain` zmienia zachowanie widoczne dla użytkownika (jak BUG-DEV-1/2) | autor PR / orchestrator / reviewer |
 
 ### 2. Workflow `.github/workflows/review-gate.yml` (nowy plik)
 - Wyzwalacze: `pull_request` z typami `opened`, `reopened`, `synchronize`, `labeled`, `unlabeled`, `ready_for_review`; gałąź `main`.
@@ -31,7 +31,8 @@ zostać zmergowany bez pozytywnego werdyktu reviewer (a dla ekranów także qa),
 - Logika (`actions/github-script`, wersja przypięta jak w `ci.yml`):
   1. Lista zmienionych plików PR (`pulls.listFiles`, stronicowanie).
   2. `code` = jakikolwiek plik pod `lib/`, `android/`, `backend/`, `test/`, `integration_test/` lub `pubspec.yaml`/`pubspec.lock`.
-     `ui` = jakikolwiek plik pod `lib/features/` **lub** etykieta `ui`.
+     `ui` = (od GH-012) plik pod `lib/features/*/presentation/`, `lib/app/`, `lib/core/ui/`, `lib/l10n/`, `assets/` lub `android/app/src/main/res/` **lub** etykieta `ui`
+     (wcześniej: cały `lib/features/`). Zmiany w `data`/`domain` zmieniające zachowanie widoczne dla użytkownika oznacza recenzent etykietą `ui`.
   3. Brak `code` → kontrola przechodzi („PR bez kodu – bramka pominięta”).
   4. Etykieta `review:changes` lub `qa:changes` → porażka z komunikatem.
   5. `code` bez `review:ok` → porażka („brak przeglądu reviewer”). `ui` bez `qa:ok` → porażka („brak weryfikacji qa”).
