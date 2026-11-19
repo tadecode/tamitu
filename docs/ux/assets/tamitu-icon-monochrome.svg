@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" aria-hidden="true" focusable="false">
+  <!-- Tamitu adaptive icon – monochrome layer (Android 13+ themed icons). Single colour; the system uses only alpha and tints it.
+       Same geometry as the foreground; waves without opacity so they survive tinting. -->
+  <g transform="translate(54 54) scale(0.9) translate(-35 -33.5)">
+    <g fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 43h5c0-11 8-19 19-19 5 0 9 2 12 5" stroke-width="5.5"/>
+      <path d="M14 51c5-3 10-3 15 0s10 3 15 0" stroke-width="4"/>
+      <path d="M14 57c5-3 10-3 15 0s10 3 15 0" stroke-width="4"/>
+    </g>
+    <circle cx="14" cy="43" r="4.5" fill="#000000"/>
+    <path d="M48 8c-7.18 0-13 5.82-13 13 0 9.2 13 22 13 22s13-12.8 13-22C61 13.82 55.18 8 48 8Zm0 8.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 1 0 0-9Z" fill="#000000" fill-rule="evenodd"/>
+  </g>
+</svg>
