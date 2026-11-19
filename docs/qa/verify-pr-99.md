@@ -36,6 +36,8 @@ Oczekiwane (US-001 AC2, CMP-09): EK-02, snackbar „Logowanie anulowane.", bez k
 | 9 | wstecz + zrzut ekranu | 11 s | zrzut: snackbar „Logowanie anulowane.", zgoda zaznaczona, przycisk aktywny |
 | 10 | wstecz w trybie samolotowym | 4 s | snackbar „anulowano" po ≤2 s, brak błędu i komunikatu o sieci |
 
+> Aktualizacja 2026-11-19 (QA-PR-102): oczekiwanie dla #10 zmienione przez EK-02 v0.4.1 i ADR-0015 – anulowanie przy pewnym braku sieci pokazuje CMP-13 „Brak połączenia z internetem…”, nie snackbar. Wynik #10 powyżej dotyczy kodu sprzed PR #102; weryfikacja nowego oczekiwania: `docs/qa/verify-pr-102.md`.
+
 **Zaliczony 10/10.** W żadnym przebiegu nie wystąpił wskaźnik ładowania 10–17 s ani „Nie udało się zalogować". Uwaga: na buildzie PR nie odtworzono pierwotnych warunków BUG-DEV-1 (mobile-dev też nie odtworzył ich w 8 próbach) – potwierdzamy zachowanie zgodne z AC2 we wszystkich wariantach anulowania, a nie usunięcie przyczyny opóźnienia z 18.11 (Q-BUG-DEV-1-DELAY pozostaje otwarte).
 
 ### SIGN-14 – prawdziwy błąd nadal jest błędem
