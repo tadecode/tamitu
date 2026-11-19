@@ -53,7 +53,15 @@ jobs:
             const isCode = p => /^(lib|android|backend|test|integration_test)\//.test(p) || /^pubspec\.(yaml|lock)$/.test(p);
             const code = paths.some(isCode);
             let labels = new Set(pr.labels.map(l => l.name));
-            const ui = paths.some(p => p.startsWith('lib/features/')) || labels.has('ui');
+            // Ekrany (GH-012): prezentacja, wspolne UI/motyw/l10n, zasoby i zasoby Androida.
+            // Zmiany w data/domain widoczne dla uzytkownika oznacza recenzent etykieta `ui`.
+            const isUi = p =>
+              /^lib\/features\/[^/]+\/presentation\//.test(p) ||
+              /^lib\/(app|core\/ui|l10n)\//.test(p) ||
+              /^assets\//.test(p) ||
+              /^android\/app\/src\/main\/res\//.test(p);
+            const uiPath = paths.find(isUi);
+            const ui = Boolean(uiPath) || labels.has('ui');
 
             if (!code) {
               core.notice('PR bez kodu - bramka pominieta.');
@@ -98,7 +106,7 @@ jobs:
             if (r) failures.push(`Brak przegladu reviewer: ${r}.`);
             if (ui) {
               const q = validOk('qa:ok');
-              if (q) failures.push(`Brak weryfikacji qa: ${q}.`);
+              if (q) failures.push(`Brak weryfikacji qa: ${q}. Uznano za UI: ${uiPath || 'etykieta ui'}.`);
             }
 
             if (failures.length) {
