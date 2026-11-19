@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../app/providers.dart';
@@ -10,10 +11,10 @@ import '../../../core/ui/tokens.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../session/session_controller.dart';
 
-/// EK-02 Start screen: privacy and Google sign-in (US-001, US-003; spec v0.3).
+/// EK-02 Start screen: privacy and Google sign-in (US-001, US-003; spec v0.5).
 ///
-/// The travel illustration and the logo (PR #50) await the owner's decision: the
-/// screen keeps a decorative placeholder slot of the specified size instead.
+/// The illustration is the approved "here and there" v0.5 (UX-ICON, 2026-11-19);
+/// the wordmark stays text until the final logo (UX2).
 class WelcomeScreen extends ConsumerStatefulWidget {
   const WelcomeScreen({super.key});
 
@@ -117,7 +118,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       ),
       const SizedBox(height: Space.s6),
       if (textScale < 2) ...[
-        _HeroPlaceholder(height: textScale >= 1.5 ? 96 : 144),
+        _WelcomeHero(height: textScale >= 1.5 ? 96 : 144),
         const SizedBox(height: Space.s4),
       ],
       Semantics(
@@ -212,23 +213,43 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
 /// Placeholder marker used to split the policy sentence around the link.
 const _marker = '\u0000';
 
-/// Decorative slot for the EK-02 illustration (144 dp, 96 dp at >= 150 % text, hidden
-/// at 200 %; radius shape-l; excluded from semantics). Final artwork pending (UX2, PR #50).
-class _HeroPlaceholder extends StatelessWidget {
-  const _HeroPlaceholder({required this.height});
+/// EK-02 illustration "here and there" v0.5 (UX-ICON), one file per theme brightness.
+@visibleForTesting
+const welcomeHeroAssetLight = 'assets/images/ek-02-illustration-light.svg';
+@visibleForTesting
+const welcomeHeroAssetDark = 'assets/images/ek-02-illustration-dark.svg';
+
+/// Decorative EK-02 illustration (144 dp, 96 dp at >= 150 % text, hidden at 200 %;
+/// cover-cropped to the centre, radius shape-l; excluded from semantics). The dark
+/// theme uses the night variant instead of dimming (spec v0.5). The surfaceContainerHigh
+/// background avoids a flash while the SVG loads.
+class _WelcomeHero extends StatelessWidget {
+  const _WelcomeHero({required this.height});
 
   final double height;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final asset = theme.brightness == Brightness.dark
+        ? welcomeHeroAssetDark
+        : welcomeHeroAssetLight;
     return ExcludeSemantics(
-      child: Container(
+      child: ClipRRect(
         key: const Key('welcomeHero'),
-        height: height,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHigh,
-          borderRadius: BorderRadius.circular(Radii.l),
+        borderRadius: BorderRadius.circular(Radii.l),
+        child: ColoredBox(
+          color: theme.colorScheme.surfaceContainerHigh,
+          child: SizedBox(
+            height: height,
+            width: double.infinity,
+            child: SvgPicture.asset(
+              asset,
+              fit: BoxFit.cover,
+              alignment: Alignment.center,
+              excludeFromSemantics: true,
+            ),
+          ),
         ),
       ),
     );

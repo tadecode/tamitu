@@ -41,6 +41,10 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   generate: true
+  assets:
+    # EK-02 illustration v0.5 (UX-ICON): light = day, dark = night.
+    - assets/images/ek-02-illustration-light.svg
+    - assets/images/ek-02-illustration-dark.svg
   # Plain `flutter build apk` (CI) builds the dev flavor.
   default-flavor: dev
 
