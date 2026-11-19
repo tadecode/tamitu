@@ -195,6 +195,12 @@ Szczegóły: `docs/security/reviews/2026-11-16-p3-14c-ekrany.md`. Do czasu odpow
 | O6 | Google może logować prompty Vertex do 90 dni (monitoring nadużyć) dla klientów na warunkach online; Master Agreement wyłącza to domyślnie. Akceptujemy i opisujemy w polityce/zgodzie AI („dostawca może przechowywać treść zapytania do 90 dni wyłącznie w celu wykrywania nadużyć”), czy szukamy innej podstawy umownej? | security (SEC-17, B-2) → owner, [PRAWNIK] | otwarte | Właściciel potwierdza rodzaj umowy (konsola → Billing/warunki); decyzja przy SEC-15 poz. 4; bloker tylko dla `allowRealData=true` | SEC-15 poz. 4, rejestr D6, SEC-31 B-2, polityka prywatności, `docs/security/review-SEC-17-iam.md` |
 | O7 | Rozbieżność dokumentów: runbook P3-03 (etap 0) pisze „repo publiczne”, `CLAUDE.md` – „prywatne”. Które jest prawdziwe i ujednolicić? | security (SEC-17, N-8) → orchestrator, owner | otwarte | Prywatne (zgodnie z `CLAUDE.md`); poprawić runbook i `.gitignore` (por. SEC-25) | `.farm/runbooks/P3-03-firebase.md`, `CLAUDE.md`, SEC-25 |
 
+## BUG-DEV-2 (PR #102), mobile-dev, 2026-11-19
+
+| # | Pytanie | Zadaje | Status | Odpowiedź / propozycja | Skutek |
+|---|---|---|---|---|---|
+| M-BUG-DEV-2 | Czy reaktywne sprawdzenie DNS po „anulowaniu” logowania Google mieści się w ADR-0011 pkt 2, i czy anulowanie w trybie samolotowym może pokazywać komunikat o braku sieci zamiast „Logowanie anulowane.”? | mobile-dev → architect, ux | **część architekta: zamknięte 2026-11-19 – ADR-0015 zatwierdzony przez właściciela („zatwierdzam ADR-0015”); część UX: rozstrzygnięta – sekcja „M-BUG-DEV-2 – odpowiedź UX” niżej** | Architekt: nie mieści się w literze pkt 2 („z wyniku wywołania”, bez osobnego sprawdzenia), więc nowy ADR-0015 uzupełniający pkt 2 (nie zastępuje). Dopuszcza jedno zapytanie DNS o `www.googleapis.com` (2 s) tylko po wyniku „anulowano” z `google_sign_in`; tylko pewny błąd resolvera → „brak sieci”, inaczej „anulowano”; bez logów; inne przepływy – nowy ADR. Prywatność: brak nowych danych osobowych i odbiorców (stała nazwa hosta do resolvera urządzenia). Koszt: zero. Ryzyko: fałszywe „offline” przy blokadzie DNS / nieosiągalnym Prywatnym DNS – łagodne. Kod PR #102 zgodny bez zmian. Komunikat przy anulowaniu offline (CMP-13 vs „anulowano”) – decyzja UX | ADR-0015, PR #102, QA-PR-99 SIGN-12 #10, SIGN-13 |
+
 ## M-BUG-DEV-2 – odpowiedź UX, ux, 2026-11-19
 
 | # | Pytanie | Zadaje | Status | Odpowiedź / propozycja | Skutek |
