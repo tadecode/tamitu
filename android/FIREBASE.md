@@ -51,6 +51,83 @@ android/app/src/dev/google-services.json` pokazuje regułę). Po testach kopię 
 - `serverClientId` dla Google Sign-In: `default_web_client_id` z pliku albo
   `--dart-define=TAMITU_GOOGLE_SERVER_CLIENT_ID=...` (patrz `lib/app/bootstrap.dart`).
 
+## App Check na urządzeniu testowym (tylko `dev`, DOC-APPCHECK-DEVICE)
+
+Flavor `dev` używa dostawcy **debug** App Check (`appCheckModeFor` w `lib/app/environment.dart`,
+aktywacja w `lib/app/bootstrap.dart`); `prod` – Play Integrity, **bez tokenów debug** (SEC-16,
+ADR-0003 Aneks A pkt 2). Bez zarejestrowanego tokenu SDK wysyła token zastępczy, a wymiana
+kończy się 403 – Functions z `ENFORCE_APP_CHECK` odrzucą wywołanie (`app_check_failed`).
+Logowanie Google (Firebase Auth) App Check nie wymaga.
+
+### Skąd się bierze token
+
+| Sposób | Kiedy token się zmienia | Zastosowanie |
+|---|---|---|
+| **A. Token stały z `--dart-define`** (zalecany dla telefonu) | nigdy – dopóki właściciel go nie usunie z konsoli | `flutter build apk --flavor dev --debug --dart-define=TAMITU_APP_CHECK_DEBUG_TOKEN=<token>`; wartość tylko w menedżerze haseł właściciela / zmiennej środowiskowej, nigdy w repo, skryptach, logu farmy ani czacie |
+| B. Token generowany przez SDK (build bez `--dart-define`) | **każde urządzenie, każdy `pm clear` / „Wyczyść dane", każda reinstalacja** (token leży w danych aplikacji) | jednorazowy test; po każdym czyszczeniu danych trzeba rejestrować nowy token (OBS-DEV-4) |
+
+Jeden token = jedno urządzenie/maszyna (np. `owner-laptop`, `owner-phone-1`), żeby dało się go
+usunąć osobno.
+
+### Gdzie znaleźć token generowany przez SDK (sposób B)
+
+Przy pierwszym starcie aplikacji `dev` dostawca debug zapisuje token w logcat (tag
+`DebugAppCheckProvider`, komunikat „Enter this debug secret into the allow list in the Firebase
+Console…"). Odczytuje go **właściciel** u siebie (agent nie wypisuje wartości – token to
+poświadczenie do projektu `dev`):
+
+```powershell
+adb -s <serial> logcat -d -s DebugAppCheckProvider
+```
+
+Po `pm clear` lub reinstalacji token z poprzedniego odczytu jest już nieważny dla tej instalacji –
+odczytaj nowy. Token w logcat to zachowanie dostawcy debug (OBS-DEV-3); w `prod` go nie ma.
+
+### Rejestracja i usuwanie (właściciel, konsola Firebase)
+
+1. Konsola → projekt `tamitu-dev-tadecode` → **App Check** → **Apps** → `pl.tadecode.tamitu.dev`
+   → menu ⋮ → **Manage debug tokens** → **Add debug token**: nazwa wg urządzenia
+   (np. `owner-phone-1`), wartość z menedżera haseł (A) albo z logcat (B) → **Save**.
+2. Ponowne uruchomienie aplikacji – w logcat nie ma już 403 przy wymianie tokenu.
+3. **Usuwanie** – w tym samym oknie (ikona kosza przy nazwie): po zakończeniu testu z tokenem B,
+   po każdym `pm clear` (stary wpis jest martwy), przy wycofaniu urządzenia, odejściu osoby
+   lub podejrzeniu wycieku. Lista tokenów `dev` ma zawierać tylko aktualnie używane urządzenia.
+
+### Przygotowanie telefonu testowego (QA na prawdziwym urządzeniu)
+
+Jednorazowo (właściciel, przy telefonie):
+
+1. **Opcje programisty:** Ustawienia → Informacje o telefonie → Wersja → 7× „Numer wersji"
+   (ColorOS: Ustawienia → Informacje o urządzeniu → Wersja → „Numer wersji").
+2. **Debugowanie USB:** Opcje programisty → Debugowanie USB → włącz; po podłączeniu kabla
+   zaakceptuj odcisk RSA komputera. `adb devices` pokazuje `<serial> device`.
+3. **ColorOS – „Wyłącz monitorowanie uprawnień"** (Opcje programisty): bez tego `adb`
+   nie zrobi `screencap` ani `uiautomator dump`, a `input` bywa blokowany (OBS-DEV-5). Po testach
+   wyłącz z powrotem.
+4. **Wygaszanie ekranu:** Ustawienia → Wyświetlacz → Autowygaszanie ekranu → co najmniej 5 min
+   (domyślne 15 s gasi ekran w trakcie kroków i psuje pomiary czasu); opcjonalnie Opcje
+   programisty → „Pozostaw włączony ekran" podczas ładowania. Ekran bez blokady PIN na czas sesji
+   albo odblokowany przez właściciela.
+5. **„Nie przeszkadzać"** na czas testu – powiadomienia innych aplikacji nie zasłaniają okna
+   wyboru konta ani snackbarów.
+6. **Osobne konto testowe Google** – logowanie tylko „kontem testowym właściciela" (wybiera
+   właściciel przy telefonie). Adresu konta nie zapisujemy w repo, raportach, logach farmy ani
+   czacie; zrzuty ekranu z oknem wyboru konta zostają poza repo. Po teście użytkownika testowego
+   usuwa się z Firebase Auth `dev` (Authentication → Users).
+7. **App Check:** token wg sposobu A (zalecane) albo B – zarejestrowany przed testami wywołań
+   Functions.
+
+Każda sesja:
+
+- Wszystkie polecenia `adb` / `flutter install` / `flutter run` na telefon przez
+  `.farm/test-lock.ps1 -Resource device` (zasób wspólny).
+- `google-services.json` `dev` tylko kopiowany na czas buildu (sekcja 2) i usuwany po nim.
+- Po teście: usunąć token debug (jeśli B), użytkownika testowego z Auth `dev`, opcjonalnie
+  odinstalować `pl.tadecode.tamitu.dev`, przywrócić wygaszanie, „Nie przeszkadzać" i
+  monitorowanie uprawnień.
+- Aplikacja niczego nie loguje (SEC-29, `test/guards_test.dart`) – kodu wyjątku logowania nie
+  widać w logcat; wynik klasyfikacji widać tylko w UI (snackbar „anulowano" / komunikat błędu).
+
 ## Emulatory Firebase (QA13, tylko `dev` debug)
 
 Aplikację `dev` w buildzie debug można skierować na lokalne emulatory (Auth, Functions; Firestore

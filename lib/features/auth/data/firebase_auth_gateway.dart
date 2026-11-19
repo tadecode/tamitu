@@ -87,7 +87,16 @@ class FirebaseAuthGateway implements AuthGateway {
 /// pkt 2). `interrupted` and failures whose description mentions the network are shown
 /// as "offline" (retry); cancel -> cancelled; everything else -> generic. The
 /// description is only inspected here, never shown or logged (SEC-29).
-/// To be confirmed on a device (QA SIGN-13).
+/// Network classification confirmed on a device (QA SIGN-13).
+///
+/// Cancellation (BUG-DEV-1, US-001 AC2): `google_sign_in_android` 7.2 reports
+/// `canceled` only for `GetCredentialCancellationException`. A user cancel can also
+/// arrive as `unknownError` – androidx `credentials-play-services-auth` 1.6 turns an
+/// `ApiException` with status 16 (`CommonStatusCodes.CANCELED`, e.g. "[16] Cancelled
+/// by user" / "16: Cancelled by user" after repeated cancels) or an unexpected
+/// activity result into `GetCredentialUnknownException` / `NoCredentialException`
+/// ("No credential available: …"). Those are classified as cancelled too, so backing
+/// out of the account chooser never shows the error message.
 AppFailure classifyGoogleSignInError(
   GoogleSignInExceptionCode code,
   String? description,
@@ -99,6 +108,9 @@ AppFailure classifyGoogleSignInError(
       return const AppFailure(FailureKind.offline);
     case GoogleSignInExceptionCode.unknownError:
       final d = description?.toLowerCase() ?? '';
+      if (_isUserCancellation(d)) {
+        return const AppFailure(FailureKind.cancelled);
+      }
       return d.contains('network') ||
               d.contains('offline') ||
               d.contains('internet')
@@ -108,3 +120,11 @@ AppFailure classifyGoogleSignInError(
       return const AppFailure(FailureKind.generic);
   }
 }
+
+/// Status 16 = `CommonStatusCodes.CANCELED` ("[16] …" from `ApiException.getMessage`,
+/// "16: …" from the one-tap wrappers).
+final _canceledStatus = RegExp(r'\[16\]|(^|: )16: ');
+
+bool _isUserCancellation(String lowerDescription) =>
+    lowerDescription.contains('cancel') ||
+    _canceledStatus.hasMatch(lowerDescription);
