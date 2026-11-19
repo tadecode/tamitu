@@ -44,7 +44,8 @@ flowchart TD
   C --> D(["System: wybór konta Google"])
   D -->|sukces| E["Zapis akceptacji polityki"]
   E --> F["EK-04 stan pusty + informacja: plany tylko na urządzeniu [U9]"]
-  D -->|anulowano| G["EK-02 + snackbar: Logowanie anulowane (bez błędu technicznego)"]
+  D -->|anulowano, sieć jest lub stan niepewny| G["EK-02 + snackbar: Logowanie anulowane (bez błędu technicznego)"]
+  D -->|anulowano przy pewnym braku sieci - M-BUG-DEV-2| H
   D -->|brak sieci / błąd| H["EK-02 + komunikat i Spróbuj ponownie"]
   B -->|nie akceptuje| B
 ```
