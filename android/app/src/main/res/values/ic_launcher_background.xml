@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Adaptive icon background, variant A (primary, light theme) - docs/ux/icon-and-illustration.md 2.2 -->
+    <color name="ic_launcher_background">#006A6A</color>
+</resources>
