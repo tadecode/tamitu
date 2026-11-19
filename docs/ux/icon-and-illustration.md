@@ -1,6 +1,6 @@
 # Ikona aplikacji i ilustracja EK-02 (UX-ICON)
 
-- Status: **projekt do akceptacji właściciela** (UX-ICON, OBS-DEV-1, OBS-DEV-2 z `docs/qa/verify-p3-04-dev.md`)
+- Status: **zatwierdzony przez właściciela 2026-11-19** („Zatwierdzam wariant A i ilustrację EK-02”): ikona wariant A, ilustracja EK-02 v0.5 (UX-ICON, OBS-DEV-1, OBS-DEV-2 z `docs/qa/verify-p3-04-dev.md`)
 - Autor: ux · Data: 2026-11-19 · Wersja: 0.1
 - Podgląd do akceptacji: [`mockups/icon-preview.html`](mockups/icon-preview.html) (ikona w maskach launcherów, na różnych tapetach, ikona tematyczna, warstwy ze strefą bezpieczną, szkic okna wyboru konta Google, wariant B, kadry ilustracji) oraz [`mockups/ek-02.html`](mockups/ek-02.html) (ilustracja na ekranie, jasny i ciemny motyw, skala 150%)
 - Powiązane: `brand.md` pkt 5 (logo tymczasowe właściciela, kierunek ilustracji), `screens/ek-02.md`, pytanie UX2
@@ -25,8 +25,8 @@ Znak z tymczasowego logo właściciela (`assets/tamitu-mark.svg`): trasa łącz�
 
 | Wariant | Tło | Znak | Ocena ux |
 |---|---|---|---|
-| **A – rekomendowany** | `#006A6A` (primary, jasny motyw) | trasa `#FFFFFF`, fala 1 `#9CF1F0` (primaryContainer), fala 2 `#4FB3B2`, znacznik `#FFB5A0` (tertiary, ciemny motyw) | wyraźny na jasnych i ciemnych tapetach i w białym oknie Google; kolor marki rozpoznawalny w szufladzie aplikacji |
-| B – alternatywa | `#F4FBFA` | kolory znaku z logo na jasne tło (`#006A6A`, `#8F4C38`) | najbliższy logo, ale na jasnych tapetach i w białym oknie Google kontur maski znika (1,05:1 do bieli) |
+| **A – zatwierdzony (2026-11-19)** | `#006A6A` (primary, jasny motyw) | trasa `#FFFFFF`, fala 1 `#9CF1F0` (primaryContainer), fala 2 `#4FB3B2`, znacznik `#FFB5A0` (tertiary, ciemny motyw) | wyraźny na jasnych i ciemnych tapetach i w białym oknie Google; kolor marki rozpoznawalny w szufladzie aplikacji |
+| B – odrzucony (historia decyzji) | `#F4FBFA` | kolory znaku z logo na jasne tło (`#006A6A`, `#8F4C38`) | najbliższy logo, ale na jasnych tapetach i w białym oknie Google kontur maski znika (1,05:1 do bieli) |
 
 Kontrast elementów znaku do tła w A (WCAG, elementy graficzne – próg 3:1): trasa 6,42:1, znacznik 3,78:1, fala 1 4,97:1; fala 2 2,58:1 – świadomie słabsza (druga fala jest dekoracyjna, kształt ikony niosą trasa i znacznik). Ikona A na tapecie `#0E1514`: 2,88:1 – kształt maski rozpoznawalny, typowy poziom dla ikon w ciemnych kolorach marki.
 
@@ -38,7 +38,7 @@ Kontrast elementów znaku do tła w A (WCAG, elementy graficzne – próg 3:1): 
 | `tamitu-icon-background.svg` | warstwa tła | 108×108 | jednolity `#006A6A`; w Androidzie lepiej jako kolor (`@color/ic_launcher_background`) niż jako grafika |
 | `tamitu-icon-monochrome.svg` | warstwa monochromatyczna (Android 13+, ikony tematyczne) | 108×108 | jeden kolor (`#000000`); system bierze tylko kanał alfa i nadaje kolory z tapety |
 | `tamitu-icon-full.svg` | ikona złożona, pełny kwadrat bez zaokrągleń | 108×108 (eksport 1024 i 512 px) | źródło PNG dla `flutter_launcher_icons` (`image_path`) i ikony w Google Play (512×512, PNG 32-bit); maskę nakłada system / Play |
-| `tamitu-icon-alt-light-full.svg` | wariant B – tylko do decyzji | 108×108 | po wyborze B ux przygotuje warstwy B (zmiana kolorów, geometria bez zmian) |
+| `tamitu-icon-alt-light-full.svg` | wariant B – odrzucony, zostaje jako historia decyzji; nie używać | 108×108 | po wyborze B ux przygotuje warstwy B (zmiana kolorów, geometria bez zmian) |
 
 Wszystkie pliki: bez tekstu, filtrów, masek, obrazów rastrowych i odwołań zewnętrznych; same ścieżki, okręgi i prostokąty (konwertowalne do Android VectorDrawable).
 
@@ -104,6 +104,8 @@ Wariant ciemny zastępuje przygaszanie jasnej grafiki (ok. 80% jasności) z EK-0
 
 ux dostarcza źródła i specyfikację; pliki produkcyjne w `android/` i `assets/` aplikacji przygotowuje mobile-dev (`.claude/agents/ux.md`, „Uprawnienia").
 
+Do implementacji: **wariant A**.
+
 ### 4.1 Ikona – zalecane: VectorDrawable, ręcznie (bez nowej zależności)
 1. Android Studio → *New → Vector Asset → Local file (SVG)*: zaimportować `tamitu-icon-foreground.svg` → `res/drawable/ic_launcher_foreground.xml` i `tamitu-icon-monochrome.svg` → `res/drawable/ic_launcher_monochrome.xml`, rozmiar **108×108 dp** (bez skalowania). Sprawdzić, że otwór w znaczniku ma `android:fillType="evenOdd"`, a kreski `strokeLineCap="round"`.
 2. Kolor tła: `res/values/ic_launcher_background.xml` → `<color name="ic_launcher_background">#006A6A</color>`.
@@ -126,9 +128,9 @@ Gdy zespół woli generator: wyeksportować PNG z SVG (`tamitu-icon-full.svg` �
 - Ekran powitalny systemu (Android 12+) używa ikony adaptacyjnej automatycznie – sprawdzić, że wygląda poprawnie (zmiana koloru tła ekranu powitalnego nie jest częścią tego zadania).
 - EK-02: ilustracja w jasnym i ciemnym motywie, kadr na najwęższym ekranie, skala 150% (96 dp) i 200% (ukryta); TalkBack pomija grafikę (zamyka OBS-DEV-1).
 
-## 5. Do zatwierdzenia przez właściciela
-1. Ikona: **wariant A** (morskie tło, rekomendacja) czy B (jasne tło).
-2. Ilustracja EK-02 „tam i tu" w wariantach jasnym i ciemnym (zastępuje tymczasową z Lizboną).
-3. Ta sama ikona dla `dev` i `prod` (pkt 2.6).
+## 5. Decyzje właściciela (2026-11-19, „Zatwierdzam wariant A i ilustrację EK-02”)
+1. Ikona: **wariant A** (morskie tło `#006A6A`) – zatwierdzony.
+2. Ilustracja EK-02 „tam i tu” w wariantach jasnym i ciemnym (zastępuje tymczasową z Lizboną) – zatwierdzona.
+3. Ta sama ikona dla `dev` i `prod` (pkt 2.6) – bez osobnej decyzji; obowiązuje propozycja ux (jedna ikona).
 
 Ikona opiera się na **tymczasowym** logo właściciela (UX2). Gdy powstanie logo ostateczne, ikonę trzeba przygotować ponownie wg tej samej siatki (pkt 2.4) – pliki i instrukcja pozostają aktualne.
