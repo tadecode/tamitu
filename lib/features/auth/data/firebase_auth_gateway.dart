@@ -5,6 +5,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../../core/errors/app_failure.dart';
 import '../domain/auth_gateway.dart';
+import 'network_reachability.dart';
 
 /// Firebase Auth + Google Sign-In (Credential Manager) adapter (ADR-0004, option 1).
 ///
@@ -16,11 +17,14 @@ class FirebaseAuthGateway implements AuthGateway {
     FirebaseAuth? auth,
     GoogleSignIn? google,
     this.serverClientId,
+    NetworkReachability? reachability,
   }) : _auth = auth ?? FirebaseAuth.instance,
-       _google = google ?? GoogleSignIn.instance;
+       _google = google ?? GoogleSignIn.instance,
+       _reachability = reachability ?? NetworkReachability();
 
   final FirebaseAuth _auth;
   final GoogleSignIn _google;
+  final NetworkReachability _reachability;
 
   /// Web client ID of the Firebase project (per flavor, via `--dart-define`); when null
   /// the plugin reads `default_web_client_id` from the Android resources.
@@ -60,7 +64,11 @@ class FirebaseAuthGateway implements AuthGateway {
       if (user == null) throw const AppFailure(FailureKind.generic);
       return AuthUser(user.uid);
     } on GoogleSignInException catch (e) {
-      throw classifyGoogleSignInError(e.code, e.description);
+      // BUG-DEV-2: a "cancel" may really be a network failure after the account pick.
+      throw await refineCancellation(
+        classifyGoogleSignInError(e.code, e.description),
+        _reachability.isOffline,
+      );
     } on FirebaseAuthException catch (e) {
       throw classifyAuthError(e.code);
     } on AppFailure {
@@ -97,6 +105,10 @@ class FirebaseAuthGateway implements AuthGateway {
 /// activity result into `GetCredentialUnknownException` / `NoCredentialException`
 /// ("No credential available: …"). Those are classified as cancelled too, so backing
 /// out of the account chooser never shows the error message.
+///
+/// No network after the account pick (BUG-DEV-2) also arrives as `canceled`; this pure
+/// function cannot see that, so [FirebaseAuthGateway] re-checks every "cancelled"
+/// with [refineCancellation] (`network_reachability.dart`).
 AppFailure classifyGoogleSignInError(
   GoogleSignInExceptionCode code,
   String? description,
