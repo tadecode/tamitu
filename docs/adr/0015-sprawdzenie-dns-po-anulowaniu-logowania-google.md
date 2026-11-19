@@ -1,6 +1,6 @@
 # ADR-0015: Sprawdzenie DNS po „anulowaniu” logowania Google (uzupełnienie ADR-0011 pkt 2)
 
-- Status: proponowany (wymaga zatwierdzenia przez właściciela przed merge PR #102)
+- Status: zatwierdzony (właściciel produktu, 2026-11-19: „zatwierdzam ADR-0015”)
 - Data: 2026-11-19
 - Autor (rola): architect
 - Zadanie: BUG-DEV-2 (QA-PR-99, SIGN-13), pytanie M-BUG-DEV-2, przegląd `docs/reviews/PR-102.md` ustalenie #1
