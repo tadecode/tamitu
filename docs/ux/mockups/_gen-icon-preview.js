@@ -32,9 +32,9 @@ figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:6px}fi
 .cmp{display:flex;gap:24px;flex-wrap:wrap}
 </style></head><body><main>
 <h1>Tamitu – ikona aplikacji i ilustracja EK-02 (UX-ICON)</h1>
-<p>Dokument do akceptacji, nie zasób aplikacji. Specyfikacja: <code>docs/ux/icon-and-illustration.md</code>. Źródła SVG: <code>docs/ux/assets/</code>. Maski i tła tapet są przybliżeniem launcherów Androida.</p>
+<p>Zatwierdzone przez właściciela 2026-11-19 (ikona wariant A, ilustracja EK-02 v0.5). Dokument, nie zasób aplikacji. Specyfikacja: <code>docs/ux/icon-and-illustration.md</code>. Źródła SVG: <code>docs/ux/assets/</code>. Maski i tła tapet są przybliżeniem launcherów Androida.</p>
 
-<h2>1. Ikona – wariant A (rekomendowany): tło morskie <code>#006A6A</code></h2>
+<h2>1. Ikona – wariant A (zatwierdzony 2026-11-19): tło morskie <code>#006A6A</code></h2>
 <section>${row(full,"#F3EEE6")}${row(full,"#1B2430","#EEE")}${row(full,"linear-gradient(135deg,#F2A65A,#6C4AA0)","#FFF")}</section>
 
 <h2>2. Ikona tematyczna (Android 13+, warstwa monochromatyczna, kolory nadaje system)</h2>
@@ -48,7 +48,7 @@ figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:6px}fi
 <h2>4. Okno wyboru konta Google (OBS-DEV-2) – szkic</h2>
 <section class="cmp">${["","dark"].map(d=>`<div class="chooser ${d}"><div class="top">${icon(40,"50%",full)}<div><b>Wybierz konto</b><br><small>aby nadal używać aplikacji Tamitu</small></div></div><div class="acc"><div class="av"></div><div>Konto testowe<br><small>konto@example.com</small></div></div></div>`).join("")}</section>
 
-<h2>5. Wariant B (alternatywa do decyzji): jasne tło <code>#F4FBFA</code>, kolory znaku z logo</h2>
+<h2>5. Wariant B (odrzucony – historia decyzji): jasne tło <code>#F4FBFA</code>, kolory znaku z logo</h2>
 <section>${row(alt,"#F3EEE6")}${row(alt,"#1B2430","#EEE")}<p>B jest bliższy logo na jasnym tle, ale na jasnych tapetach i w białym oknie Google gubi kształt maski; A jest wyraźniejszy na każdym tle.</p></section>
 
 <h2>6. Ilustracja EK-02 – kadry „cover" (144 dp, 96 dp przy tekście ≥ 150%)</h2>
