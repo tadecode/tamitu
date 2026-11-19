@@ -176,7 +176,7 @@ Kontrast trzeba ponownie sprawdzić po implementacji motywu (zrzuty ekranu) i wp
 - **Ilustracje:** stany puste i błędy używają dużej ikony Material (48 dp) – zero kosztu,
   spójne z ikonografią (UX7). Wyjątek: ilustracja powitalna EK-02. **Kierunek stylu (właściciel 2026-11-17):**
   grafika wektorowa (SVG), klimat podróży „jak z bajki" – miękkie kształty, ciepłe światło, paleta
-  wariantu A. Motyw ogólny (bez rozpoznawalnego miasta); obecna ilustracja z Lizboną jest tymczasowa.
+  wariantu A. Motyw ogólny (bez rozpoznawalnego miasta); obecna ilustracja z Lizboną jest tymczasowa. **Propozycja ux (UX-ICON, 2026-11-19, do akceptacji):** ilustracja „tam i tu” w wariancie jasnym i ciemnym oraz ikona adaptacyjna Androida na bazie znaku – `icon-and-illustration.md`.
   Wymagania techniczne: bez tekstu i filtrów (cienie i rozmycia jako kształty albo wcale – `flutter_svg`
   nie obsługuje filtrów; brak cieni we Flutterze akceptowany), wariant jasny i ciemny, kadr działający
   w pasie 144 dp wysokości.
