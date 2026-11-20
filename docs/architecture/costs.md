@@ -1,6 +1,6 @@
 # Szacunek kosztów zmiennych – Tamitu (MVP)
 
-Stan: **2026-11-18 (ARCH-01)**, autor: architect. Poprzednia wersja: 2026-11-15 (po G2; scenariusze A/B/C – historia w sekcji 10). **To szacunek, nie wycena.**
+Stan: **2026-11-20 (SEC-09 – decyzje właściciela: limit globalny 25/dobę, spend cap zatwierdzony)**, autor: architect. Poprzednie wersje: 2026-11-18 (ARCH-01), 2026-11-15 (po G2; scenariusze A/B/C – historia w sekcji 10). **To szacunek, nie wycena.**
 
 > **Status cen modeli (2026-11-18):** stawki tokenów odczytane bezpośrednio z oficjalnej strony cennika Google Cloud (źródło i data w sekcji 1.1) dla kandydatów z ADR-0001 Aneks B pkt 3. **Do weryfikacji w P3-10:** (1) kurs PLN/USD i VAT, (2) SKU w Cloud Billing (rzeczywista stawka w rozliczeniu, w tym mechanizm promocji 3.8 Flash – sekcja 1.1, uwaga c), (3) tokeny rzeczywiste (wejście, wyjście, **myślenie**) – pomiar w teście ARCH-01 (`docs/architecture/arch-01-gemini-test.md`). Do tego czasu liczby służą do porównania modeli i rzędu wielkości budżetu.
 
@@ -59,13 +59,16 @@ Język polski zwykle zużywa więcej tokenów na ten sam sens niż angielski; za
 |---|---|---|---|---|
 | Jedno konto, doba: 5 generowań × plan maksymalny × 2 próby | 0,68 USD (2,7 PLN) | 0,82 USD (3,3 PLN) | 0,23 USD (0,9 PLN) | 0,14 USD (0,55 PLN) |
 | Jedno konto, miesiąc (30 dób, teoretycznie) | 20,5 USD (≈ 82 PLN) | 24,6 USD (≈ 98 PLN) | 6,8 USD (≈ 27 PLN) | 4,1 USD (≈ 16 PLN) |
-| Pułap globalny: 50 generowań/dobę, maksymalne plany, 2 próby, 30 dób | 205 USD (≈ 822 PLN) | 246 USD (≈ 982 PLN) | 68 USD (≈ 271 PLN) | 41 USD (≈ 164 PLN) |
-| To samo, plany typowe z 10% ponowień | 31 USD (≈ 125 PLN) | 37 USD (≈ 148 PLN) | 10 USD (≈ 40 PLN) | 6,2 USD (≈ 25 PLN) |
+| **Pułap globalny (obowiązujący): 25 generowań/dobę**, maksymalne plany, 2 próby, 30 dób | 103 USD (≈ 411 PLN) | 123 USD (≈ 491 PLN) | 34 USD (≈ 136 PLN) | 20 USD (≈ 82 PLN) |
+| **To samo (25/dobę), plany typowe z 10% ponowień** | 15,7 USD (≈ 63 PLN) | 18,5 USD (≈ 74 PLN) | 5,0 USD (≈ 20 PLN) | 3,1 USD (≈ 12 PLN) |
+| *Historycznie: 50/dobę, maksymalne plany, 2 próby, 30 dób* | *205 USD (≈ 822 PLN)* | *246 USD (≈ 982 PLN)* | *68 USD (≈ 271 PLN)* | *41 USD (≈ 164 PLN)* |
+| *Historycznie: 50/dobę, plany typowe z 10% ponowień* | *31 USD (≈ 125 PLN)* | *37 USD (≈ 148 PLN)* | *10 USD (≈ 40 PLN)* | *6,2 USD (≈ 25 PLN)* |
 
 Myślenie zwiększa każdy wiersz o (tokeny myślenia / 1 000) × kolumna „+1 000 tok. myślenia" z sekcji 2 na próbę.
 Wnioski:
-- Dla klasy Flash **jedno konto przy pełnym nadużyciu limitu 5/dobę (≈ 82–98 PLN/mies.) wyczerpuje budżet prod 100 PLN**; pułap globalny 50/dobę z planami typowymi (125–148 PLN) też go przekracza. Twarde ograniczenia: `budgetGuard` (ADR-0003) i spend cap `aiplatform` prod 80 PLN / dev 15 PLN (ADR-0014, proponowany). Rekomendacja do decyzji właściciela w P3-09/P3-10: przy wyborze klasy Flash rozważyć **limit globalny 20–30/dobę** w fazie testów; przy Flash-Lite obecne limity mieszczą się w budżecie.
-- Dla Flash-Lite pułapy są poniżej budżetu prod poza nadużyciem całego limitu globalnego planami maksymalnymi.
+- **Decyzja właściciela 2026-11-20 (O-ARCH01-1, ADR-0014 Aneks A pkt 3): limit globalny 25/dobę** w fazie testów (dev i prod). Pułap przy planach typowych: klasa Flash ≈ 63–74 PLN/mies. – **poniżej spend cap prod 80 PLN i budżetu prod 100 PLN**; Flash-Lite ≈ 12–20 PLN.
+- Pułap przy nadużyciu całego limitu globalnego planami maksymalnymi (Flash ≈ 411–491 PLN, 3.5 Flash-Lite ≈ 136 PLN, 3.1 Flash-Lite ≈ 82 PLN) nadal przekracza budżet prod – ten scenariusz zatrzymują twarde warstwy: spend cap `aiplatform` **prod 80 PLN / dev 15 PLN** (ADR-0014, zatwierdzony; z opóźnieniem F4, więc możliwa nadwyżka) i `budgetGuard` (tylko prod, ADR-0003). W `dev` (budżet 20 PLN, cap 15 PLN, bez `budgetGuard`) pułap typowy klasy Flash przy pełnym wykorzystaniu 25/dobę przez cały miesiąc (≈ 63–74 PLN) przekracza cap – w praktyce cap zatrzyma generowanie w dev po ok. 6–7 dniach takiego użycia (≈ 2,1–2,5 PLN/dobę); testy w dev planować z tym zapasem (sekcja 6).
+- Dla klasy Flash **jedno konto przy pełnym nadużyciu limitu 5/dobę (≈ 82–98 PLN/mies.) nadal wyczerpuje cap prod 80 PLN** – limit globalny tego nie zmienia (dotyczy jednego konta); ogranicza to cap i przegląd limitów przed wydaniem publicznym (ADR-0002 Aneks A pkt 5b).
 
 ## 5. Pozostałe usługi (przy skali testowej)
 | Usługa | Koszt | Uwagi |
@@ -99,11 +102,12 @@ Koszty poza zakresem: konto Google Play (jednorazowa opłata), domena/strona pol
 7. Punkt `eu`/`europe-west4` vs `global`: +10% (świadomy koszt wymogu UE; `global` zakazany).
 
 ## 8. Alerty i wyłączniki (patrz ADR-0002, ADR-0003, ADR-0014)
-Budżety zatwierdzone przez właściciela (Q3, 2026-11-15; ustawia właściciel): dev 20 PLN, prod 100 PLN, alerty 50/90/100%, automatyczne wyłączenie AI przy 100% prod, limit na konto 5/dobę (doba kalendarzowa Europe/Warsaw, Q5), limit globalny 50/dobę, `maxInstances` 10, `maxOutputTokens` 10 000, kwoty Vertex ograniczone w konsoli. Dodatkowo alert na wyczerpanie limitu globalnego i przegląd limitów przed wydaniem publicznym (ADR-0002, Aneks A pkt 5). Spend cap `aiplatform` (prod 80 / dev 15 PLN) – ADR-0014, **proponowany**. Klasa modelu: start od Flash, wybór ostateczny po ewaluacji w fazie 3 (Q4); rekomendacja zależna od wyników – `arch-01-gemini-test.md` sekcja 7.
+Budżety zatwierdzone przez właściciela (Q3, 2026-11-15; ustawia właściciel): dev 20 PLN, prod 100 PLN, alerty 50/90/100%, automatyczne wyłączenie AI przy 100% prod, limit na konto 5/dobę (doba kalendarzowa Europe/Warsaw, Q5), limit globalny **25/dobę** (decyzja właściciela 2026-11-20, ADR-0014 Aneks A pkt 3; wcześniej 50 – Q3), `maxInstances` 10, `maxOutputTokens` 10 000, kwoty Vertex ograniczone w konsoli. Dodatkowo alert na wyczerpanie limitu globalnego i przegląd limitów przed wydaniem publicznym (ADR-0002, Aneks A pkt 5). Spend cap `aiplatform` (prod 80 / dev 15 PLN) – ADR-0014, **zatwierdzony 2026-11-20** (kwoty ostateczne). `budgetGuard` tylko w prod; w dev: cap + budżet 20 PLN z alertami e-mail (ADR-0014 Aneks A pkt 2). Klasa modelu: start od Flash, wybór ostateczny po ewaluacji w fazie 3 (Q4); rekomendacja zależna od wyników – `arch-01-gemini-test.md` sekcja 7.
 
 ## 9. Koszt wynikający z decyzji G2
 Czwarte konto usług, sprawdzanie istnienia użytkownika (jedno wywołanie Admin API na żądanie), handler wyjątków i dodatkowy alert nie zmieniają kosztów w istotny sposób (pula bezpłatna). SQLCipher zwiększa rozmiar APK, nie koszt zmienny.
 
 ## 10. Historia
+- **2026-11-20 (SEC-09):** limit globalny 50 → 25/dobę (O-ARCH01-1); pułapy w sekcji 4 przeliczone dla 25/dobę (wiersze dla 50/dobę zostawione jako historyczne); ADR-0014 zatwierdzony – spend cap prod 80 / dev 15 PLN ostateczne; `budgetGuard` tylko prod. Stawki i założenia bez zmian.
 - **2026-11-18 (ARCH-01):** scenariusze A/B/C zastąpione kandydatami z ADR-0001 Aneks B pkt 3; ceny z oficjalnej strony cennika (stawki „Non-global"); dodane: myślenie (3.8 Flash min. `LOW`), buforowanie wyłączone (B-1), koszt testu ARCH-01, wnioski o pułapach dla klasy Flash. Ostrzeżenie „ceny niezweryfikowane" zastąpione statusem z listą weryfikacji w P3-10.
 - **2026-11-15 (po G2):** scenariusze A 0,30/2,50 USD (2.5 Flash – wycofany 2026-10-20), B 1,50/7,50 (nowsza Flash; promocja 0,75/3,75 do 2026-12-31 – odpowiada 3.8 Flash „Global"), C 0,10/0,40 (Flash-Lite 2.x – wycofany); kurs 4,0 PLN/USD. Skrót w ADR-0001 („Szacunek kosztów") pozostaje historyczny – zatwierdzonego ADR nie zmieniamy; aktualne liczby są w tym pliku.

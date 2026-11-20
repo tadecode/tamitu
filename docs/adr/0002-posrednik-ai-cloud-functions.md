@@ -89,3 +89,4 @@ Wspólny wrapper loggera z listą dozwolonych pól: znacznik czasu, nazwa funkcj
 
 ## Odnośniki późniejsze (dopisane, treść ADR bez zmian)
 - **2026-11-18 – ADR-0014 (proponowany):** konto usługi `fn-ai` → **`fn-ai-plan`** (Google wymaga ID konta 6–30 znaków; konto utworzone w P3-03 pod tą nazwą). Po zatwierdzeniu ADR-0014 nazwa `fn-ai-plan` obowiązuje zamiast `fn-ai` w sekcji „Tożsamości (IAM)" i w Aneksie A pkt 6; role bez zmian. Pytanie O2.
+- **2026-11-20 – ADR-0014 zatwierdzony przez właściciela (w tym Aneks A):** (a) nazwa `fn-ai-plan` obowiązuje (O2); (b) **limit globalny w fazie testów: 25 generowań/dobę** zamiast 50 w tabeli „Limity i bezpieczniki" i w Aneksie A pkt 5a (ADR-0014 Aneks A pkt 3; pytanie O-ARCH01-1) – pozostałe zasady pkt 5 bez zmian; (c) `budgetGuard` wdrażany tylko w `prod` (ADR-0014 Aneks A pkt 2).
