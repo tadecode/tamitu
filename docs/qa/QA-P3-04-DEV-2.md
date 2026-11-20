@@ -83,5 +83,8 @@ Do wykonania przez właściciela po przyjęciu raportu (bez identyfikatorów w r
    `--dart-define`; po usunięciu tokenu z konsoli przestaje on działać), wyłączyć „Wyłącz monitorowanie
    uprawnień” i „Nie przeszkadzać”, jeśli były włączone na test.
 
+Stan (2026-11-20): pkt 1 i 2 **wykonane** przez właściciela. Usunięcie zmiennej QA potwierdziło odczytem
+(zmienna pusta). Skutek: AIC-04 i RECON-03 będą wymagały nowego tokenu debug. Pkt 3 i 4 – otwarte.
+
 Po stronie QA: `google-services.json` usunięty z worktree, zrzut ekranu usunięty, poza odczytem nie zmieniano
 niczego w projekcie `dev` (dane powstały wyłącznie przez normalne użycie aplikacji).
