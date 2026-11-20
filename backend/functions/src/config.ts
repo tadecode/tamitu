@@ -34,7 +34,7 @@ export const SAFE_RUNTIME_DEFAULTS: RuntimeConfig = {
  * SEC-22: accepted ranges for limits read from config/runtime. A value outside the range (or not an
  * integer) falls back to SAFE_RUNTIME_DEFAULTS (fail-closed, T3/T26): an owner's typo in the console
  * can neither switch off nor blow up the cost fuse. ADR-0002/ADR-0014 do not define ranges; values
- * proposed in TAM-60 (question O-SEC22-1). Raising the upper bound needs a code change and review.
+ * approved by the owner on 2026-11-20 (TAM-60, question O-SEC22-1). Raising the upper bound needs a code change and review.
  */
 export const LIMIT_BOUNDS = {
   perUserDailyLimit: { min: 1, max: 20 },
