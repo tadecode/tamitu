@@ -6,7 +6,8 @@
 #   - zadanie = Task (BUG-* = Bug); ID farmy (np. SEC-35) w polu „Farm Id” (tekst), tytuł bez kodu,
 #     czytelny dla człowieka; klucz Jiry (TAM-12) jest dodatkowy; task.ps1 przyjmuje oba,
 #   - epik = Epic z „Farm Id” = prefiks (np. SEC); zadanie wskazuje epik polem parent,
-#   - role = etykiety `rola:mobile-dev`, blokada = etykieta `zablokowane`,
+#   - role = pole „Agent role” (Checkbox); zadanie czekające na człowieka (kolumna Owner Review)
+#     jest przypisane do właściciela, reszta do Farm Bota; blokada = etykieta `zablokowane`,
 #   - PR = link zdalny do GitHuba.
 . (Join-Path $PSScriptRoot '..\atlassian\atlassian-common.ps1')
 
@@ -104,13 +105,29 @@ function Get-JiraFarmIdField {
 }
 function Get-FarmId($Issue) { $Issue.fields.(Get-JiraFarmIdField) }
 
+# Pole „Agent role” (Checkbox, wiele ról): analyst, architect, data-analyst, dba, mobile-dev, orchestrator,
+# qa, reviewer, security, steward, ux. Zadania czekające na człowieka są przypisane do właściciela.
+function Get-JiraRoleField {
+    if (-not $script:RoleField) {
+        $f = (Invoke-Jira -Uri 'field') | ForEach-Object { $_ } | Where-Object { $_.custom -and $_.name -eq 'Agent role' -and $_.schema.type -eq 'array' } | Select-Object -First 1
+        if (-not $f) { throw 'Brak pola „Agent role” (Checkbox) w Jirze.' }
+        $script:RoleField = $f.id
+    }
+    $script:RoleField
+}
+function Get-JiraRoles($Issue) { (@($Issue.fields.(Get-JiraRoleField)) | Where-Object { $_ } | ForEach-Object { $_.value }) -join '/' }
+function ConvertTo-JiraRoles([string]$Role) {
+    $alias = @{ developer = 'mobile-dev'; devops = 'steward'; designer = 'ux'; 'farm-builder' = 'orchestrator' }
+    @($Role -split '[/,\s]+' | Where-Object { $_ -and $_ -ne 'owner' } | ForEach-Object { $r = $_.ToLower(); if ($alias[$r]) { $alias[$r] } else { $r } } | Select-Object -Unique | ForEach-Object { @{ value = $_ } })
+}
+
 # Wszystkie zadania i epiki projektu: @{ Items = @{ID farmy -> issue}; Epics = @{prefiks epiku -> issue}; Keys = @{TAM-n -> ID farmy} }
 function Get-JiraIndex {
     $items = @{}; $epics = @{}; $keys = @{}
     $token = $null
     $fid = Get-JiraFarmIdField
     do {
-        $body = @{ jql = "project = $JiraProject ORDER BY created ASC"; maxResults = 100; fields = @('summary', 'status', 'labels', 'issuetype', 'parent', 'created', $fid) }
+        $body = @{ jql = "project = $JiraProject ORDER BY created ASC"; maxResults = 100; fields = @('summary', 'status', 'labels', 'issuetype', 'parent', 'created', 'assignee', $fid, (Get-JiraRoleField)) }
         if ($token) { $body.nextPageToken = $token }
         $r = Invoke-Jira -Method post -Uri 'search/jql' -Body $body
         foreach ($i in $r.issues) {
