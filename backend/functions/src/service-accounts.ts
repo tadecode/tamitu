@@ -13,12 +13,30 @@ export const SERVICE_ACCOUNTS = {
 
 export type FunctionName = keyof typeof SERVICE_ACCOUNTS;
 
+/** Google project id rule: 6-30 chars, lowercase letters, digits, hyphens, starts with a letter. */
+const PROJECT_ID = /^[a-z][a-z0-9-]{4,28}[a-z0-9]$/;
+
 /**
- * Value for the `serviceAccount` function option. The trailing `@` is the Firebase CLI shorthand:
- * at deploy time it appends `<projectId>.iam.gserviceaccount.com` of the target project
- * (`--project dev|prod`), so the same code deploys to `tamitu-dev-tadecode` and
- * `tamitu-prod-tadecode` without hard-coding a project id.
+ * Value for the `serviceAccount` function option: the full e-mail
+ * `<name>@<projectId>.iam.gserviceaccount.com`.
+ *
+ * TAM-86: the `<name>@` shorthand is expanded by the Firebase CLI for the function itself, but NOT
+ * when it grants the account access to a secret (`secrets: [UID_HASH_PEPPER]`), which failed with
+ * `setIamPolicy ... 400, Invalid service account (fn-consent@)`. Hence the full address.
+ *
+ * The project id comes from `GCLOUD_PROJECT`, which the Firebase CLI sets from `--project` both when
+ * it analyses the source (discovery) and in the deployed function's environment (also in the
+ * emulator), so the same code serves `tamitu-dev-tadecode` and `tamitu-prod-tadecode`.
+ * `projectID` from `firebase-functions/params` is not used: it is an Expression and cannot be
+ * concatenated with the account name into one string option.
+ *
+ * Fail-closed: no (or malformed) project id throws instead of falling back to the default
+ * compute account.
  */
-export function serviceAccountFor(fn: FunctionName): string {
-  return `${SERVICE_ACCOUNTS[fn]}@`;
+export function serviceAccountFor(fn: FunctionName, env: NodeJS.ProcessEnv = process.env): string {
+  const projectId = env.GCLOUD_PROJECT;
+  if (projectId === undefined || !PROJECT_ID.test(projectId)) {
+    throw new Error(`serviceAccountFor(${fn}): GCLOUD_PROJECT missing or invalid; refusing default account`);
+  }
+  return `${SERVICE_ACCOUNTS[fn]}@${projectId}.iam.gserviceaccount.com`;
 }
