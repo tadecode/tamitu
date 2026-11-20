@@ -112,6 +112,61 @@ describe("generatePlan request", () => {
   });
 });
 
+describe("free-text fields: NFC and Unicode Cc/Cf/Zl/Zp (SEC-21, T4)", () => {
+  const withDest = (destination: string) => ({ ...valid(), trip: { ...valid().trip, destination } });
+
+  it("normalises to NFC (decomposed input becomes composed)", () => {
+    const decomposed = "Málaga Łódź".normalize("NFD");
+    expect(decomposed).not.toBe("Málaga Łódź");
+    expect(parseGeneratePlan(withDest(decomposed), NOW).trip.destination).toBe("Málaga Łódź");
+  });
+
+  it("measures length after NFC (80 composed chars fit although NFD is 160)", () => {
+    const nfd = "ó".repeat(80).normalize("NFD");
+    expect(nfd.length).toBe(160);
+    expect(parseGeneratePlan(withDest(nfd), NOW).trip.destination).toHaveLength(80);
+  });
+
+  it("keeps ordinary letters, emoji and inner spaces", () => {
+    for (const ok of ["Zakopane – Krupówki", "São Paulo", "Москва", "東京", "Rzym 🍕"]) {
+      expect(parseGeneratePlan(withDest(ok), NOW).trip.destination).toBe(ok);
+    }
+  });
+
+  it.each([
+    ["NUL (Cc)", "a\u0000b"],
+    ["DEL (Cc)", "a\u007fb"],
+    ["C1 control NEL (Cc)", "a\u0085b"],
+    ["tab (Cc)", "a\tb"],
+    ["zero-width space (Cf)", "Lizbona​"],
+    ["zero-width joiner (Cf)", "a‍b"],
+    ["LRM (Cf)", "a‎b"],
+    ["RLO bidi override (Cf)", "a‮b"],
+    ["RLI bidi isolate (Cf)", "a⁧b"],
+    ["BOM inside (Cf)", "a﻿b"],
+    ["soft hyphen (Cf)", "a­b"],
+    ["tag character (Cf)", "a\u{E0041}b"],
+    ["line separator (Zl)", "a b"],
+    ["paragraph separator (Zp)", "a b"],
+  ])("rejects %s with field path only", (_n, bad) => {
+    const e = errOf(() => parseGeneratePlan(withDest(bad), NOW));
+    expect(e.appCode).toBe("invalid_argument");
+    expect(e.details).toEqual({ field: "trip.destination" });
+  });
+
+  it("applies to lodging and airport too", () => {
+    const lodging = { ...valid(), trip: { ...valid().trip, lodging: "Hotel‮" } };
+    expect(errOf(() => parseGeneratePlan(lodging, NOW)).details["field"]).toBe("trip.lodging");
+    const t = valid().trip;
+    const airport = { ...valid(), trip: { ...t, arrival: { ...t.arrival, airport: "LIS⁦" } } };
+    expect(errOf(() => parseGeneratePlan(airport, NOW)).details["field"]).toBe("trip.arrival.airport");
+  });
+
+  it("a value made only of format characters is rejected", () => {
+    expect(() => parseGeneratePlan(withDest("​​"), NOW)).toThrow();
+  });
+});
+
 describe("recordConsent request", () => {
   const ok = {
     apiVersion: 1,
@@ -129,7 +184,18 @@ describe("recordConsent request", () => {
     expect(() => parseRecordConsent({ ...ok, clientAt: "yesterday" })).toThrow();
     expect(() => parseRecordConsent({ ...ok, extra: 1 })).toThrow();
   });
-  it.each(["ai-consent-v2", "privacy-v1", "ai-consent-v01", "ai-consent-v0", "AI-consent-v1", "ai-consent-v10000"])(
+  it.each([
+    "ai-consent-v2",
+    "privacy-v1",
+    "ai-consent-v01",
+    "ai-consent-v0",
+    "AI-consent-v1",
+    "ai-consent-v10000",
+    " ai-consent-v1",
+    "ai-consent-v1​",
+    "ai‐consent-v1",
+    "",
+  ])(
     "rejects unknown / malformed / foreign-prefix version %s (ADR-0012, SEC-21)",
     (v) => {
       expect(errOf(() => parseRecordConsent({ ...ok, policyVersion: v })).details["field"]).toBe("policyVersion");
