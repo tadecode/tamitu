@@ -87,3 +87,12 @@ describe("data policy (S5)", () => {
     expect(() => assertDataPolicy(cfg(), r, "other", true)).toThrow();
   });
 });
+
+describe("safe runtime defaults (ADR-0014 Aneks A pkt 3)", () => {
+  it("global daily limit defaults to 25 during the test phase", () => {
+    expect(SAFE_RUNTIME_DEFAULTS.globalDailyLimit).toBe(25);
+  });
+  it("defaults stay fail-closed", () => {
+    expect(SAFE_RUNTIME_DEFAULTS).toMatchObject({ aiEnabled: false, allowRealData: false, perUserDailyLimit: 5 });
+  });
+});
