@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
+// index.ts resolves service accounts at import time; the Firebase CLI sets GCLOUD_PROJECT from --project.
+vi.hoisted(() => {
+  process.env.GCLOUD_PROJECT = "tamitu-dev-tadecode";
+});
+
 // index.ts initialises firebase-admin at import time; no credentials or network in unit tests.
 vi.mock("firebase-admin/app", () => ({ getApps: () => [{}], initializeApp: vi.fn() }));
 vi.mock("firebase-admin/auth", () => ({ getAuth: vi.fn() }));
@@ -8,16 +13,7 @@ vi.mock("firebase-admin/firestore", () => ({ getFirestore: vi.fn(), Timestamp: {
 import * as functions from "../src/index.js";
 import { SERVICE_ACCOUNTS, serviceAccountFor, type FunctionName } from "../src/service-accounts.js";
 
-/**
- * Full e-mail of the account in a project, as the Firebase CLI expands the `<name>@` shorthand.
- * Test-only (review PR #70 #4b: not used by production code); documents the runbook addresses.
- */
-function serviceAccountEmail(fn: FunctionName, projectId: string): string {
-  if (!/^[a-z][a-z0-9-]{4,28}[a-z0-9]$/.test(projectId)) {
-    throw new Error("invalid project id");
-  }
-  return `${SERVICE_ACCOUNTS[fn]}@${projectId}.iam.gserviceaccount.com`;
-}
+const DEV_SUFFIX = "@tamitu-dev-tadecode.iam.gserviceaccount.com";
 
 interface EndpointLike {
   __endpoint?: { serviceAccountEmail?: unknown; region?: unknown };
@@ -32,10 +28,10 @@ describe("SEC-20: dedicated service account per function", () => {
     expect(exported.map(([name]) => name).sort()).toEqual(Object.keys(SERVICE_ACCOUNTS).sort());
   });
 
-  it.each(exported)("%s sets serviceAccount to its own fn-* account in europe-west4", (name, fn) => {
+  it.each(exported)("%s sets serviceAccount to its own full fn-* e-mail in europe-west4", (name, fn) => {
     const expected = SERVICE_ACCOUNTS[name as FunctionName];
     expect(expected).toBeDefined();
-    expect(fn.__endpoint?.serviceAccountEmail).toBe(`${expected}@`);
+    expect(fn.__endpoint?.serviceAccountEmail).toBe(`${expected}${DEV_SUFFIX}`);
     expect(fn.__endpoint?.region).toEqual(["europe-west4"]);
   });
 
@@ -45,15 +41,28 @@ describe("SEC-20: dedicated service account per function", () => {
   });
 
   it("maps generatePlan to fn-ai-plan (renamed from fn-ai, O2)", () => {
-    expect(serviceAccountFor("generatePlan")).toBe("fn-ai-plan@");
+    expect(serviceAccountFor("generatePlan")).toBe(`fn-ai-plan${DEV_SUFFIX}`);
   });
 
-  it("builds the full e-mail from the project id", () => {
-    expect(serviceAccountEmail("recordConsent", "tamitu-dev-tadecode")).toBe(
+  it("builds the full e-mail from GCLOUD_PROJECT for dev and prod (TAM-86)", () => {
+    expect(serviceAccountFor("recordConsent", { GCLOUD_PROJECT: "tamitu-dev-tadecode" })).toBe(
       "fn-consent@tamitu-dev-tadecode.iam.gserviceaccount.com",
     );
-    expect(serviceAccountEmail("budgetGuard", "tamitu-prod-tadecode")).toBe(
+    expect(serviceAccountFor("budgetGuard", { GCLOUD_PROJECT: "tamitu-prod-tadecode" })).toBe(
       "fn-budget@tamitu-prod-tadecode.iam.gserviceaccount.com",
+    );
+  });
+
+  it("never returns the `name@` shorthand (rejected by Secret Manager setIamPolicy, TAM-86)", () => {
+    for (const fn of Object.keys(SERVICE_ACCOUNTS) as FunctionName[]) {
+      expect(serviceAccountFor(fn)).toMatch(/^[a-z0-9-]+@[a-z0-9-]+\.iam\.gserviceaccount\.com$/);
+    }
+  });
+
+  it("fails closed when the project id is unknown (no default compute account)", () => {
+    expect(() => serviceAccountFor("recordConsent", {})).toThrow("GCLOUD_PROJECT missing or invalid");
+    expect(() => serviceAccountFor("recordConsent", { GCLOUD_PROJECT: "" })).toThrow(
+      "GCLOUD_PROJECT missing or invalid",
     );
   });
 
@@ -64,8 +73,10 @@ describe("SEC-20: dedicated service account per function", () => {
   });
 
   it("rejects malformed project ids", () => {
-    for (const bad of ["", "Tamitu-Dev", "x", "evil.com/a", "tamitu-dev-tadecode-"]) {
-      expect(() => serviceAccountEmail("deleteAccount", bad)).toThrow("invalid project id");
+    for (const bad of ["Tamitu-Dev", "x", "evil.com/a", "tamitu-dev-tadecode-"]) {
+      expect(() => serviceAccountFor("deleteAccount", { GCLOUD_PROJECT: bad })).toThrow(
+        "GCLOUD_PROJECT missing or invalid",
+      );
     }
   });
 });
