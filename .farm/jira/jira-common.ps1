@@ -5,7 +5,7 @@
 # Model:
 #   - zadanie = Task (BUG-* = Bug); ID farmy (np. SEC-35) w polu „Farm Id” (tekst), tytuł bez kodu,
 #     czytelny dla człowieka; klucz Jiry (TAM-12) jest dodatkowy; task.ps1 przyjmuje oba,
-#   - epik = Epic z „Farm Id” = prefiks (np. SEC); zadanie wskazuje epik polem parent,
+#   - epik = funkcja produktu (Epic z „Farm Id”, np. EP-ZGODY); zadanie wskazuje epik polem parent,
 #   - role = pole „Agent role” (Checkbox); zadanie czekające na człowieka (kolumna Owner Review)
 #     jest przypisane do właściciela, reszta do Farm Bota; blokada = etykieta `zablokowane`,
 #   - PR = link zdalny do GitHuba.
@@ -26,13 +26,8 @@ $JiraColumnAlias = @{
     'in-progress' = 'doing'; 'qa' = 'review'; 'czeka' = 'owner'
     'Do zrobienia' = 'todo'; 'W pracy (agent)' = 'doing'; 'Przegląd i QA' = 'review'; 'Czeka na Ciebie' = 'owner'; 'Gotowe' = 'done'
 }
-$JiraEpics = @{
-    'P2' = 'Faza 2: Projekt'; 'P3' = 'Faza 3: Implementacja'; 'SEC' = 'Bezpieczeństwo'
-    'GH' = 'Infrastruktura i CI (Steward)'; 'O' = 'Pytania otwarte'; 'REV' = 'Przeglądy kodu'
-    'QA' = 'Testy i QA'; 'TEST' = 'Testy integracyjne i CI'; 'OBS' = 'Obserwowalność'; 'ARCH' = 'Architektura'
-    'FARM' = 'Farma agentów'; 'BUG' = 'Błędy'; 'UX' = 'UX i grafika'; 'OWNER' = 'Czynności właściciela'
-    'DOC' = 'Dokumentacja'; 'CHORE' = 'Porządki'; 'AN' = 'Analiza'; 'MD' = 'Wdrożenia mobile-dev'
-}
+# Epiki = funkcje produktu (właściciel, 2026-11-20), np. EP-ZGODY, EP-PLAN-AI, EP-INFRA; FARM = farma agentów.
+# Nowe zadanie wskazuje epik jawnie (task.ps1 new -Epic); epików skrypt nie tworzy (zakłada je właściciel/orkiestrator w Jirze).
 
 $script:JiraAuth = Get-AtlassianAuthHeader (Get-AtlassianToken jira)
 $script:utf8 = New-Object Text.UTF8Encoding($false)
@@ -133,7 +128,10 @@ function Get-JiraIndex {
         foreach ($i in $r.issues) {
             $id = $i.fields.$fid
             if (-not $id) { continue }
-            if ($i.fields.issuetype.name -eq 'Epic') { if (-not $epics[$id]) { $epics[$id] = $i } }
+            if ($i.fields.issuetype.name -eq 'Epic') {
+                # Przy powtórzonym Farm Id wygrywa epik otwarty (stare, zamknięte epiki zostają jako historia).
+                if (-not $epics[$id] -or ($epics[$id].fields.status.name -eq 'Done' -and $i.fields.status.name -ne 'Done')) { $epics[$id] = $i }
+            }
             elseif (-not $items[$id]) { $items[$id] = $i; $keys[$i.key] = $id }
         }
         $token = $r.nextPageToken
@@ -141,19 +139,18 @@ function Get-JiraIndex {
     @{ Items = $items; Epics = $epics; Keys = $keys }
 }
 
-function Get-JiraEpicKey([string]$TaskId) {
-    if ($TaskId -match '^(P\d+)-') { $Matches[1] } elseif ($TaskId -match '^([A-Z]+)') { $Matches[1] }
+# Otwarte epiki jako tekst (do podpowiedzi w błędach i `task.ps1 epics`).
+function Get-JiraOpenEpicsText($Index) {
+    ($Index.Epics.GetEnumerator() | Where-Object { $_.Value.fields.status.name -ne 'Done' } | Sort-Object Key |
+        ForEach-Object { "  $($_.Key) ($($_.Value.key)): $($_.Value.fields.summary)" }) -join "`n"
 }
 
-# Zwraca epik dla zadania; tworzy go, jeśli nie ma.
-function Get-JiraEpic([string]$TaskId, $Index) {
-    $key = Get-JiraEpicKey $TaskId
-    if ($Index.Epics[$key]) { return $Index.Epics[$key] }
-    $title = if ($JiraEpics[$key]) { $JiraEpics[$key] } else { $key }
-    $fields = @{ project = @{ key = $JiraProject }; issuetype = @{ name = 'Epic' }; summary = $title }
-    $fields[(Get-JiraFarmIdField)] = $key
-    $e = Invoke-Jira -Method post -Uri 'issue' -Body @{ fields = $fields }
-    $Index.Epics[$key] = $e
+# Zwraca otwarty epik wskazany przez Farm Id (np. EP-ZGODY) albo klucz (TAM-76). Epików nie tworzy.
+function Get-JiraEpic([string]$Epic, $Index) {
+    if (-not $Epic) { throw "Podaj -Epic (Farm Id albo TAM-n). Otwarte epiki:`n$(Get-JiraOpenEpicsText $Index)" }
+    $e = if ($Epic -match "^$JiraProject-\d+$") { $Index.Epics.Values | Where-Object { $_.key -eq $Epic } | Select-Object -First 1 } else { $Index.Epics[$Epic] }
+    if (-not $e) { throw "Nie ma epiku '$Epic'. Otwarte epiki:`n$(Get-JiraOpenEpicsText $Index)" }
+    if ($e.fields.status.name -eq 'Done') { throw "Epik '$Epic' ($($e.key)) jest zamknięty. Otwarte epiki:`n$(Get-JiraOpenEpicsText $Index)" }
     $e
 }
 

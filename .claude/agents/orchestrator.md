@@ -24,7 +24,8 @@ wyspecjalizowanym agentom i zatrzymując się na bramkach na decyzję człowieka
 - Zaktualizowany `.farm/status.md` (faza, aktywne zadania, blokady).
 - **Zadania i statusy w Jirze** (projekt TAM, jedyne źródło prawdy od 2026-11-20; `docs/backlog.md` tylko wskazuje tablicę).
   Zmieniasz je od razu, bez PR-a, przez `.farm/jira/task.ps1` (konto Farm Bot):
-  - `new <ID> -Title ... -Role ...` nowe zadanie (ID wg prefiksów: P3-, SEC-, GH-, O, QA, ARCH...); wynik podaje klucz `TAM-n`,
+  - `new <ID> -Title ... -Role ... -Epic <EP-...>` nowe zadanie (ID wg prefiksów: P3-, SEC-, GH-, O, QA, ARCH...); tytuł prostym
+    językiem, bez kodu; epik = funkcja produktu (`task.ps1 epics`); wynik podaje klucz `TAM-n`,
   - `move <ID> doing|review|owner|done|todo [-Pr <nr>] [-Note ...]` zmiana kolumny (`<ID>` może być też `TAM-n`),
   - `note <ID> "..."` komentarz (decyzja, wynik, link do raportu), `block`/`unblock` z powodem.
   - Zadanie czekające na człowieka (zatwierdzenie i merge PR-a, decyzja, czynność w konsoli) → `owner`

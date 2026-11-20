@@ -5,7 +5,9 @@
 #   task.ps1 list [-Column owner] [-Role mobile-dev] [-All]   lista (domyślnie bez Done)
 #   task.ps1 show SEC-35                                       szczegóły i komentarze (działa też: show TAM-12)
 #   (ID farmy jest w polu „Farm Id”; tytuł piszemy prosto, bez kodu, dla człowieka)
-#   task.ps1 new  P3-15 -Title "..." -Role mobile-dev [-Column todo] [-Related "US-004, ADR-0002"] [-Notes "..."] [-Pr 61]
+#   task.ps1 epics                                             otwarte epiki (funkcje produktu)
+#   task.ps1 new  P3-15 -Title "..." -Role mobile-dev -Epic EP-PLANY [-Column todo] [-Related "US-004, ADR-0002"] [-Notes "..."] [-Pr 61]
+#             -Epic: Farm Id epiku (EP-ZGODY, EP-PLAN-AI, ...) albo jego klucz TAM-n; wymagany, epików skrypt nie tworzy
 #   task.ps1 move P3-04 owner [-Note "PR #61 czeka na merge"] [-Pr 61]
 #   task.ps1 note P3-04 "tekst komentarza" [-Pr 61]
 #   task.ps1 block P3-04 "powód"     /   task.ps1 unblock P3-04
@@ -14,10 +16,10 @@
 # Zasada: zadanie czekające na właściciela (merge PR-a, decyzja, czynność w konsoli) -> `owner`.
 # Gałąź i tytuł PR-a zaczynaj od klucza Jiry (np. TAM-12), żeby GitHub for Jira je powiązał.
 param(
-    [Parameter(Mandatory, Position = 0)][ValidateSet('list', 'show', 'new', 'move', 'note', 'block', 'unblock')][string]$Command,
+    [Parameter(Mandatory, Position = 0)][ValidateSet('list', 'show', 'new', 'move', 'note', 'block', 'unblock', 'epics')][string]$Command,
     [Parameter(Position = 1)][string]$Id,
     [Parameter(Position = 2)][string]$Arg,
-    [string]$Title, [string]$Role, [string]$Column, [string]$Related, [string]$Notes, [string]$Note,
+    [string]$Title, [string]$Role, [string]$Epic, [string]$Column, [string]$Related, [string]$Notes, [string]$Note,
     [int]$Pr, [switch]$All
 )
 $ErrorActionPreference = 'Stop'
@@ -31,6 +33,7 @@ function Get-Task($index) {
 }
 
 switch ($Command) {
+    'epics' { 'Otwarte epiki (funkcje produktu):'; Get-JiraOpenEpicsText (Get-JiraIndex) }
     'list' {
         $index = Get-JiraIndex
         $col = if ($Column) { Resolve-JiraColumn $Column }
@@ -77,7 +80,7 @@ switch ($Command) {
         $text = "Rola: $Role"
         if ($Related) { $text += "`n`nPowiązane: $Related" }
         if ($Notes) { $text += "`n`nUwagi: $Notes" }
-        $epic = Get-JiraEpic $Id $index
+        $epic = Get-JiraEpic $Epic $index
         $type = if ($Id -like 'BUG-*') { 'Bug' } else { 'Task' }
         # Tytuł bez kodu (czytelny dla człowieka); ID farmy trafia do pola „Farm Id”.
         $fields = @{
