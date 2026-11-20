@@ -42,8 +42,8 @@ async function loadRuntime(): Promise<RuntimeConfig> {
     aiEnabled: d["aiEnabled"] === true,
     allowRealData: d["allowRealData"] === true,
     testUids: Array.isArray(d["testUids"]) ? d["testUids"].filter((x): x is string => typeof x === "string") : [],
-    perUserDailyLimit: Number.isInteger(d["perUserDailyLimit"]) ? d["perUserDailyLimit"] : 5,
-    globalDailyLimit: Number.isInteger(d["globalDailyLimit"]) ? d["globalDailyLimit"] : 50,
+    perUserDailyLimit: Number.isInteger(d["perUserDailyLimit"]) ? d["perUserDailyLimit"] : SAFE_RUNTIME_DEFAULTS.perUserDailyLimit,
+    globalDailyLimit: Number.isInteger(d["globalDailyLimit"]) ? d["globalDailyLimit"] : SAFE_RUNTIME_DEFAULTS.globalDailyLimit,
     // Raw strings; format checked fail-closed in consents.currentVersionNumbers (ADR-0012 pkt 4).
     policyVersionCurrent: typeof d["policyVersionCurrent"] === "string" ? d["policyVersionCurrent"] : undefined,
     aiConsentVersionCurrent: typeof d["aiConsentVersionCurrent"] === "string" ? d["aiConsentVersionCurrent"] : undefined,

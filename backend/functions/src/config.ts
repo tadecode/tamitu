@@ -26,7 +26,8 @@ export const SAFE_RUNTIME_DEFAULTS: RuntimeConfig = {
   allowRealData: false,
   testUids: [],
   perUserDailyLimit: 5,
-  globalDailyLimit: 50,
+  // ADR-0014 Aneks A pkt 3: 25 generations/day during the test phase (was 50).
+  globalDailyLimit: 25,
 };
 
 /**
