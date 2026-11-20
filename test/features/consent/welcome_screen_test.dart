@@ -1,10 +1,13 @@
 import 'dart:async';
 
+import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:tamitu/app/home_screen.dart';
 import 'package:tamitu/core/config/app_constants.dart';
 import 'package:tamitu/core/errors/app_failure.dart';
+import 'package:tamitu/core/ui/tokens.dart';
 import 'package:tamitu/features/consent/presentation/welcome_screen.dart';
 import 'package:tamitu/l10n/app_localizations.dart';
 
@@ -255,5 +258,78 @@ void main() {
   testWidgets('150 % text: illustration 96 dp', (t) async {
     await pumpApp(t, TestEnv(), textScale: 1.5);
     expect(t.getSize(find.byKey(const Key('welcomeHero'))).height, 96);
+  });
+
+  group('EK-02 illustration v0.5 (MD-ICON)', () {
+    Finder hero() => find.byKey(const Key('welcomeHero'));
+    SvgPicture svgOf(WidgetTester t) => t.widget<SvgPicture>(
+      find.descendant(of: hero(), matching: find.byType(SvgPicture)),
+    );
+
+    for (final b in brightnesses) {
+      testWidgets('shows the ${b.name} variant, cover-cropped, 144 dp', (
+        t,
+      ) async {
+        await pumpApp(t, TestEnv(), brightness: b);
+        final svg = svgOf(t);
+        expect(
+          (svg.bytesLoader as SvgAssetLoader).assetName,
+          b == Brightness.dark ? welcomeHeroAssetDark : welcomeHeroAssetLight,
+        );
+        expect(svg.fit, BoxFit.cover);
+        expect(svg.alignment, Alignment.center);
+        expect(t.getSize(hero()).height, 144);
+        final clip = t.widget<ClipRRect>(hero());
+        expect(clip.borderRadius, BorderRadius.circular(Radii.l));
+        final background = t.widget<ColoredBox>(
+          find.descendant(of: hero(), matching: find.byType(ColoredBox)),
+        );
+        expect(
+          background.color,
+          Theme.of(t.element(find.byType(WelcomeScreen)))
+              .colorScheme
+              .surfaceContainerHigh,
+        );
+      });
+    }
+
+    testWidgets('is decorative: excluded from semantics', (t) async {
+      final handle = t.ensureSemantics();
+      await pumpApp(t, TestEnv());
+      final exclude = t.widget<ExcludeSemantics>(
+        find
+            .ancestor(of: hero(), matching: find.byType(ExcludeSemantics))
+            .first,
+      );
+      expect(exclude.excluding, isTrue);
+      expect(
+        find.bySemanticsLabel(RegExp('illustr', caseSensitive: false)),
+        findsNothing,
+      );
+      handle.dispose();
+    });
+
+    testWidgets('both asset files are bundled', (t) async {
+      for (final asset in [welcomeHeroAssetLight, welcomeHeroAssetDark]) {
+        final svg = await rootBundle.loadString(asset);
+        expect(svg, contains('viewBox="0 0 1200 400"'));
+      }
+    });
+
+    testWidgets('200 % text: no illustration loaded', (t) async {
+      await pumpApp(t, TestEnv(), textScale: 2);
+      // Icons (hugeicons) are SVGs too – look for the illustration assets only.
+      final illustrations = find.byWidgetPredicate(
+        (w) =>
+            w is SvgPicture &&
+            w.bytesLoader is SvgAssetLoader &&
+            [
+              welcomeHeroAssetLight,
+              welcomeHeroAssetDark,
+            ].contains((w.bytesLoader as SvgAssetLoader).assetName),
+      );
+      expect(illustrations, findsNothing);
+      expect(find.byKey(const Key('welcomeHero')), findsNothing);
+    });
   });
 }
