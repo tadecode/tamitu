@@ -10,10 +10,11 @@ Region: `europe-west4`. Wywołanie przez SDK `cloud_functions` (callable): token
 - **Środowisko `dev`:** wyłącznie dane testowe – start funkcji z `ENVIRONMENT=dev` i `ALLOW_REAL_DATA=true` kończy się błędem inicjalizacji; w `dev` `config/runtime.allowRealData` jest ignorowane (ADR-0011 pkt 5, SEC-24).
 - **`config/runtime`** (np. `policyVersionCurrent`) nie jest udostępniane klientowi; wersja polityki po stronie aplikacji to stała w kodzie (ADR-0011 pkt 1).
 - **Czas:** daty `YYYY-MM-DD`, godziny `HH:MM` (24 h), strefa lokalna miejsca docelowego, bez przeliczania stref.
-- **Logowanie:** zakaz logowania treści żądań i odpowiedzi; wyjątki logowane wyłącznie jako kod i klasa błędu, nigdy `error.message`/stos (ADR-0002, Aneks A pkt 2).
+- **Logowanie:** zakaz logowania treści żądań i odpowiedzi; wyjątki logowane wyłącznie jako kod i klasa błędu, nigdy `error.message`/stos (ADR-0002, Aneks A pkt 2); kod i klasa spoza listy dozwolonych wzorców (kod `^[A-Za-z0-9_./:-]{1,60}$`, klasa – identyfikator do 60 znaków) logowane jako `unknown` (SEC-19).
 - **Istnienie użytkownika:** `generatePlan` i `recordConsent` odrzucają token użytkownika usuniętego lub z unieważnionymi tokenami (`unauthenticated`), bez żadnego zapisu (ADR-0002, Aneks A pkt 1).
 - **Doba limitu:** dzień kalendarzowy w strefie `Europe/Warsaw` (Q5); `resetAt` = najbliższa północ tej strefy, w UTC.
 - Rozmiar żądania ≤ 4 KB; przekroczenie → `invalid_argument`.
+- **Pola tekstowe** (`trip.destination`, `trip.lodging`, `trip.arrival.airport`) – „po oczyszczeniu” oznacza: obcięcie białych znaków na brzegach, normalizacja Unicode NFC, długość liczona po normalizacji; znaki kategorii Unicode `Cc` (sterujące), `Cf` (formatujące: zero-width, sterowanie kierunkiem, BOM, miękki dywiz), `Zl`, `Zp` (separatory wiersza i akapitu) → `invalid_argument` z `field` (SEC-21). Emoji i zwykłe spacje są dozwolone, ale emoji złożone ze znakiem ZWJ (U+200D) – odrzucane.
 
 ## 2. `generatePlan`
 Wymaga: token ID (`sign_in_provider = google.com`), App Check, **aktualnej akceptacji `privacy_policy`** (ostatni rekord w wersji ≥ `config/runtime.policyVersionCurrent`), aktualnej zgody `ai_processing` (ostatni rekord `granted = true` w wersji ≥ `aiConsentVersionCurrent`), `aiEnabled = true`, wolnego limitu. Zgody sprawdzane w tej kolejności, przed rezerwacją limitu; wersje porównywane po numerze `N` z `privacy-vN` / `ai-consent-vN`; brak lub zły format wartości w `config/runtime` → fail-closed (`consent_required`, `privacy_policy`) (ADR-0012).
@@ -136,6 +137,7 @@ Wyzwalacz Pub/Sub z powiadomień budżetowych; brak publicznego punktu wejścia.
 - Brak automatycznych ponowień `generatePlan` w aplikacji (każde ponowienie zużywa slot limitu); ponowienie wyłącznie z decyzji użytkownika. `recordConsent` i `deleteAccount` są idempotentne i mogą być ponawiane automatycznie.
 
 ## 7. Historia zmian
+- **v0.4.1 (2026-11-20, mobile-dev, TAM-58/59/60 – doprecyzowanie bez zmiany pól i kodów):** „po oczyszczeniu” dla pól tekstowych = NFC + odrzucenie `Cc`/`Cf`/`Zl`/`Zp` (SEC-21); lista dozwolonych wzorców kodu i klasy błędu w logach (SEC-19). Granice limitów z `config/runtime` (SEC-22) nie zmieniają kontraktu.
 - **v0.4 (2026-11-16, ADR-0012 zatwierdzony przez właściciela; S17, SEC-26):** `generatePlan` egzekwuje aktualną akceptację `privacy_policy` (`consent_required`, `consentType=privacy_policy`); porównanie wersji „≥ bieżąca" dla obu zgód; wzorzec i lista znanych wersji w `recordConsent`; wysyłka oczekujących zgód przed `generatePlan`. Implementacja – mobile-dev (P3-04/P3-05).
 - **v0.3 (2026-11-16, ADR-0011 zatwierdzony przez właściciela):** data przylotu „dziś − 2 dni" (Warsaw); `deleteAccount` bez wymogu dostawcy i bez `unsupported_version`; `dev` tylko dane testowe (SEC-24); mapowanie błędów klienta i pętli `consent_required`; `testData` ze stałej kompilacji; anulowanie = porzucenie wyniku; `config/runtime` niedostępne dla klienta. Implementacja w `backend/functions` – zadanie mobile-dev (`docs/architecture/przeglad-ekranow-p3-14c.md` pkt 5).
 - **v0.2 (2026-11-15):** zatwierdzona na G2 (ADR-0002 z Aneksem A).

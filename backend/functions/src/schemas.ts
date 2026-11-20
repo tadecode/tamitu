@@ -23,17 +23,21 @@ export const INTERESTS = [
 ] as const;
 
 const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-// eslint-disable-next-line no-control-regex
-const CONTROL_CHARS = /[\u0000-\u001f\u007f]/;
+/**
+ * SEC-21: Unicode categories Cc (control), Cf (format: zero-width, bidi overrides/isolates, BOM,
+ * soft hyphen), Zl and Zp (line/paragraph separators). Hidden text and direction tricks (T4).
+ */
+const FORBIDDEN_CHARS = /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u;
 
-/** Trimmed, 1..max characters, no control characters. */
+/** Trimmed, NFC-normalised, 1..max characters (after normalisation), no Cc/Cf/Zl/Zp characters. */
 const text = (max: number) =>
   z
     .string()
     .trim()
+    .normalize("NFC")
     .min(1)
     .max(max)
-    .refine((s) => !CONTROL_CHARS.test(s));
+    .refine((s) => !FORBIDDEN_CHARS.test(s));
 
 const timeHHMM = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
 

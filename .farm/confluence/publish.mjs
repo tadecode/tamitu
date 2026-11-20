@@ -313,14 +313,125 @@ async function findBySource(parentId, file) {
   return null;
 }
 
+// ---------- Załączniki: grafiki SVG, makiety HTML i ich zrzuty PNG ----------
+// Dokument, który wspomina plik .svg lub .html z repo (link albo `ścieżka`), dostaje go jako załącznik
+// i sekcję „Podgląd i załączniki”. Z makiety HTML robimy zrzuty PNG przeglądarką bez okna
+// (lokalnie Edge/Chrome, w CI google-chrome), bo Confluence Cloud nie wyświetla dowolnego HTML.
+const sha = (buf) => crypto.createHash('sha256').update(buf).digest('hex').slice(0, 16);
+const UX_ASSETS = 'docs/ux/assets';
+function referencedAssets(file, text) {
+  const found = new Map();
+  for (const m of text.matchAll(/([\w./{}-]*?)([\w.-]+)\.(svg|html)\b/g)) {
+    const raw = `${m[1]}${m[2]}.${m[3]}`;
+    const variants = raw.includes('{') ? [] : [raw];
+    // Skrót typu `ek-02-illustration-{light,dark}.svg`
+    const brace = raw.match(/^(.*)\{([^}]+)\}(.*)$/);
+    if (brace) for (const v of brace[2].split(',')) variants.push(`${brace[1]}${v.trim()}${brace[3]}`);
+    for (const v of variants) {
+      const candidates = [path.posix.normalize(path.posix.join(path.posix.dirname(file), v)), path.posix.normalize(v), `${UX_ASSETS}/${path.posix.basename(v)}`];
+      const hit = candidates.find((c) => c.startsWith('docs/') && fs.existsSync(path.join(ROOT, c)));
+      if (hit && !found.has(hit)) found.set(hit, m[3]);
+    }
+  }
+  return [...found].map(([p, kind]) => ({ path: p, kind, name: path.posix.basename(p) }));
+}
+function shotVariants(asset) {
+  if (/\/mockups\/ek-\d+\.html$/.test(asset.path)) {
+    // Makieta pokazuje kilka stanów ekranu obok siebie; szerokie okno mieści ich kilka w rzędzie.
+    return [['#light', 'Wersja polska, motyw jasny'], ['#dark', 'Wersja polska, motyw ciemny'], ['#en-light', 'Wersja angielska, motyw jasny']].map(([hash, label], i) => ({
+      name: asset.name.replace(/\.html$/, `${['', '-dark', '-en'][i]}.png`), hash, label, size: '1440,2000',
+    }));
+  }
+  return [{ name: asset.name.replace(/\.html$/, '.png'), hash: '#light', label: 'Podgląd (motyw jasny)', size: '1440,2000' }];
+}
+function browserPath() {
+  if (process.env.CHROME_PATH) return process.env.CHROME_PATH;
+  const list = process.platform === 'win32'
+    ? ['C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', 'C:/Program Files/Google/Chrome/Application/chrome.exe']
+    : ['/usr/bin/google-chrome', '/usr/bin/google-chrome-stable', '/usr/bin/chromium', '/usr/bin/chromium-browser'];
+  return list.find((p) => fs.existsSync(p)) || null;
+}
+const BROWSER = browserPath();
+function screenshot(htmlPath, v) {
+  if (!BROWSER) return null;
+  const dir = fs.mkdtempSync(path.join(process.env.RUNNER_TEMP || process.env.TEMP || '/tmp', 'tamitu-shot-'));
+  const out = path.join(dir, v.name);
+  const url = 'file:///' + path.join(ROOT, htmlPath).replace(/\\/g, '/').replace(/^\/+/, '') + v.hash;
+  try {
+    // Osobny profil: bez niego Edge/Chrome otwarte przez człowieka przejmuje polecenie i nie robi zrzutu.
+    execFileSync(BROWSER, ['--headless=new', '--disable-gpu', '--hide-scrollbars', '--no-first-run', '--no-sandbox', '--force-device-scale-factor=1', `--user-data-dir=${path.join(dir, 'profile')}`,
+      `--window-size=${v.size}`, '--virtual-time-budget=3000', `--screenshot=${out}`, url], { stdio: 'ignore', timeout: 60000 });
+  } catch { return null; }
+  return fs.existsSync(out) ? fs.readFileSync(out) : null;
+}
+// Lista plików do wgrania: { name, sourceHash, load() } oraz kod sekcji podglądu.
+function assetPlan(assets) {
+  const uploads = [];
+  let html = '';
+  const svgs = assets.filter((a) => a.kind === 'svg');
+  const pages = assets.filter((a) => a.kind === 'html');
+  for (const a of [...svgs, ...pages]) {
+    const buf = fs.readFileSync(path.join(ROOT, a.path));
+    uploads.push({ name: a.name, sourceHash: sha(buf), load: () => buf, type: a.kind === 'svg' ? 'image/svg+xml' : 'text/html' });
+  }
+  for (const a of pages) {
+    const src = sha(fs.readFileSync(path.join(ROOT, a.path)));
+    const vs = shotVariants(a);
+    vs.forEach((v) => uploads.push({ name: v.name, sourceHash: `${src}${v.hash}${BROWSER ? '' : '-nobrowser'}`, load: () => screenshot(a.path, v), type: 'image/png' }));
+    html += `<h3>${esc(a.name.startsWith('ek-') ? `Makieta ekranu ${a.name.replace(/\.html$/, '').toUpperCase()}` : `Podgląd: ${a.name}`)}</h3>`
+      + vs.map((v) => `<p><strong>${esc(v.label)}</strong></p><p><ac:image ac:width="760"><ri:attachment ri:filename="${esc(v.name)}" /></ac:image></p>`).join('')
+      + `<p>Klikalną makietę (przełączniki języka, motywu i wielkości tekstu) pobierzesz jako załącznik <ac:link><ri:attachment ri:filename="${esc(a.name)}" /><ac:plain-text-link-body><![CDATA[${a.name}]]></ac:plain-text-link-body></ac:link> i otworzysz w przeglądarce.</p>`;
+  }
+  if (svgs.length) {
+    const cells = svgs.map((a) => `<td><p><ac:image ac:width="160"><ri:attachment ri:filename="${esc(a.name)}" /></ac:image></p><p><code>${esc(a.name)}</code></p></td>`);
+    const rows = [];
+    for (let i = 0; i < cells.length; i += 3) rows.push(`<tr>${cells.slice(i, i + 3).join('')}</tr>`);
+    html += `<h3>Grafiki</h3><table data-layout="default"><tbody>${rows.join('')}</tbody></table>`;
+  }
+  return { uploads, html: html ? h2(emo('blue-star', 'frame_with_picture', '1f5bc'), 'Podgląd i załączniki') + html : '' };
+}
+async function upload(pageId, u) {
+  const data = u.load();
+  if (!data) { console.warn(`  pominięto ${u.name} (brak przeglądarki lub błąd zrzutu)`); return false; }
+  const form = new FormData();
+  form.append('file', new Blob([data], { type: u.type }), u.name);
+  form.append('minorEdit', 'true');
+  const res = await fetch(`${SITE}/wiki/rest/api/content/${pageId}/child/attachment`, {
+    method: 'PUT', headers: { Authorization: AUTH, 'X-Atlassian-Token': 'no-check', Accept: 'application/json' }, body: form,
+  });
+  if (!res.ok) throw new Error(`załącznik ${u.name}: ${res.status} ${(await res.text()).slice(0, 300)}`);
+  return true;
+}
+async function syncAssets(pageId, uploads, known = {}) {
+  const done = { ...known };
+  for (const u of uploads) {
+    if (known[u.name] === u.sourceHash) continue;
+    if (await upload(pageId, u)) { done[u.name] = u.sourceHash; console.log(`  załącznik ${u.name}`); }
+  }
+  return done;
+}
+
+// Plik .svg/.html na wejściu (np. z CI po zmianie makiety) -> publikujemy dokumenty, które go wspominają.
+function documentsReferencing(assetFile) {
+  const base = path.posix.basename(assetFile);
+  const out = execFileSync('git', ['grep', '-l', '-F', base, '--', ...new Set(SECTIONS.map((s) => `${s.prefix}*.md`))], { cwd: ROOT, encoding: 'utf8' });
+  return out.trim().split('\n').filter(Boolean);
+}
+
 async function publish(file) {
   currentFile = file;
   const text = fs.readFileSync(path.join(ROOT, file), 'utf8');
   const doc = parseDoc(text);
-  const body = layoutFor(file)(doc, file);
-  const hash = crypto.createHash('sha256').update(body).digest('hex').slice(0, 16);
+  const plan = assetPlan(referencedAssets(file, text));
+  let body = layoutFor(file)(doc, file);
+  if (plan.html) {
+    // Sekcja podglądu przed „Historią zmian”.
+    const at = body.lastIndexOf('<h2>' + E.clock);
+    body = at >= 0 ? body.slice(0, at) + plan.html + body.slice(at) : body + plan.html;
+  }
+  const hash = sha(body);
   const title = doc.title || path.basename(file, '.md');
-  if (DRY) { fs.writeFileSync(path.join(process.env.TEMP || '/tmp', path.basename(file) + '.storage.xml'), body); console.log(`[dry] ${file} -> „${title}” (${body.length} zn.)`); return; }
+  if (DRY) { fs.writeFileSync(path.join(process.env.TEMP || '/tmp', path.basename(file) + '.storage.xml'), body); console.log(`[dry] ${file} -> „${title}” (${body.length} zn., załączniki: ${plan.uploads.map((u) => u.name).join(', ') || 'brak'})`); return; }
   const parentId = await parentFor(file);
   const found = await findBySource(parentId, file);
   if (!found) {
@@ -332,21 +443,35 @@ async function publish(file) {
       if (!/title|already exists/i.test(e.message)) throw e;
       p = await api('POST', '/api/v2/pages', { spaceId: SPACE_ID, status: 'current', title: `${title} (${path.basename(file, '.md')})`, parentId, body: { representation: 'storage', value: body } });
     }
-    await api('POST', `/api/v2/pages/${p.id}/properties`, { key: PROP, value: { path: file, hash } });
+    const assets = await syncAssets(p.id, plan.uploads);
+    await api('POST', `/api/v2/pages/${p.id}/properties`, { key: PROP, value: { path: file, hash, assets } });
     (await childrenOf(parentId)).push(p);
     console.log(`nowa   ${file} -> ${SITE}/wiki/spaces/TAM/pages/${p.id}`);
     return;
   }
-  if (found.prop.value.hash === hash && found.page.title === title) { console.log(`bez zmian ${file}`); return; }
-  const page = await api('GET', `/api/v2/pages/${found.page.id}`);
-  await api('PUT', `/api/v2/pages/${page.id}`, { id: page.id, status: 'current', title, body: { representation: 'storage', value: body }, version: { number: page.version.number + 1, message: 'Publikacja z repo' } });
-  await api('PUT', `/api/v2/pages/${page.id}/properties/${found.prop.id}`, { key: PROP, value: { path: file, hash }, version: { number: found.prop.version.number + 1 } });
-  console.log(`zmiana ${file} -> ${SITE}/wiki/spaces/TAM/pages/${page.id}`);
+  const known = found.prop.value.assets || {};
+  const assets = await syncAssets(found.page.id, plan.uploads, known);
+  const assetsChanged = JSON.stringify(assets) !== JSON.stringify(known);
+  const bodyChanged = found.prop.value.hash !== hash || found.page.title !== title;
+  if (!bodyChanged && !assetsChanged) { console.log(`bez zmian ${file}`); return; }
+  if (bodyChanged) {
+    const page = await api('GET', `/api/v2/pages/${found.page.id}`);
+    await api('PUT', `/api/v2/pages/${page.id}`, { id: page.id, status: 'current', title, body: { representation: 'storage', value: body }, version: { number: page.version.number + 1, message: 'Publikacja z repo' } });
+  }
+  await api('PUT', `/api/v2/pages/${found.page.id}/properties/${found.prop.id}`, { key: PROP, value: { path: file, hash, assets }, version: { number: found.prop.version.number + 1 } });
+  console.log(`zmiana ${file} -> ${SITE}/wiki/spaces/TAM/pages/${found.page.id}`);
 }
 
+// Wejście: pliki .md z sekcji; pliki .svg/.html zamieniamy na dokumenty, które je wspominają.
+const queue = [];
+for (const f of files.map((x) => x.replace(/\\/g, '/'))) {
+  const list = /\.(svg|html)$/.test(f) ? documentsReferencing(f) : [f];
+  for (const d of list) if (!queue.includes(d)) queue.push(d);
+}
+if (!BROWSER) console.warn('Uwaga: nie znaleziono Chrome/Edge - zrzuty makiet zostaną pominięte (ustaw CHROME_PATH).');
 let failed = 0;
-for (const f of files) {
-  try { await publish(f.replace(/\\/g, '/')); }
+for (const f of queue) {
+  try { await publish(f); }
   catch (e) { failed++; console.error(`BŁĄD   ${f}: ${e.message}`); }
 }
 if (failed) { console.error(`Nieudane: ${failed}`); process.exitCode = 1; }

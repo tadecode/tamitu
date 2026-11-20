@@ -49,11 +49,25 @@ export class AppError extends Error {
   }
 }
 
-/** Safe, content-free classification of any thrown value: class name and code only. */
+/**
+ * SEC-19: allow-list for values that reach the log. Library codes (Firebase, gRPC, Node) are
+ * short identifiers like `auth/id-token-revoked`, `ECONNRESET` or `5`; anything else (spaces,
+ * quotes, longer text that could carry input fragments) becomes `unknown`. Never truncated:
+ * a cut value could still leak a prefix of the input.
+ */
+export const ERROR_CODE_PATTERN = /^[A-Za-z0-9_./:-]{1,60}$/;
+/** Class names: JS identifier characters only, max 60. */
+export const ERROR_CLASS_PATTERN = /^[A-Za-z_$][A-Za-z0-9_$]{0,59}$/;
+
+function allowed(value: string, pattern: RegExp): string {
+  return pattern.test(value) ? value : "unknown";
+}
+
+/** Safe, content-free classification of any thrown value: class name and code only (SEC-19). */
 export function classifyError(e: unknown): { errorClass: string; errorCode: string } {
   if (e instanceof AppError) return { errorClass: "AppError", errorCode: e.appCode };
-  const errorClass = e instanceof Error ? e.constructor.name : typeof e;
+  const rawClass = e instanceof Error ? e.constructor.name : typeof e;
   const raw = (e as { code?: unknown } | null)?.code;
-  const errorCode = typeof raw === "string" || typeof raw === "number" ? String(raw).slice(0, 60) : "unknown";
-  return { errorClass: errorClass.slice(0, 60), errorCode };
+  const rawCode = typeof raw === "string" || (typeof raw === "number" && Number.isFinite(raw)) ? String(raw) : "";
+  return { errorClass: allowed(rawClass, ERROR_CLASS_PATTERN), errorCode: allowed(rawCode, ERROR_CODE_PATTERN) };
 }

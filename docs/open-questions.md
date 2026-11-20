@@ -229,3 +229,9 @@ Analiza: `docs/requirements/idea-kredyty-sloneczka.md`. Pytania nie blokują MVP
 | OC8 | **[po MVP]** Co z niewykorzystanym saldem przy usunięciu konta? | analyst → owner, [PRAWNIK] | otwarte | Przepada po wyraźnym ostrzeżeniu; nie wraca przy ponownym założeniu konta – po opinii prawnika (P-L4) | US-K07, US-010 |
 | OC9 | **[po MVP]** Czy oferować „plan premium" (wyższa klasa modelu) za więcej słoneczek? | analyst → owner | otwarte | Nie na start; jeden poziom jakości | analiza 1.1 |
 | OC10 | **[po MVP]** Reklamacja jakości planu: czy zwracamy słoneczko? | analyst → owner | otwarte | Ręcznie przez wsparcie, uznaniowo; bez automatu | analiza 2.3, P-L6 |
+
+## Granice limitów w `config/runtime` (SEC-22, TAM-60), mobile-dev, 2026-11-20
+
+| # | Pytanie | Zadaje | Status | Propozycja domyślna | Skutek |
+|---|---|---|---|---|---|
+| O-SEC22-1 | Jakie zakresy dopuszczać dla `config/runtime.perUserDailyLimit` i `globalDailyLimit`? ADR-0002/ADR-0014 podają tylko wartości (5 i 25), nie granice. Wartość spoza zakresu → wartość domyślna (fail-closed) | mobile-dev → architect, owner | **odpowiedziane 2026-11-20 (właściciel: „Tak, zatwierdzam”)** – granice 1–20 na konto i 1–100 globalnie zatwierdzone | Na konto 1–20 (OC6 zakłada 15 po zakupie kredytów); globalnie 1–100 (4× obecny pułap 25; przy Flash-Lite poniżej budżetu, przy Flash ok. 250–300 PLN/mies. – podniesienie powyżej wymaga zmiany kodu i przeglądu, ADR-0002 Aneks A pkt 5b). Wyłączenie AI – przez `aiEnabled=false`, nie przez limit 0 | `backend/functions/src/config.ts` (`LIMIT_BOUNDS`); zmiana zakresu = mały PR |

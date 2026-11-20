@@ -4,6 +4,7 @@
 #
 #   task.ps1 list [-Column owner] [-Role mobile-dev] [-All]   lista (domyślnie bez Done)
 #   task.ps1 show SEC-35                                       szczegóły i komentarze (działa też: show TAM-12)
+#   (ID farmy jest w polu „Farm Id”; tytuł piszemy prosto, bez kodu, dla człowieka)
 #   task.ps1 new  P3-15 -Title "..." -Role mobile-dev [-Column todo] [-Related "US-004, ADR-0002"] [-Notes "..."] [-Pr 61]
 #   task.ps1 move P3-04 owner [-Note "PR #61 czeka na merge"] [-Pr 61]
 #   task.ps1 note P3-04 "tekst komentarza" [-Pr 61]
@@ -28,7 +29,6 @@ function Get-Task($index) {
     if (-not $i) { throw "Nie ma zadania $Id w Jirze ($JiraBoardUrl)." }
     $i
 }
-function Get-Roles($labels) { (($labels | Where-Object { $_ -like 'rola:*' } | ForEach-Object { $_.Substring(5) }) -join '/') }
 
 switch ($Command) {
     'list' {
@@ -38,22 +38,22 @@ switch ($Command) {
         $index.Items.GetEnumerator() | ForEach-Object {
             $f = $_.Value.fields
             [pscustomobject]@{
-                ID = $_.Key; Klucz = $_.Value.key; Status = $f.status.name; Rola = Get-Roles $f.labels
+                ID = $_.Key; Klucz = $_.Value.key; Status = $f.status.name; Rola = Get-JiraRoles $_.Value; Kto = $f.assignee.displayName
                 Blok = if ($f.labels -contains 'zablokowane') { 'tak' } else { '' }
                 Tytul = ($f.summary -replace "^$([regex]::Escape($_.Key)):\s*", '')
             }
         } | Where-Object {
             ($All -or $_.Status -ne 'Done') -and (-not $col -or $_.Status -eq $JiraColumns[$col]) -and (-not $Role -or $_.Rola -match [regex]::Escape($Role))
         } | Sort-Object @{ e = { $order.IndexOf($_.Status) } }, ID |
-            Format-Table -AutoSize -Wrap ID, Klucz, Status, Rola, Blok, @{ n = 'Tytuł'; e = { if ($_.Tytul.Length -gt 80) { $_.Tytul.Substring(0, 77) + '...' } else { $_.Tytul } } }
+            Format-Table -AutoSize -Wrap ID, Klucz, Status, Rola, Kto, Blok, @{ n = 'Tytuł'; e = { if ($_.Tytul.Length -gt 80) { $_.Tytul.Substring(0, 77) + '...' } else { $_.Tytul } } }
     }
     'show' {
         Need-Id
         $i = Get-Task (Get-JiraIndex)
-        $i = Invoke-Jira -Uri "issue/$($i.key)?fields=summary,status,labels,description,parent"
+        $i = Invoke-Jira -Uri "issue/$($i.key)?fields=summary,status,labels,description,parent,assignee,$(Get-JiraRoleField)"
         $f = $i.fields
-        "$($i.key)  $($f.summary)"
-        "Status: $($f.status.name)   Rola: $(Get-Roles $f.labels)   Etykiety: $($f.labels -join ', ')"
+        "$Id ($($i.key))  $($f.summary)"
+        "Status: $($f.status.name)   Rola: $(Get-JiraRoles $i)   Przypisane: $($f.assignee.displayName)   Etykiety: $($f.labels -join ', ')"
         if ($f.parent) { "Epik: $($f.parent.fields.summary)" }
         "Link: $AtlassianSite/browse/$($i.key)"
         ''
@@ -73,18 +73,22 @@ switch ($Command) {
         $index = Get-JiraIndex
         if ($index.Items[$Id]) { throw "Zadanie $Id już istnieje ($($index.Items[$Id].key))." }
         $col = Resolve-JiraColumn ($(if ($Column) { $Column } else { 'todo' }))
-        $roles = $Role -split '[/,\s]+' | Where-Object { $_ }
-        $labels = @("id:$Id") + ($roles | ForEach-Object { "rola:$_" })
+        $labels = @()
         $text = "Rola: $Role"
         if ($Related) { $text += "`n`nPowiązane: $Related" }
         if ($Notes) { $text += "`n`nUwagi: $Notes" }
         $epic = Get-JiraEpic $Id $index
         $type = if ($Id -like 'BUG-*') { 'Bug' } else { 'Task' }
-        $i = Invoke-Jira -Method post -Uri 'issue' -Body @{ fields = @{
-                    project = @{ key = $JiraProject }; issuetype = @{ name = $type }; summary = "${Id}: $Title"
-                    labels = $labels; description = (ConvertTo-Adf $text); parent = @{ key = $epic.key }
-                } }
+        # Tytuł bez kodu (czytelny dla człowieka); ID farmy trafia do pola „Farm Id”.
+        $fields = @{
+            project = @{ key = $JiraProject }; issuetype = @{ name = $type }; summary = ($Title -replace "^$([regex]::Escape($Id)):\s*", '')
+            labels = $labels; description = (ConvertTo-Adf $text); parent = @{ key = $epic.key }
+        }
+        $fields[(Get-JiraFarmIdField)] = $Id
+        $fields[(Get-JiraRoleField)] = ConvertTo-JiraRoles $Role
+        $i = Invoke-Jira -Method post -Uri 'issue' -Body @{ fields = $fields }
         if ($col -ne 'todo') { Set-JiraColumn $i.key $col }
+        Set-JiraAssigneeFor $i.key $col
         Add-JiraPrLink $i.key $Pr
         "Utworzono $Id = $($i.key) -> $($JiraColumns[$col])  ($AtlassianSite/browse/$($i.key))"
     }
@@ -94,6 +98,7 @@ switch ($Command) {
         $col = Resolve-JiraColumn $Arg
         $i = Get-Task (Get-JiraIndex)
         if ($i.fields.status.name -ne $JiraColumns[$col]) { Set-JiraColumn $i.key $col }
+        Set-JiraAssigneeFor $i.key $col
         Add-JiraPrLink $i.key $Pr
         if ($Note) { Add-JiraComment $i.key $Note $Pr }
         "${Id} ($($i.key)): $($i.fields.status.name) -> $($JiraColumns[$col])"

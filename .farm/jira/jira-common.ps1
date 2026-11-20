@@ -3,10 +3,11 @@
 # Działa na koncie Farm Bot (token w Menedżerze poświadczeń: .farm/atlassian/set-token.ps1 jira).
 #
 # Model:
-#   - zadanie = Task (BUG-* = Bug); ID farmy (np. SEC-35) w etykiecie `id:SEC-35` i na początku tytułu,
-#     klucz Jiry (TAM-12) jest dodatkowy; task.ps1 przyjmuje oba,
-#   - epik = Epic z etykietą `epic:SEC`; zadanie wskazuje epik polem parent,
-#   - role = etykiety `rola:mobile-dev`, blokada = etykieta `zablokowane`,
+#   - zadanie = Task (BUG-* = Bug); ID farmy (np. SEC-35) w polu „Farm Id” (tekst), tytuł bez kodu,
+#     czytelny dla człowieka; klucz Jiry (TAM-12) jest dodatkowy; task.ps1 przyjmuje oba,
+#   - epik = Epic z „Farm Id” = prefiks (np. SEC); zadanie wskazuje epik polem parent,
+#   - role = pole „Agent role” (Checkbox); zadanie czekające na człowieka (kolumna Owner Review)
+#     jest przypisane do właściciela, reszta do Farm Bota; blokada = etykieta `zablokowane`,
 #   - PR = link zdalny do GitHuba.
 . (Join-Path $PSScriptRoot '..\atlassian\atlassian-common.ps1')
 
@@ -93,19 +94,47 @@ function ConvertFrom-Adf($Node) {
     }
 }
 
-# Wszystkie zadania i epiki projektu: @{ Items = @{ID farmy -> issue}; Epics = @{klucz epiku -> issue}; Keys = @{TAM-n -> ID farmy} }
+# Pole „Farm Id” (tekst) - szukane po nazwie, żeby skrypt nie zależał od numeru customfield.
+function Get-JiraFarmIdField {
+    if (-not $script:FarmIdField) {
+        $f = (Invoke-Jira -Uri 'field') | Where-Object { $_.custom -and $_.name -eq 'Farm Id' } | Select-Object -First 1
+        if (-not $f) { throw 'Brak pola „Farm Id” w Jirze (projekt TAM, typy Task, Bug, Epic).' }
+        $script:FarmIdField = $f.id
+    }
+    $script:FarmIdField
+}
+function Get-FarmId($Issue) { $Issue.fields.(Get-JiraFarmIdField) }
+
+# Pole „Agent role” (Checkbox, wiele ról): analyst, architect, data-analyst, dba, mobile-dev, orchestrator,
+# qa, reviewer, security, steward, ux. Zadania czekające na człowieka są przypisane do właściciela.
+function Get-JiraRoleField {
+    if (-not $script:RoleField) {
+        $f = (Invoke-Jira -Uri 'field') | ForEach-Object { $_ } | Where-Object { $_.custom -and $_.name -eq 'Agent role' -and $_.schema.type -eq 'array' } | Select-Object -First 1
+        if (-not $f) { throw 'Brak pola „Agent role” (Checkbox) w Jirze.' }
+        $script:RoleField = $f.id
+    }
+    $script:RoleField
+}
+function Get-JiraRoles($Issue) { (@($Issue.fields.(Get-JiraRoleField)) | Where-Object { $_ } | ForEach-Object { $_.value }) -join '/' }
+function ConvertTo-JiraRoles([string]$Role) {
+    $alias = @{ developer = 'mobile-dev'; devops = 'steward'; designer = 'ux'; 'farm-builder' = 'orchestrator' }
+    @($Role -split '[/,\s]+' | Where-Object { $_ -and $_ -ne 'owner' } | ForEach-Object { $r = $_.ToLower(); if ($alias[$r]) { $alias[$r] } else { $r } } | Select-Object -Unique | ForEach-Object { @{ value = $_ } })
+}
+
+# Wszystkie zadania i epiki projektu: @{ Items = @{ID farmy -> issue}; Epics = @{prefiks epiku -> issue}; Keys = @{TAM-n -> ID farmy} }
 function Get-JiraIndex {
     $items = @{}; $epics = @{}; $keys = @{}
     $token = $null
+    $fid = Get-JiraFarmIdField
     do {
-        $body = @{ jql = "project = $JiraProject ORDER BY created ASC"; maxResults = 100; fields = @('summary', 'status', 'labels', 'issuetype', 'parent', 'created') }
+        $body = @{ jql = "project = $JiraProject ORDER BY created ASC"; maxResults = 100; fields = @('summary', 'status', 'labels', 'issuetype', 'parent', 'created', 'assignee', $fid, (Get-JiraRoleField)) }
         if ($token) { $body.nextPageToken = $token }
         $r = Invoke-Jira -Method post -Uri 'search/jql' -Body $body
         foreach ($i in $r.issues) {
-            foreach ($l in $i.fields.labels) {
-                if ($l -like 'id:*' -and -not $items[$l.Substring(3)]) { $items[$l.Substring(3)] = $i; $keys[$i.key] = $l.Substring(3) }
-                if ($l -like 'epic:*' -and -not $epics[$l.Substring(5)]) { $epics[$l.Substring(5)] = $i }
-            }
+            $id = $i.fields.$fid
+            if (-not $id) { continue }
+            if ($i.fields.issuetype.name -eq 'Epic') { if (-not $epics[$id]) { $epics[$id] = $i } }
+            elseif (-not $items[$id]) { $items[$id] = $i; $keys[$i.key] = $id }
         }
         $token = $r.nextPageToken
     } while ($token -and -not $r.isLast)
@@ -121,9 +150,9 @@ function Get-JiraEpic([string]$TaskId, $Index) {
     $key = Get-JiraEpicKey $TaskId
     if ($Index.Epics[$key]) { return $Index.Epics[$key] }
     $title = if ($JiraEpics[$key]) { $JiraEpics[$key] } else { $key }
-    $e = Invoke-Jira -Method post -Uri 'issue' -Body @{ fields = @{
-                project = @{ key = $JiraProject }; issuetype = @{ name = 'Epic' }; summary = $title; labels = @("epic:$key")
-            } }
+    $fields = @{ project = @{ key = $JiraProject }; issuetype = @{ name = 'Epic' }; summary = $title }
+    $fields[(Get-JiraFarmIdField)] = $key
+    $e = Invoke-Jira -Method post -Uri 'issue' -Body @{ fields = $fields }
     $Index.Epics[$key] = $e
     $e
 }
@@ -142,6 +171,18 @@ function Set-JiraColumn([string]$Key, [string]$Column) {
     $t = (Invoke-Jira -Uri "issue/$Key/transitions").transitions | Where-Object { $_.to.name -eq $target } | Select-Object -First 1
     if (-not $t) { throw "Brak przejścia do '$target' dla $Key." }
     $null = Invoke-Jira -Method post -Uri "issue/$Key/transitions" -Body @{ transition = @{ id = $t.id } }
+}
+
+# Przypisanie: kolumna `owner` (czeka na człowieka) -> właściciel, pozostałe -> Farm Bot.
+function Set-JiraAssigneeFor([string]$Key, [string]$Column) {
+    if (-not $script:BotAccount) {
+        $script:BotAccount = (Invoke-Jira -Uri 'myself').accountId
+        # ConvertFrom-Json w PS 5.1 zwraca tablicę JSON jako jeden obiekt - rozwijamy ją przez ForEach-Object.
+        $users = Invoke-Jira -Uri "user/assignable/search?project=$JiraProject&maxResults=50"
+        $script:OwnerAccount = ($users | ForEach-Object { $_ } | Where-Object { $_.accountId -ne $script:BotAccount } | Select-Object -First 1).accountId
+    }
+    $acc = if ($Column -eq 'owner' -and $script:OwnerAccount) { $script:OwnerAccount } else { $script:BotAccount }
+    $null = Invoke-Jira -Method put -Uri "issue/$Key/assignee" -Body @{ accountId = $acc }
 }
 
 function Add-JiraComment([string]$Key, [string]$Text, [int]$Pr) {

@@ -7,8 +7,8 @@ import { onMessagePublished } from "firebase-functions/v2/pubsub";
 import { stubModel } from "./ai.js";
 import {
   assertStartupConfig,
+  parseRuntimeConfig,
   parseStaticConfig,
-  SAFE_RUNTIME_DEFAULTS,
   type RuntimeConfig,
 } from "./config.js";
 import {
@@ -36,18 +36,8 @@ if (getApps().length === 0) initializeApp();
 
 async function loadRuntime(): Promise<RuntimeConfig> {
   const snap = await getFirestore().doc("config/runtime").get();
-  const d = snap.data();
-  if (!d) return SAFE_RUNTIME_DEFAULTS;
-  return {
-    aiEnabled: d["aiEnabled"] === true,
-    allowRealData: d["allowRealData"] === true,
-    testUids: Array.isArray(d["testUids"]) ? d["testUids"].filter((x): x is string => typeof x === "string") : [],
-    perUserDailyLimit: Number.isInteger(d["perUserDailyLimit"]) ? d["perUserDailyLimit"] : SAFE_RUNTIME_DEFAULTS.perUserDailyLimit,
-    globalDailyLimit: Number.isInteger(d["globalDailyLimit"]) ? d["globalDailyLimit"] : SAFE_RUNTIME_DEFAULTS.globalDailyLimit,
-    // Raw strings; format checked fail-closed in consents.currentVersionNumbers (ADR-0012 pkt 4).
-    policyVersionCurrent: typeof d["policyVersionCurrent"] === "string" ? d["policyVersionCurrent"] : undefined,
-    aiConsentVersionCurrent: typeof d["aiConsentVersionCurrent"] === "string" ? d["aiConsentVersionCurrent"] : undefined,
-  };
+  // Parsing and bounds live in config.ts (SEC-22, unit-tested).
+  return parseRuntimeConfig(snap.data());
 }
 
 /** Latest record of one type; uses the existing index (type ASC, receivedAt DESC). ADR-0012 pkt 3. */
