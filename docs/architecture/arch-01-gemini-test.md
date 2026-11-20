@@ -1,6 +1,6 @@
 # ARCH-01: test modeli Gemini 3.x na Vertex AI (dev) przed P3-05
 
-Stan: 2026-11-18, autor: architect. Wykonuje: **właściciel** (sam loguje się do `gcloud`; agenci nie mają dostępu do GCP).
+Stan: **2026-11-20** (decyzja właściciela: najpierw Flash-Lite; poprzednio 2026-11-18), autor: architect. Wykonuje: **właściciel** (sam loguje się do `gcloud`; agenci nie mają dostępu do GCP).
 Podstawa: ADR-0001 (pkt 2–3) i Aneks B (proponowany, pkt 2–4), ADR-0014, `docs/security/review-SEC-17-iam.md` (B-1),
 koszty: `docs/architecture/costs.md` (v2026-11-18).
 
@@ -8,6 +8,13 @@ Cel: (1) potwierdzić, na którym punkcie końcowym UE (`europe-west4` czy `eu`)
 (2) zmierzyć na 5 fikcyjnych przypadkach w kształcie `generatePlan` czas, tokeny i zgodność ze schematem;
 (3) dać podstawę do wyboru `AI_MODEL_ID` na start P3-05. To **test wstępny**, nie pełna ewaluacja z ADR-0001
 pkt 2 (min. 20 przypadków × PL/EN, kryterium ≥ 95%) – ta zostaje w P3.
+
+**Kolejność – decyzja właściciela 2026-11-20** („najpierw Flash-Lite w ARCH-01, może wystarczy do prostych rzeczy";
+cel: jak najniższy koszt; ADR-0001 Aneks B pkt 7):
+- **Etap A (zawsze):** `gemini-3.1-flash-lite`, potem `gemini-3.5-flash-lite`, oba z `thinkingLevel=MINIMAL`.
+- **Etap B (tylko gdy żaden Flash-Lite nie spełni kryterium „wystarczy" z sekcji 4.6):** `gemini-3.8-flash` (`LOW` – niżej się nie da).
+- `gemini-3.5-flash` **nie jest testowany** w ARCH-01 (droższy od 3.8 Flash przy krótszym cyklu życia); tylko na osobną
+  decyzję właściciela, gdyby 3.8 Flash też zawiódł.
 
 ## 1. Ustalenia z dokumentacji Google (odczyt 2026-11-18, strony „Last updated 2026-11-18 UTC")
 
@@ -37,19 +44,28 @@ Wnioski (do potwierdzenia testem z sekcji 4):
 | W2 | Projekt **dev**, nie prod | W poleceniach jawnie `$p='tamitu-dev-tadecode'` |
 | W3 | Bez narzędzi, groundingu, jawnych cache (`cachedContents`), „request-response logging" | Skrypt poniżej ich nie używa; niczego nie włączać w konsoli |
 | W4 | Dane wyłącznie fikcyjne, **zero danych osobowych** | Używać tylko przypadków C1–C5 z sekcji 5; nie wpisywać własnych podróży, nazwisk, adresów, numerów lotów |
-| W5 | Budżet dev 20 PLN – sprawdzić bieżące zużycie | Konsola → Billing → Reports (projekt dev, bieżący miesiąc). Jeśli zużycie > 10 PLN – test przełożyć |
+| W5 | Budżet dev 20 PLN i spend cap `aiplatform` dev 15 PLN (ADR-0014) – sprawdzić bieżące zużycie | Konsola → Billing → Reports (projekt dev, bieżący miesiąc, usługa Vertex AI). Jeśli zużycie Vertex AI > 12 PLN – test przełożyć (cap może zatrzymać przebieg w połowie) |
 | W6 | Zalogowanie właściciela | `gcloud auth login` (przeglądarka, 2FA). Konto Owner w dev ma `aiplatform.endpoints.predict`. **Nie tworzyć kluczy kont usług ani kluczy API** |
 | W7 | API `aiplatform` włączone w dev | Runbook P3-03, etap 5/9 – zrobione 2026-11-18 |
 
 ## 3. Limit kosztu testu
 
-- Zakres: 8 wywołań sondujących (4 modele × 2 punkty, `maxOutputTokens` 256) + 20 wywołań testowych
-  (4 modele × 5 przypadków, `maxOutputTokens` 10 000), **jeden przebieg**, bez powtórek (wyjątek: jedno ponowienie
-  przy błędzie 429/503).
-- Szacunek najgorszy (każde wywołanie: 1 500 tokenów wejścia + 10 000 wyjścia/myślenia, cena standardowa „Non-global",
-  kurs 4,0 PLN/USD – do weryfikacji w P3-10): **ok. 4,7 PLN**. Oczekiwany: **ok. 1–3 PLN**.
-- **Limit testu: 6 PLN** (30% budżetu dev). Skrypt liczy koszt szacunkowy po każdym wywołaniu i **przerywa
-  po przekroczeniu 5 PLN**. Rozliczenie w Billing pojawia się z opóźnieniem (godziny) – sprawdzić następnego dnia.
+- Zakres na etap: 2 wywołania sondujące na model (2 punkty, `maxOutputTokens` 256) + 5 wywołań testowych na model
+  (przypadki C1–C5, `maxOutputTokens` 10 000), **jeden przebieg**, bez powtórek (wyjątek: jedno ponowienie przy błędzie 429/503).
+  Etap A: 2 modele (4 sondy + 10 wywołań). Etap B (warunkowy): 1 model (2 sondy + 5 wywołań).
+- Szacunek (najgorszy: każde wywołanie 1 500 tokenów wejścia + 10 000 wyjścia/myślenia; oczekiwany: plany z `costs.md`
+  sekcja 2, C3 jako plan maksymalny; cena standardowa „Non-global", kurs 4,0 PLN/USD – do weryfikacji w P3-10):
+
+  | Etap | Modele | Najgorszy | Oczekiwany | Przerwanie skryptu (`$stopPln`) |
+  |---|---|---|---|---|
+  | A | `3.1-flash-lite`, `3.5-flash-lite` (MINIMAL) | ok. 0,9 PLN | ok. 0,2–0,4 PLN | 1,5 PLN |
+  | B (warunkowy) | `3.8-flash` (LOW) | ok. 1,7 PLN | ok. 0,6–1,0 PLN (zależnie od myślenia) | 2,5 PLN (łącznie z A) |
+  | **Razem A+B** | | **ok. 2,6 PLN** | **ok. 0,8–1,4 PLN** | |
+  | *Poprzednio (4 modele naraz, 2026-11-18)* | | *ok. 4,7 PLN* | *ok. 1–3 PLN* | *5 PLN* |
+
+  Gdy wystarczy etap A, test kosztuje **poniżej 1 PLN** (ok. 5× mniej niż wariant z 4 modelami).
+- **Limit testu: 3 PLN** (15% budżetu dev, 20% capu dev). Skrypt liczy koszt szacunkowy po każdym wywołaniu
+  i przerywa po przekroczeniu `$stopPln`. Rozliczenie w Billing pojawia się z opóźnieniem (godziny) – sprawdzić następnego dnia.
 - Koszt pokrywa kredyt okresu próbnego; budżet dev („kredyty nieodliczane") widzi kwotę brutto.
 
 ## 4. Krok po kroku (PowerShell, katalog roboczy poza repozytorium)
@@ -62,7 +78,8 @@ Wyniki (surowe odpowiedzi, CSV) zapisują się w `%TEMP%\tamitu-arch01` – **ni
 $p   = 'tamitu-dev-tadecode'
 $out = Join-Path $env:TEMP 'tamitu-arch01'; New-Item -ItemType Directory -Force $out | Out-Null
 $h   = @{ Authorization = "Bearer $(gcloud auth print-access-token)"; 'x-goog-user-project' = $p }
-$models = 'gemini-3.5-flash','gemini-3.8-flash','gemini-3.5-flash-lite','gemini-3.1-flash-lite'
+$models = 'gemini-3.1-flash-lite','gemini-3.5-flash-lite'   # etap A; etap B: $models = 'gemini-3.8-flash' (sekcja 4.5)
+$spentPln = 0.0; $results = @()                             # licznik wspólny dla etapów A i B
 function Get-VertexUri([string]$loc, [string]$model) {
   if ($loc -eq 'eu') { $hn = 'aiplatform.eu.rep.googleapis.com' } else { $hn = "$loc-aiplatform.googleapis.com" }
   "https://$hn/v1/projects/$p/locations/$loc/publishers/google/models/${model}:generateContent"
@@ -90,7 +107,7 @@ foreach ($loc in 'europe-west4','eu') { foreach ($m in $models) {
 ```
 Zapisać wynik każdej pary (OK / kod błędu, np. 404 „not found / not supported in location"). Oczekiwane:
 `europe-west4` → błąd dla wszystkich, `eu` → OK dla wszystkich (sekcja 1). Model bez OK na żadnym punkcie UE
-odpada z dalszego testu.
+odpada z dalszego testu. Sonda dotyczy modeli bieżącego etapu (`$models`); w etapie B uruchomić ją ponownie dla `gemini-3.8-flash`.
 
 ### 4.3 Prompt testowy, schemat i przypadki
 Prompt **testowy** (nie produkcyjny; prompt P3-05 powstaje w `backend/functions/src/prompt`), po angielsku, język
@@ -155,16 +172,20 @@ function Test-Plan([string]$json, $c) {
 }
 ```
 
-### 4.5 Przebieg testu (20 wywołań, stop przy 5 PLN)
+### 4.5 Przebieg testu (etap A: 10 wywołań, stop przy 1,5 PLN; etap B: 5 wywołań, stop przy 2,5 PLN łącznie)
 Ustawić `$loc` wg wyniku sondy (4.2): `europe-west4`, jeśli model tam działa, w przeciwnym razie `eu`.
 Ceny „Non-global" z `costs.md` (2026-11-18; dla 3.8 Flash cena standardowa od 2027-01-01 – ostrożnie).
+**Etap A:** uruchomić blok poniżej z `$models` z 4.1 i `$stopPln = 1.5`, potem ocena 4.6. **Etap B – tylko gdy
+żaden Flash-Lite nie spełnił kryterium 4.6:** w tej samej sesji PowerShell ustawić `$models = 'gemini-3.8-flash'`,
+`$stopPln = 2.5`, wykonać sondę 4.2 i ponownie ten blok (wyniki dopisują się do `$results`, licznik kosztu jest wspólny).
 ```powershell
 $loc = 'eu'   # albo 'europe-west4', jeśli sonda 4.2 dała OK
+$stopPln = 1.5   # etap A; etap B: 2.5
 $price = @{ 'gemini-3.8-flash' = @(1.65, 8.25); 'gemini-3.5-flash' = @(1.65, 9.90)
             'gemini-3.5-flash-lite' = @(0.33, 2.75); 'gemini-3.1-flash-lite' = @(0.275, 1.65) }  # USD / 1M tokenów
-$usdPln = 4.0; $spentPln = 0.0; $results = @()
+$usdPln = 4.0
 :outer foreach ($m in $models) { foreach ($c in $cases) {
-  if ($spentPln -gt 5.0) { Write-Warning "Limit 5 PLN przekroczony ($spentPln) - STOP"; break outer }
+  if ($spentPln -gt $stopPln) { Write-Warning "Limit $stopPln PLN przekroczony ($spentPln) - STOP"; break outer }
   $lvl  = if ($m -eq 'gemini-3.8-flash') { 'LOW' } else { 'MINIMAL' }
   $user = @{ planLanguage = $c.lang; trip = $c.trip; preferences = $c.prefs; day1EarliestStart = $c.floor } | ConvertTo-Json -Depth 10
   $body = @{ systemInstruction = @{ parts = @(@{ text = $sys }) }
@@ -194,9 +215,20 @@ $results | Format-Table model, case, seconds, inTok, outTok, thoughtTok, finish,
 Jeśli `finish` ≠ `STOP` (np. `MAX_TOKENS`) – przypadek liczy się jako niezgodny. Jeśli `inTok` > 2 000 albo
 `outTok + thoughtTok` > 10 000 w którymkolwiek wywołaniu – przerwać i zgłosić architektowi (założenia kosztów).
 
-### 4.6 Ocena ręczna (krótka)
-Dla każdego modelu otworzyć `C1` i `C2` w `%TEMP%\tamitu-arch01`: czy opisy są w języku przypadku (PL/EN), czy
-nazwy miejsc są realne i sensowne (bez wymyślonych obiektów), czy dzień 1 w C4 jest pusty. Ocena: OK / uwagi.
+### 4.6 Kryterium „wystarczy" (ocena modelu Flash-Lite; ta sama miara dla 3.8 Flash w etapie B)
+Model **wystarczy**, gdy spełnia **wszystkie** warunki K1–K4. Ocena ręczna (K3) – właściciel, wszystkie 5 przypadków
+w `%TEMP%\tamitu-arch01`, ok. 10 min na model; w razie wątpliwości przy K3 rozstrzyga „nie wystarczy" tylko błąd, który
+użytkownik zauważyłby i który wprowadza w błąd (np. nieistniejące miejsce), a nie styl.
+
+| # | Warunek | Jak sprawdzić | Próg |
+|---|---|---|---|
+| K1 | Kontrakt techniczny | Kolumna `schemaOk` i `finish` z 4.5 (schemat, liczba dni, punkty wg tempa, godziny rosnące, dzień 1 od progu, C4 pusty dzień 1, długości, brak URL) | **5/5** zgodne, `finish = STOP` |
+| K2 | Wydajność | `seconds` dla C3 (14 dni intensywnie); `thoughtTok` | C3 **< 40 s**; myślenie ≤ 1 000 tokenów na wywołanie (przy MINIMAL zwykle ok. 0) |
+| K3 | Treść – fakty | Każde miejsce: rozpoznawalne, istniejące, publicznie dostępne, w podanej miejscowości lub w rozsądnym zasięgu wycieczki dziennej | **0 miejsc wymyślonych**; najwyżej **1 na przypadek** wątpliwe (np. zamknięte, źle przypisana miejscowość) |
+| K4 | Treść – użyteczność | (a) opisy w całości w języku przypadku (PL/EN; nazwy własne w oryginale dopuszczalne); (b) każde zainteresowanie z `prefs.interests` pojawia się co najmniej raz w planie; (c) brak tego samego miejsca w dwóch dniach; (d) punkty jednego dnia w jednej okolicy, kolejność geograficznie sensowna (bez przeskoków tam i z powrotem przez miasto); (e) opisy konkretne (co zobaczyć / dlaczego), nie ogólniki typu „piękne miejsce warte odwiedzenia" | (a)–(c) **bez wyjątku**; (d)–(e) uwagi dopuszczalne w najwyżej **1 z 5** przypadków |
+
+Wynik zapisać jako „wystarczy: tak / nie" z listą uwag (sekcja 6, kolumna „Kryterium 4.6"). Pełna ewaluacja P3
+(ADR-0001 pkt 2: min. 40 wywołań, ≥ 95%) i tak potwierdza wybór – K1–K4 to próg dopuszczenia do niej jako modelu startowego.
 
 ### 4.7 Sprzątanie
 Usunąć `%TEMP%\tamitu-arch01` po przepisaniu tabeli (sekcja 6). `gcloud auth revoke` – opcjonalnie.
@@ -218,35 +250,36 @@ Data testu: ____  W1 `disableCache=True`: tak / nie  Koszt w Billing (D+1): ____
 
 **Sonda punktów (4.2)**
 
-| Model | `europe-west4` | `eu` | `modelVersion` |
-|---|---|---|---|
-| `gemini-3.5-flash` | | | |
-| `gemini-3.8-flash` | | | |
-| `gemini-3.5-flash-lite` | | | |
-| `gemini-3.1-flash-lite` | | | |
+| Etap | Model | `europe-west4` | `eu` | `modelVersion` |
+|---|---|---|---|---|
+| A | `gemini-3.1-flash-lite` | | | |
+| A | `gemini-3.5-flash-lite` | | | |
+| B (warunkowo) | `gemini-3.8-flash` | | | |
 
 **Przebieg (4.5) – podsumowanie na model**
 
-| Model | Punkt | Zgodne 5/5? (lista błędów) | Śr. czas [s] | Czas C3 [s] | Śr. tokeny wej. | Śr. tokeny wyj. | Śr. tokeny myśl. | Tokeny wyj.+myśl. C3 | Koszt szac. [PLN] | Język i treść (4.6) |
-|---|---|---|---|---|---|---|---|---|---|---|
-| `gemini-3.5-flash` | | | | | | | | | | |
-| `gemini-3.8-flash` | | | | | | | | | | |
-| `gemini-3.5-flash-lite` | | | | | | | | | | |
-| `gemini-3.1-flash-lite` | | | | | | | | | | |
+| Etap | Model | Punkt | Zgodne 5/5? (lista błędów) | Śr. czas [s] | Czas C3 [s] | Śr. tokeny wej. | Śr. tokeny wyj. | Śr. tokeny myśl. | Tokeny wyj.+myśl. C3 | Koszt szac. [PLN] | Kryterium 4.6 (K1–K4: wystarczy tak/nie, uwagi) |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| A | `gemini-3.1-flash-lite` | | | | | | | | | | |
+| A | `gemini-3.5-flash-lite` | | | | | | | | | | |
+| B | `gemini-3.8-flash` (tylko gdy A: oba „nie") | | | | | | | | | | |
 
 ## 7. Rekomendacja modelu – zależna od wyników
 
 Kolejność kosztowa (cena „Non-global", plan typowy, bez myślenia – `costs.md` sekcja 2):
 `3.1-flash-lite` (0,015 PLN) < `3.5-flash-lite` (0,024) < `3.8-flash` (0,038 promocyjnie do 2026-12-31; 0,076 od 2027)
 < `3.5-flash` (0,090). `gemini-3.8-flash` jest tańszy od `gemini-3.5-flash` (wyjście 8,25 vs 9,90 USD/1 mln)
-i ma dłuższy cykl życia – w klasie Flash wybieramy 3.5 Flash tylko, gdy 3.8 Flash zawiedzie.
+i ma dłuższy cykl życia – dlatego w etapie B testujemy 3.8 Flash, a 3.5 Flash nie.
+
+Zasada (decyzja właściciela 2026-11-20, ADR-0001 Aneks B pkt 7): **start od najtańszego modelu, który „wystarczy" (4.6)**.
 
 | Wynik testu | Rekomendacja na start P3-05 (`AI_MODEL_ID`) |
 |---|---|
-| 3.8 Flash: 5/5 zgodne, C3 < 40 s, myślenie (LOW) ≤ 1 000 tokenów na wywołanie | **`gemini-3.8-flash`** na punkcie z sondy (oczekiwane `eu`) – zgodnie z Q4 (start od klasy Flash). W pełnej ewaluacji P3 najpierw sprawdzić tańsze Flash-Lite (3.5, potem 3.1). |
-| 3.8 Flash zgodny, ale myślenie > 1 000 tokenów lub C3 ≥ 40 s | Gdy `gemini-3.5-flash-lite` też 5/5 – start od **`gemini-3.5-flash-lite`** (MINIMAL), z decyzją właściciela odstępstwa od Q4; inaczej `gemini-3.5-flash` z MINIMAL. Architekt przelicza `costs.md` z pomiarem. |
-| 3.8 Flash niezgodny (schemat/reguły) | Ten z `gemini-3.5-flash` / `gemini-3.5-flash-lite`, który ma 5/5 (taniej = lepiej); błędy reguł (np. dzień 1, liczba punktów) to także sygnał dla promptu P3-05 – opisać. |
-| Flash-Lite 5/5 i jakość treści (4.6) OK | Kandydat do wyboru ostatecznego po pełnej ewaluacji (ADR-0001: najtańszy ≥ 95%). `gemini-3.1-flash-lite` ma najwcześniejsze wycofanie (2027-05-07) – przy wyborze sprawdzić następcę i datę startu publicznego. |
+| A: `gemini-3.1-flash-lite` wystarczy | **`gemini-3.1-flash-lite`** (MINIMAL) na punkcie z sondy (oczekiwane `eu`). Ma najwcześniejsze wycofanie (≥ 2027-05-07) – przed startem publicznym sprawdzić następcę; zapasowo `gemini-3.5-flash-lite` (sprawdzony w tym samym etapie). Etap B pominięty. |
+| A: tylko `gemini-3.5-flash-lite` wystarczy | **`gemini-3.5-flash-lite`** (MINIMAL). Etap B pominięty. Uwagi do 3.1 Flash-Lite – opisać (sygnał dla promptu P3-05: może po poprawce promptu wystarczy w pełnej ewaluacji). |
+| A: oba Flash-Lite nie wystarczają tylko z powodu K1 (reguły kontraktu, np. dzień 1, liczba punktów) | Najpierw sygnał dla promptu P3-05 (reguły można też egzekwować w walidacji/naprawie po stronie funkcji) – zgłosić architektowi przed etapem B; etap B tylko na decyzję właściciela. |
+| A: oba Flash-Lite nie wystarczają (K3/K4 – treść) → etap B: `gemini-3.8-flash` wystarczy | **`gemini-3.8-flash`** (LOW). Architekt przelicza `costs.md` z pomiarem `thoughtTok`; od 2027-01-01 stawka podwójna. |
+| Etap B: 3.8 Flash też nie wystarcza | Stop; eskalacja do architekta i właściciela (prompt, ewentualnie `gemini-3.5-flash` – osobna decyzja). |
 | Żaden model nie działa na `europe-west4` ani `eu` | Stop P3-05; eskalacja do architekta (nowy ADR – region/model). |
 | Model działa tylko na `global` | Niedopuszczalny (Aneks B pkt 2); nie używać. |
 
