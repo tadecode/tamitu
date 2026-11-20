@@ -156,6 +156,18 @@ function Set-JiraColumn([string]$Key, [string]$Column) {
     $null = Invoke-Jira -Method post -Uri "issue/$Key/transitions" -Body @{ transition = @{ id = $t.id } }
 }
 
+# Przypisanie: kolumna `owner` (czeka na człowieka) -> właściciel, pozostałe -> Farm Bot.
+function Set-JiraAssigneeFor([string]$Key, [string]$Column) {
+    if (-not $script:BotAccount) {
+        $script:BotAccount = (Invoke-Jira -Uri 'myself').accountId
+        # ConvertFrom-Json w PS 5.1 zwraca tablicę JSON jako jeden obiekt - rozwijamy ją przez ForEach-Object.
+        $users = Invoke-Jira -Uri "user/assignable/search?project=$JiraProject&maxResults=50"
+        $script:OwnerAccount = ($users | ForEach-Object { $_ } | Where-Object { $_.accountId -ne $script:BotAccount } | Select-Object -First 1).accountId
+    }
+    $acc = if ($Column -eq 'owner' -and $script:OwnerAccount) { $script:OwnerAccount } else { $script:BotAccount }
+    $null = Invoke-Jira -Method put -Uri "issue/$Key/assignee" -Body @{ accountId = $acc }
+}
+
 function Add-JiraComment([string]$Key, [string]$Text, [int]$Pr) {
     $url = if ($Pr) { "$JiraRepoUrl/pull/$Pr" }
     $null = Invoke-Jira -Method post -Uri "issue/$Key/comment" -Body @{ body = (ConvertTo-Adf $Text $url "PR #$Pr") }

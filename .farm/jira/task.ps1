@@ -89,6 +89,7 @@ switch ($Command) {
         $fields[(Get-JiraFarmIdField)] = $Id
         $i = Invoke-Jira -Method post -Uri 'issue' -Body @{ fields = $fields }
         if ($col -ne 'todo') { Set-JiraColumn $i.key $col }
+        Set-JiraAssigneeFor $i.key $col
         Add-JiraPrLink $i.key $Pr
         "Utworzono $Id = $($i.key) -> $($JiraColumns[$col])  ($AtlassianSite/browse/$($i.key))"
     }
@@ -98,6 +99,7 @@ switch ($Command) {
         $col = Resolve-JiraColumn $Arg
         $i = Get-Task (Get-JiraIndex)
         if ($i.fields.status.name -ne $JiraColumns[$col]) { Set-JiraColumn $i.key $col }
+        Set-JiraAssigneeFor $i.key $col
         Add-JiraPrLink $i.key $Pr
         if ($Note) { Add-JiraComment $i.key $Note $Pr }
         "${Id} ($($i.key)): $($i.fields.status.name) -> $($JiraColumns[$col])"
