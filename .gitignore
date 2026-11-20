@@ -1,6 +1,8 @@
 # Sekrety i klucze
 .env
 .env.*
+# Wyjątek (TAM-85, O-TAM84-1): parametry środowiska dev, bez sekretów (tylko ENVIRONMENT=dev)
+!backend/functions/.env.tamitu-dev-tadecode
 *.jks
 *.keystore
 key.properties
