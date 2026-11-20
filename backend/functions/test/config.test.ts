@@ -3,6 +3,8 @@ import {
   assertDataPolicy,
   assertRequestConfig,
   assertStartupConfig,
+  LIMIT_BOUNDS,
+  parseRuntimeConfig,
   parseStaticConfig,
   SAFE_RUNTIME_DEFAULTS,
   type RuntimeConfig,
@@ -94,5 +96,88 @@ describe("safe runtime defaults (ADR-0014 Aneks A pkt 3)", () => {
   });
   it("defaults stay fail-closed", () => {
     expect(SAFE_RUNTIME_DEFAULTS).toMatchObject({ aiEnabled: false, allowRealData: false, perUserDailyLimit: 5 });
+  });
+});
+
+describe("parseRuntimeConfig (SEC-22)", () => {
+  it("missing document -> safe defaults", () => {
+    expect(parseRuntimeConfig(undefined)).toEqual(SAFE_RUNTIME_DEFAULTS);
+  });
+
+  it("parses a valid document", () => {
+    const r = parseRuntimeConfig({
+      aiEnabled: true,
+      allowRealData: true,
+      testUids: ["a", 1, null, "b"],
+      perUserDailyLimit: 3,
+      globalDailyLimit: 25,
+      policyVersionCurrent: "privacy-v1",
+      aiConsentVersionCurrent: "ai-consent-v1",
+    });
+    expect(r).toEqual({
+      aiEnabled: true,
+      allowRealData: true,
+      testUids: ["a", "b"],
+      perUserDailyLimit: 3,
+      globalDailyLimit: 25,
+      policyVersionCurrent: "privacy-v1",
+      aiConsentVersionCurrent: "ai-consent-v1",
+    });
+  });
+
+  it("flags are true only for boolean true; wrong types are dropped", () => {
+    const r = parseRuntimeConfig({
+      aiEnabled: "true",
+      allowRealData: 1,
+      testUids: "owner",
+      policyVersionCurrent: 2,
+      aiConsentVersionCurrent: null,
+    });
+    expect(r).toEqual({ ...SAFE_RUNTIME_DEFAULTS, policyVersionCurrent: undefined, aiConsentVersionCurrent: undefined });
+  });
+
+  it("accepts the range bounds", () => {
+    const { perUserDailyLimit: u, globalDailyLimit: g } = LIMIT_BOUNDS;
+    expect(parseRuntimeConfig({ perUserDailyLimit: u.min, globalDailyLimit: g.min })).toMatchObject({
+      perUserDailyLimit: u.min,
+      globalDailyLimit: g.min,
+    });
+    expect(parseRuntimeConfig({ perUserDailyLimit: u.max, globalDailyLimit: g.max })).toMatchObject({
+      perUserDailyLimit: u.max,
+      globalDailyLimit: g.max,
+    });
+  });
+
+  it.each([
+    ["zero", 0],
+    ["negative", -5],
+    ["above max (per user)", LIMIT_BOUNDS.perUserDailyLimit.max + 1],
+    ["huge", 1e12],
+    ["fraction", 2.5],
+    ["NaN", Number.NaN],
+    ["Infinity", Number.POSITIVE_INFINITY],
+    ["string", "10"],
+    ["null", null],
+  ])("perUserDailyLimit %s -> default", (_n, v) => {
+    expect(parseRuntimeConfig({ perUserDailyLimit: v }).perUserDailyLimit).toBe(SAFE_RUNTIME_DEFAULTS.perUserDailyLimit);
+  });
+
+  it.each([
+    ["zero", 0],
+    ["negative", -1],
+    ["above max (global)", LIMIT_BOUNDS.globalDailyLimit.max + 1],
+    ["huge", 1e12],
+    ["fraction", 24.5],
+    ["string", "25"],
+  ])("globalDailyLimit %s -> default 25", (_n, v) => {
+    expect(parseRuntimeConfig({ globalDailyLimit: v }).globalDailyLimit).toBe(25);
+  });
+
+  it("defaults lie within the bounds", () => {
+    const { perUserDailyLimit: u, globalDailyLimit: g } = LIMIT_BOUNDS;
+    expect(SAFE_RUNTIME_DEFAULTS.perUserDailyLimit).toBeGreaterThanOrEqual(u.min);
+    expect(SAFE_RUNTIME_DEFAULTS.perUserDailyLimit).toBeLessThanOrEqual(u.max);
+    expect(SAFE_RUNTIME_DEFAULTS.globalDailyLimit).toBeGreaterThanOrEqual(g.min);
+    expect(SAFE_RUNTIME_DEFAULTS.globalDailyLimit).toBeLessThanOrEqual(g.max);
   });
 });
