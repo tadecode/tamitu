@@ -24,7 +24,7 @@ Wdrożenie z CI (`deploy.yml`) na razie się nie nadaje – szczegóły w sekcji
 |---|---|---|---|
 | B1 | Nadać domyślnemu kontu Compute rolę `roles/cloudbuild.builds.builder` | właściciel (1 polecenie) | To konto **buduje** funkcję, a dziś nie ma żadnej roli – budowanie się nie uda |
 | B2 | Poprawić `predeploy` w `backend/firebase.json`, żeby działał w Windows | mobile-dev (mały PR) | Obecny zapis `"$RESOURCE_DIR"` działa tylko w Linuksie/macOS; na Windows `firebase deploy` się wywróci |
-| B3 | Utworzyć lokalnie plik `backend/functions/.env.tamitu-dev-tadecode` z `ENVIRONMENT=dev` | właściciel (lub mały PR, pytanie O-TAM84-1) | Bez niego funkcja uzna, że działa w **prod** (zasada „fail-closed" w `config.ts`) |
+| B3 | Dodać do repo plik `backend/functions/.env.tamitu-dev-tadecode` z `ENVIRONMENT=dev` i wyjątek w `.gitignore` | mobile-dev (ten sam PR co B2; decyzja właściciela O-TAM84-1: „W repo”) | Bez niego funkcja uzna, że działa w **prod** (zasada „fail-closed" w `config.ts`) |
 
 App Check na telefonie testowym: decyzja właściciela – token debug dla QA (sekcja 3.4, O-TAM84-2).
 
@@ -80,8 +80,16 @@ Funkcja czyta trzy zmienne (`config.ts`, wszystkie „fail-closed"):
 | `ALLOW_REAL_DATA` | `false` | `false` |
 
 Firebase CLI przy wdrożeniu do projektu `X` czyta plik `backend/functions/.env.X`. Wartości **nie są
-sekretami**, ale `.gitignore` blokuje wszystkie pliki `.env.*`, więc dziś plik trzeba utworzyć lokalnie
-(polecenie w sekcji 5, krok 3). Na stałe lepiej mieć go w repo – pytanie O-TAM84-1.
+sekretami**. **Decyzja właściciela (2026-11-20, O-TAM84-1: „W repo”):** plik `backend/functions/.env.tamitu-dev-tadecode`
+jest w repozytorium, a `.gitignore` (który dziś blokuje wszystkie `.env.*`) dostaje wyjątek
+`!backend/functions/.env.tamitu-dev-tadecode`. Zmianę robi mobile-dev w tym samym PR-ze co poprawkę B2.
+Treść pliku:
+```
+ENVIRONMENT=dev
+ENFORCE_APP_CHECK=true
+ALLOW_REAL_DATA=false
+```
+W pliku nigdy nie ma sekretów (sekrety tylko w Secret Managerze). Ten sam plik posłuży później wdrożeniom z CI.
 
 ### 3.4 App Check na telefonie testowym
 
@@ -154,7 +162,7 @@ Firebase CLI w wersji ≥ 15.34 (`firebase --version`), Node 22.
 $p = 'tamitu-dev-tadecode'
 gcloud auth login            # konto właściciela
 firebase login --reauth
-cd C:\Repository\tamitu       # katalog na gałęzi main, po merge'u poprawki B2
+cd C:\Repository\tamitu       # katalog na gałęzi main, po merge'u PR-a z B2 i B3
 git pull
 ```
 
@@ -174,11 +182,12 @@ gcloud projects add-iam-policy-binding $p --member="serviceAccount:$build" --rol
 ```
 Wynik (bez numerów kont) – do runbooka P3-03, etap 5.
 
-**Krok 3 – B3: parametry środowiska (plik lokalny, ignorowany przez git)**
+**Krok 3 – B3: parametry środowiska (plik z repo)**
 ```powershell
-Set-Content -Encoding ascii backend\functions\.env.tamitu-dev-tadecode "ENVIRONMENT=dev`nENFORCE_APP_CHECK=true`nALLOW_REAL_DATA=false"
+Get-Content backend\functions\.env.tamitu-dev-tadecode
 ```
-(`ENFORCE_APP_CHECK=true` – decyzja właściciela O-TAM84-2.)
+Oczekiwane: `ENVIRONMENT=dev`, `ENFORCE_APP_CHECK=true` (decyzja O-TAM84-2), `ALLOW_REAL_DATA=false`.
+Jeśli pliku nie ma – PR mobile-dev z B2/B3 nie jest jeszcze w `main`; **nie wdrażać** i nie tworzyć pliku ręcznie.
 
 **Krok 4 – kontrola przed wdrożeniem**
 ```powershell
@@ -265,7 +274,7 @@ Vertex AI – nie chroni Cloud Run/Functions (świadoma decyzja ADR-0014 Aneks A
 |---|---|---|
 | Funkcja publiczna (`allUsers`) – ktoś z internetu ją wywołuje | średnie / mały (koszt ~0, odrzucenie przed zapisem: brak tokenu → `unauthenticated`, brak App Check → `app_check_failed`) | `maxInstances: 10`, alerty budżetu, szybka blokada (sekcja 6) |
 | Wdrożenie „za dużo" (wszystkie funkcje lub reguły) przez pomyłkę w poleceniu | niskie / średni (`budgetGuard`, `generatePlan` z szerokimi rolami) | tylko `--only functions:recordConsent`; kontrola 6b |
-| Funkcja działa jako `prod` (brak pliku `.env`) | średnie bez B3 / mały (zła etykieta środowiska) | krok 3, kontrola 6a |
+| Funkcja działa jako `prod` (brak pliku `.env`) | niskie po B3 (plik w repo) / mały (zła etykieta środowiska) | krok 3, kontrola 6a |
 | Firebase CLI sam dopisze uprawnienia (np. dostęp do sekretu, rola dla konta) | niskie / mały | kontrola 6d; każde nowe powiązanie – zgłosić security |
 | Poświadczenia Ownera zostają na komputerze, na którym pracują agenci (W-3) | średnie / wysoki (dostęp do prod) | krok 8 |
 | `fn-consent` ma szerszą rolę Firestore niż potrzeba (Ś-1) | niskie / mały w dev (tylko dane testowe) | poprawka przed realnymi danymi (SEC-31) |
