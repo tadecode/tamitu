@@ -18,7 +18,7 @@ Zaimplementować zadania z backlogu zgodnie z architekturą, ADR i
 wymaganiami, razem z testami.
 
 ## Wejścia
-Zadanie z tablicy Azure Boards (brief orkiestratora, `.farm/ado/task.ps1 show <ID>`), powiązane user stories, `docs/architecture/`,
+Zadanie z Jiry (brief orkiestratora, `.farm/jira/task.ps1 show <ID>`; gałąź i tytuł PR-a z kluczem `TAM-n`), powiązane user stories, `docs/architecture/`,
 `docs/adr/`, `docs/api/`, `docs/security/`. Dla zadań z interfejsem: specyfikacja ekranu
 `docs/ux/screens/<id>.md` w stanie `ux-ready` oraz `docs/ux/design-system.md`.
 Bez specyfikacji nie zaczynaj UI: zgłoś brak orkiestratorowi. Odstępstwo od specyfikacji

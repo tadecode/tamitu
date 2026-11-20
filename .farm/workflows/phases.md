@@ -4,7 +4,7 @@
 |---|---|---|---|
 | 1 Odkrywanie | analyst, security | `docs/requirements/`, rejestr danych osobowych (wstępny), ryzyka | **G1 Zakres** |
 | 2 Projekt | architect, ux, dba, data-analyst, security | `docs/architecture/`, `docs/adr/`, `docs/data/` (model: architect; schemat, zapytania, migracje: dba), `docs/api/`, `docs/ux/` (marka, design system, layout, biblioteka komponentów, wzorce, przepływy, pierwsze makiety), `docs/analytics/` (plan pomiarów, zdarzenia), model zagrożeń | **G2 Architektura** |
-| 3 Planowanie | orchestrator, analyst | zadania w Azure Boards (`.farm/ado/task.ps1`), kolejność iteracji, definicje ukończenia | G3 (opcjonalna) |
+| 3 Planowanie | orchestrator, analyst | zadania w Jirze (`.farm/jira/task.ps1`), kolejność iteracji, definicje ukończenia | G3 (opcjonalna) |
 | 4 Implementacja (pętla) | mobile-dev, qa, security | kod, testy, raporty QA | testy zielone + werdykt QA |
 | 5 Wydanie | mobile-dev, qa, security, data-analyst (+ DevOps) | build, checklista wydania, notatki, raport kosztów i metryk pilota | **G5 Wydanie** |
 | 6 Utrzymanie | wszyscy wg potrzeby | triage błędów, nowe wymagania | powrót do fazy 1/3 |
@@ -29,7 +29,7 @@
 6. security: przegląd, jeśli zadanie dotyka danych osobowych, sieci,
    uwierzytelniania, reklam lub płatności (pogłębia ustalenia recenzenta).
 7. orchestrator: po merge przenosi zgłoszenia ról (status zadań, nowe zadania, pytania – sekcja „Dla orkiestratora”
-   w plikach przekazania) zadania na tablicę Azure Boards (`.farm/ado/task.ps1`, bez PR-a), a pytania do `docs/open-questions.md` małym PR-em;
+   w plikach przekazania) zadania do Jiry (`.farm/jira/task.ps1`, bez PR-a), a pytania do `docs/open-questions.md` małym PR-em;
    aktualizuje status; zapisuje prośbę o merge w `.farm/requests/` po spełnieniu definicji ukończenia.
    Role nie piszą na tablicy ani w pytaniach otwartych; każdy wpis dziennika to osobny plik (`handoff.md`).
 8. github-steward (osobna sesja): merguje (`--squash`) dopiero gdy CI zielone,
@@ -53,7 +53,7 @@
 - Do następnej fazy tylko po zatwierdzeniu bramki przez człowieka
   (dotyczy G1, G2, G5).
 - **Wspólne pliki (decyzja właściciela 2026-11-17):** żeby PR-y nie kolidowały, dziennik to osobne pliki
-  (`.farm/log/<data>/<HHMM>-<rola>-<zadanie>.md`), zadania (Azure Boards, od 2026-11-18) i `docs/open-questions.md` zmienia tylko
+  (`.farm/log/<data>/<HHMM>-<rola>-<zadanie>.md`), zadania (Jira, od 2026-11-20) i `docs/open-questions.md` zmienia tylko
   orkiestrator po merge (zgłoszenia w pliku przekazania). Okres przejściowy i szczegóły: `handoff.md`;
   zmiany uprawnień ról i `CLAUDE.md`: `.farm/requests/FARM-006-shared-files.md`.
 - Zmiana zakresu po G1 lub architektury po G2 = nowy przebieg bramki.

@@ -1,5 +1,5 @@
 ## Zadanie
-Backlog: T-<id> · Issue: #<numer>
+Jira: TAM-<nr> (ID farmy: <np. SEC-35>) – klucz TAM-<nr> także w tytule PR-a i nazwie gałęzi
 
 ## Co zrobiono
 <1–3 zdania>

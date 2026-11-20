@@ -36,10 +36,10 @@ Każde przekazanie pracy między agentami to **osobny plik** w `.farm/log/` (dec
 
 ## Zadania i pytania otwarte (zmienia tylko orkiestrator)
 
-**Zadania i statusy są w Azure Boards** (od 2026-11-18; `docs/backlog.md` tylko wskazuje tablicę).
+**Zadania i statusy są w Jirze** (projekt TAM, od 2026-11-20; wcześniej Azure Boards; `docs/backlog.md` tylko wskazuje tablicę).
 Role nie piszą na tablicy ani w `docs/open-questions.md`: zmianę statusu, nowe zadania i nowe pytania
 zgłaszają w sekcji „Dla orkiestratora” własnego pliku przekazania. Orkiestrator **po merge** PR-a roli
-przenosi zgłoszenia zadań na tablicę (`.farm/ado/task.ps1`, bez PR-a), a pytania otwarte zbiorczo do
+przenosi zgłoszenia zadań na tablicę (`.farm/jira/task.ps1`, bez PR-a), a pytania otwarte zbiorczo do
 `docs/open-questions.md` małym PR-em. Do czasu przeniesienia źródłem prawdy są pliki przekazania.
 
 Zmiana uprawnień ról (`-Allow` w `.claude/agents/*.md`) oraz `CLAUDE.md` (zasady 2 i 12) czeka na właściciela:

@@ -33,7 +33,7 @@ wąską rolę (`.claude/agents/`). Człowiek jest właścicielem produktu.
 8. **Praca na gałęziach.** Kod trafia na gałąź `feat/<id-zadania>`; nigdy
    bezpośrednio na `main`. Commity małe i opisowe.
 9. **Definicja ukończenia zadania:** kod + testy zielone + zaktualizowana
-   dokumentacja + wpis w dzienniku (status zadania na tablicy Azure Boards zmienia orkiestrator).
+   dokumentacja + wpis w dzienniku (status zadania w Jirze zmienia orkiestrator).
 10. **Koszty.** Wywołania modeli AI w aplikacji i w CI mają limity;
     każda zmiana zwiększająca koszt wymaga wzmianki w ADR lub zadaniu.
 11. **GitHub.** Tworzenie repozytoriów, CI, sekrety, ustawienia i merge do `main`
@@ -44,7 +44,13 @@ wąską rolę (`.claude/agents/`). Człowiek jest właścicielem produktu.
     `main` i służy tylko do odczytu. Każda sesja i każde zadanie pracuje we
     własnym worktree (`.farm/new-worktree.ps1 <zadanie>`, katalog
     `<repo>-wt\<zadanie>`) i nie przełącza gałęzi w cudzym katalogu. Pliki
-    wspólne (`docs/open-questions.md`) edytuj małymi, osobnymi wpisami; zadania są w Azure Boards,
+    wspólne (`docs/open-questions.md`) edytuj małymi, osobnymi wpisami; zadania są w Jirze (projekt TAM),
     żeby równoległe PR-y nie kolidowały. Testy na emulatorze, urządzeniu lub
     emulatorach Firebase uruchamiaj przez `.farm/test-lock.ps1` (kolejka na
     zasoby wspólne); zwykłe testy bez urządzenia nie potrzebują blokady.
+13. **Jira i Confluence** (tadecode.atlassian.net, konto Farm Bot; tokeny tylko
+    w Menedżerze poświadczeń, nigdy w repo ani logach). Confluence (przestrzeń
+    Tamitu) jest dla ludzi, także nietechnicznych: pisz prosto, najpierw co
+    i po co, potem szczegóły. Stron w Confluence **nie usuwamy, tylko
+    archiwizujemy**. Dokumenty z `docs/` publikuje automat po merge'u (repo
+    jest źródłem prawdy); nie edytuj ich ręcznie w Confluence.
