@@ -1,0 +1,55 @@
+name: Confluence
+
+# Publikuje dokumenty z docs/ do Confluence (przestrzeń Tamitu) po merge'u do main.
+# Jednokierunkowo (repo = źródło prawdy), stron nie usuwa. NIE uruchamiać na pull_request:
+# sekret CONFLUENCE_TOKEN nie może trafić do kodu z PR-ów.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: confluence
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Zależności publikatora
+        run: npm ci --prefix .farm/confluence
+      - name: Publikacja do Confluence
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          ATLASSIAN_EMAIL: farm-bot@tadecode.pl
+          CONFLUENCE_TOKEN: ${{ secrets.CONFLUENCE_TOKEN }}
+        run: |
+          set -euo pipefail
+          PATTERN='^docs/(requirements|adr|architecture|data|api|security|ux)/.*\.md$'
+          if [ "$EVENT_NAME" = "push" ] && ! echo "$BEFORE" | grep -Eq '^0+$' && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            git diff --name-only --diff-filter=AMR "$BEFORE" "$GITHUB_SHA" > all.txt
+          else
+            git ls-files > all.txt
+          fi
+          grep -E "$PATTERN" all.txt > files.txt || true
+          if [ ! -s files.txt ]; then
+            echo "Brak dokumentów do publikacji."
+            exit 0
+          fi
+          echo "Do publikacji: $(wc -l < files.txt) plik(ów)"
+          mapfile -t FILES < files.txt
+          node .farm/confluence/publish.mjs "${FILES[@]}"
