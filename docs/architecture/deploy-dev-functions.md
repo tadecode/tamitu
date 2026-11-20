@@ -26,7 +26,7 @@ Wdrożenie z CI (`deploy.yml`) na razie się nie nadaje – szczegóły w sekcji
 | B2 | Poprawić `predeploy` w `backend/firebase.json`, żeby działał w Windows | mobile-dev (mały PR) | Obecny zapis `"$RESOURCE_DIR"` działa tylko w Linuksie/macOS; na Windows `firebase deploy` się wywróci |
 | B3 | Utworzyć lokalnie plik `backend/functions/.env.tamitu-dev-tadecode` z `ENVIRONMENT=dev` | właściciel (lub mały PR, pytanie O-TAM84-1) | Bez niego funkcja uzna, że działa w **prod** (zasada „fail-closed" w `config.ts`) |
 
-Plus decyzja właściciela o App Check na telefonie testowym (sekcja 3.4, pytanie O-TAM84-2).
+App Check na telefonie testowym: decyzja właściciela – token debug dla QA (sekcja 3.4, O-TAM84-2).
 
 ## 2. Które funkcje wdrażamy
 
@@ -76,7 +76,7 @@ Funkcja czyta trzy zmienne (`config.ts`, wszystkie „fail-closed"):
 | Zmienna | Wartość w dev | Co, jeśli brak |
 |---|---|---|
 | `ENVIRONMENT` | `dev` | funkcja uzna się za **prod** |
-| `ENFORCE_APP_CHECK` | `true` (zalecane, sekcja 3.4) | `true` |
+| `ENFORCE_APP_CHECK` | `true` (decyzja właściciela, sekcja 3.4) | `true` |
 | `ALLOW_REAL_DATA` | `false` | `false` |
 
 Firebase CLI przy wdrożeniu do projektu `X` czyta plik `backend/functions/.env.X`. Wartości **nie są
@@ -88,12 +88,11 @@ sekretami**, ale `.gitignore` blokuje wszystkie pliki `.env.*`, więc dziś plik
 `recordConsent` odrzuca wywołanie bez ważnego tokenu App Check (`app_check_failed`). Aplikacja instalowana
 z komputera (nie ze Sklepu Play) zwykle nie przejdzie Play Integrity, więc telefon potrzebuje **tokenu debug**.
 
-- **Zalecenie:** zostawić `ENFORCE_APP_CHECK=true` (dev zachowuje się jak prod) i dać QA token debug:
-  nowy token „qa-phone" w konsoli Firebase → App Check → Manage debug tokens; wartość tylko w menedżerze haseł,
-  build z `--dart-define=TAMITU_APP_CHECK_DEBUG_TOKEN=...`; po teście token usunąć (SEC-UIDLOG, rejestr D18).
-- Alternatywa (gorsza): `ENFORCE_APP_CHECK=false` w dev – ryzyko małe (dev = tylko konta testowe), ale nie
-  testujemy wtedy App Check.
-- Decyzja właściciela – pytanie O-TAM84-2.
+- **Decyzja właściciela (2026-11-20, O-TAM84-2: „Token debug QA”):** w dev zostaje `ENFORCE_APP_CHECK=true`
+  (dev zachowuje się jak prod), a QA dostaje token debug: nowy token „qa-phone" w konsoli Firebase → App Check →
+  Manage debug tokens; wartość tylko w menedżerze haseł, build z `--dart-define=TAMITU_APP_CHECK_DEBUG_TOKEN=...`;
+  po teście token usunąć (SEC-UIDLOG, rejestr D18).
+- Odrzucona alternatywa: `ENFORCE_APP_CHECK=false` w dev (nie testowalibyśmy App Check).
 
 ### 3.5 Sekret `UID_HASH_PEPPER`
 
@@ -179,7 +178,7 @@ Wynik (bez numerów kont) – do runbooka P3-03, etap 5.
 ```powershell
 Set-Content -Encoding ascii backend\functions\.env.tamitu-dev-tadecode "ENVIRONMENT=dev`nENFORCE_APP_CHECK=true`nALLOW_REAL_DATA=false"
 ```
-(`ENFORCE_APP_CHECK=false` tylko jeśli właściciel tak zdecyduje w O-TAM84-2.)
+(`ENFORCE_APP_CHECK=true` – decyzja właściciela O-TAM84-2.)
 
 **Krok 4 – kontrola przed wdrożeniem**
 ```powershell
