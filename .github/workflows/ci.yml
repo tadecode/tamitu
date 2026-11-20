@@ -80,6 +80,8 @@ jobs:
       - uses: subosito/flutter-action@v2
         if: steps.detect.outputs.flutter == 'true'
         with:
+          # wersja z pubspec.yaml (environment.flutter) - jedno źródło prawdy, CI nie ucieka na nowszy stable
+          flutter-version-file: pubspec.yaml
           channel: stable
           cache: true
       - name: Zależności
