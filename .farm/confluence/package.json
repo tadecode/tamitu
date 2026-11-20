@@ -1,0 +1,9 @@
+{
+  "name": "tamitu-confluence-publisher",
+  "private": true,
+  "type": "module",
+  "description": "Jednokierunkowa publikacja docs/ z repo do Confluence (przestrzeń Tamitu).",
+  "dependencies": {
+    "markdown-it": "14.1.0"
+  }
+}
