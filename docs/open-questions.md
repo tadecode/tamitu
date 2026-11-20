@@ -212,3 +212,20 @@ Szczegóły: `docs/security/reviews/2026-11-16-p3-14c-ekrany.md`. Do czasu odpow
 | # | Pytanie | Zadaje | Status | Odpowiedź / propozycja | Skutek |
 |---|---|---|---|---|---|
 | O-ARCH01-1 | Przy klasie Flash: obniżyć limit globalny do 20–30/dobę w fazie testów (pułap ok. 125–148 PLN/mies. przy 50/dobę > budżet prod 100 PLN)? | architect (ARCH-01) → owner | **zamknięte 2026-11-20 (właściciel): 25 generowań/dobę** w fazie testów, `dev` i `prod` – ADR-0014 Aneks A pkt 3 (uzupełnia ADR-0002 i ADR-0003 Q3) | Pułap przy planach typowych ≈ 63–74 PLN/mies. (Flash), poniżej capu prod 80 PLN (`costs.md` sekcja 4) | `backend/functions/src/config.ts` i `src/index.ts` (domyślne `globalDailyLimit`) – mobile-dev; `config/runtime.globalDailyLimit` – owner |
+
+## Kredyty „słoneczka" (AN-CREDITS), analyst, 2026-11-20 – **po MVP**
+
+Analiza: `docs/requirements/idea-kredyty-sloneczka.md`. Pytania nie blokują MVP. Pytania do prawnika (P-L1–P-L7) – w analizie, sekcja 4, w pakiecie z SEC-30.
+
+| # | Pytanie | Zadaje | Status | Propozycja domyślna | Skutek |
+|---|---|---|---|---|---|
+| OC1 | **[po MVP]** Przelicznik: ile słoneczek kosztuje plan? | analyst → owner | otwarte | 1–5 dni = 1, 6–10 dni = 2, 11–14 dni = 3; tempo i ponowienia techniczne bez dopłaty | analiza 1.1, US-K04 |
+| OC2 | **[po MVP]** Paczki i ceny brutto? | analyst → owner | otwarte | 10 = 4,99 zł, 30 = 11,99 zł, 100 = 29,99 zł (przy Flash-Lite marża ok. 85–90%; wymaga programu 15% w Google Play) | analiza 1.3 |
+| OC3 | **[po MVP]** Darmowy próg: jednorazowy czy odnawialny? | analyst → owner | otwarte | 5 słoneczek jednorazowo, ważne 3 miesiące, jeden przydział na konto | analiza 1.4, US-K01, budżet prod |
+| OC4 | **[po MVP]** Ważność kupionych słoneczek? | analyst → owner, [PRAWNIK] | otwarte | 12 miesięcy od zakupu, osobno dla każdej paczki; zużycie od najwcześniej wygasających | analiza 1.5, US-K05, P-L1 |
+| OC5 | **[po MVP]** Czy kredyty zastępują subskrypcję i reklamy z `vision.md` (model: reklamy + plan jednorazowy/roczny)? | analyst → owner | otwarte | Kredyty zamiast subskrypcji; reklamy odłożone do osobnej decyzji; właściciel aktualizuje wizję | `vision.md`, `scope.md` |
+| OC6 | **[po MVP]** Limity dzienne przy sprzedaży kredytów | analyst → owner, architect | otwarte | Na konto: 5/dobę bez zakupu, 15/dobę po zakupie; limit globalny 25/dobę podniesiony przed sprzedażą (przegląd ADR-0002 Aneks A pkt 5b) | analiza 1.6, ADR-0002, ADR-0014 |
+| OC7 | **[po MVP]** Czy anulowanie generowania przez użytkownika (po starcie modelu) zużywa słoneczko? | analyst → owner | otwarte | Nie – słoneczko pobierane tylko po dostarczeniu planu (inaczej niż slot limitu dziennego, Q12) | US-K04 |
+| OC8 | **[po MVP]** Co z niewykorzystanym saldem przy usunięciu konta? | analyst → owner, [PRAWNIK] | otwarte | Przepada po wyraźnym ostrzeżeniu; nie wraca przy ponownym założeniu konta – po opinii prawnika (P-L4) | US-K07, US-010 |
+| OC9 | **[po MVP]** Czy oferować „plan premium" (wyższa klasa modelu) za więcej słoneczek? | analyst → owner | otwarte | Nie na start; jeden poziom jakości | analiza 1.1 |
+| OC10 | **[po MVP]** Reklamacja jakości planu: czy zwracamy słoneczko? | analyst → owner | otwarte | Ręcznie przez wsparcie, uznaniowo; bez automatu | analiza 2.3, P-L6 |
