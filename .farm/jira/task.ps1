@@ -88,7 +88,8 @@ switch ($Command) {
             labels = $labels; description = (ConvertTo-Adf $text); parent = @{ key = $epic.key }
         }
         $fields[(Get-JiraFarmIdField)] = $Id
-        $fields[(Get-JiraRoleField)] = ConvertTo-JiraRoles $Role
+        # @(...) - funkcja z jedną rolą zwraca pojedynczy obiekt, a Jira wymaga tablicy.
+        $fields[(Get-JiraRoleField)] = @(ConvertTo-JiraRoles $Role)
         $i = Invoke-Jira -Method post -Uri 'issue' -Body @{ fields = $fields }
         if ($col -ne 'todo') { Set-JiraColumn $i.key $col }
         Set-JiraAssigneeFor $i.key $col
