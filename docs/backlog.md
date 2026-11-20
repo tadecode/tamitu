@@ -4,7 +4,7 @@
 https://tadecode.atlassian.net/jira/software/projects/TAM/boards/1
 
 Tablica: To Do → In Progress → In Review → **Owner Review** (czeka na właściciela) → Done.
-Zadanie ma ID farmy w tytule (np. `P3-04: …`) i w etykiecie `id:P3-04`, klucz Jiry (`TAM-12`),
+Zadanie ma czytelny tytuł (bez kodu), ID farmy w polu **Farm Id** (np. `P3-04`), klucz Jiry (`TAM-12`),
 etykiety ról (`rola:mobile-dev`), etykietę `zablokowane` przy blokadzie i epik wg prefiksu.
 
 - **Czyta** każdy: `powershell -File .farm/jira/task.ps1 list` (albo `show <ID>` / `show TAM-12`).

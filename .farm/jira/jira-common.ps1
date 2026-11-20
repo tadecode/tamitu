@@ -3,9 +3,9 @@
 # Działa na koncie Farm Bot (token w Menedżerze poświadczeń: .farm/atlassian/set-token.ps1 jira).
 #
 # Model:
-#   - zadanie = Task (BUG-* = Bug); ID farmy (np. SEC-35) w etykiecie `id:SEC-35` i na początku tytułu,
-#     klucz Jiry (TAM-12) jest dodatkowy; task.ps1 przyjmuje oba,
-#   - epik = Epic z etykietą `epic:SEC`; zadanie wskazuje epik polem parent,
+#   - zadanie = Task (BUG-* = Bug); ID farmy (np. SEC-35) w polu „Farm Id” (tekst), tytuł bez kodu,
+#     czytelny dla człowieka; klucz Jiry (TAM-12) jest dodatkowy; task.ps1 przyjmuje oba,
+#   - epik = Epic z „Farm Id” = prefiks (np. SEC); zadanie wskazuje epik polem parent,
 #   - role = etykiety `rola:mobile-dev`, blokada = etykieta `zablokowane`,
 #   - PR = link zdalny do GitHuba.
 . (Join-Path $PSScriptRoot '..\atlassian\atlassian-common.ps1')
@@ -93,19 +93,31 @@ function ConvertFrom-Adf($Node) {
     }
 }
 
-# Wszystkie zadania i epiki projektu: @{ Items = @{ID farmy -> issue}; Epics = @{klucz epiku -> issue}; Keys = @{TAM-n -> ID farmy} }
+# Pole „Farm Id” (tekst) - szukane po nazwie, żeby skrypt nie zależał od numeru customfield.
+function Get-JiraFarmIdField {
+    if (-not $script:FarmIdField) {
+        $f = (Invoke-Jira -Uri 'field') | Where-Object { $_.custom -and $_.name -eq 'Farm Id' } | Select-Object -First 1
+        if (-not $f) { throw 'Brak pola „Farm Id” w Jirze (projekt TAM, typy Task, Bug, Epic).' }
+        $script:FarmIdField = $f.id
+    }
+    $script:FarmIdField
+}
+function Get-FarmId($Issue) { $Issue.fields.(Get-JiraFarmIdField) }
+
+# Wszystkie zadania i epiki projektu: @{ Items = @{ID farmy -> issue}; Epics = @{prefiks epiku -> issue}; Keys = @{TAM-n -> ID farmy} }
 function Get-JiraIndex {
     $items = @{}; $epics = @{}; $keys = @{}
     $token = $null
+    $fid = Get-JiraFarmIdField
     do {
-        $body = @{ jql = "project = $JiraProject ORDER BY created ASC"; maxResults = 100; fields = @('summary', 'status', 'labels', 'issuetype', 'parent', 'created') }
+        $body = @{ jql = "project = $JiraProject ORDER BY created ASC"; maxResults = 100; fields = @('summary', 'status', 'labels', 'issuetype', 'parent', 'created', $fid) }
         if ($token) { $body.nextPageToken = $token }
         $r = Invoke-Jira -Method post -Uri 'search/jql' -Body $body
         foreach ($i in $r.issues) {
-            foreach ($l in $i.fields.labels) {
-                if ($l -like 'id:*' -and -not $items[$l.Substring(3)]) { $items[$l.Substring(3)] = $i; $keys[$i.key] = $l.Substring(3) }
-                if ($l -like 'epic:*' -and -not $epics[$l.Substring(5)]) { $epics[$l.Substring(5)] = $i }
-            }
+            $id = $i.fields.$fid
+            if (-not $id) { continue }
+            if ($i.fields.issuetype.name -eq 'Epic') { if (-not $epics[$id]) { $epics[$id] = $i } }
+            elseif (-not $items[$id]) { $items[$id] = $i; $keys[$i.key] = $id }
         }
         $token = $r.nextPageToken
     } while ($token -and -not $r.isLast)
@@ -121,9 +133,9 @@ function Get-JiraEpic([string]$TaskId, $Index) {
     $key = Get-JiraEpicKey $TaskId
     if ($Index.Epics[$key]) { return $Index.Epics[$key] }
     $title = if ($JiraEpics[$key]) { $JiraEpics[$key] } else { $key }
-    $e = Invoke-Jira -Method post -Uri 'issue' -Body @{ fields = @{
-                project = @{ key = $JiraProject }; issuetype = @{ name = 'Epic' }; summary = $title; labels = @("epic:$key")
-            } }
+    $fields = @{ project = @{ key = $JiraProject }; issuetype = @{ name = 'Epic' }; summary = $title }
+    $fields[(Get-JiraFarmIdField)] = $key
+    $e = Invoke-Jira -Method post -Uri 'issue' -Body @{ fields = $fields }
     $Index.Epics[$key] = $e
     $e
 }
