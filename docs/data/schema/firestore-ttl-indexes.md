@@ -1,6 +1,6 @@
 # Firestore – retencja (TTL) i indeksy – Tamitu (MVP)
 
-Stan: 2026-11-18, wersja 0.2, autor: dba. Rozstrzyga pytanie **O4** (`docs/open-questions.md`, sekcja „Konfiguracja środowisk (P3-03)").
+Stan: 2026-11-21, wersja 0.3, autorzy: dba (v0.1–0.2), architect (v0.3). Zmiany v0.3 (TAM-91, decyzja właściciela O-TAM18-3): pole `usage.released` (najwyżej 2 zwroty slotu na dobę, zerowane w nowej dobie, bez indeksu; pkt 3.1, 3.2); `usage_global` bez zwrotu. Polityki TTL, indeksy i `backend/firestore.indexes.json` bez zmian. Rozstrzyga pytanie **O4** (`docs/open-questions.md`, sekcja „Konfiguracja środowisk (P3-03)").
 Zmiany v0.2 (O4-b, decyzja security SEC-34, zatwierdzona przez właściciela 2026-11-18): retencja `usage/{uid}` skrócona z „czas serwera + 30 dni" do `expireAt = max(resetAt(now) + 2 d, now + 2 d)` (pkt 2.1, 3, 3.1, 3.2, 7). Pole TTL, polityka TTL, indeksy i `backend/firestore.indexes.json` bez zmian. `usage_global.expireAt` bez zmian (+7 dni).
 Źródła: `docs/data/model-danych.md` pkt 3 (v0.4), `docs/data/przechowywanie-i-retencja.md`, ADR-0002 („Limity i bezpieczniki", Aneks A pkt 1), ADR-0003, ADR-0012, `docs/security/personal-data-register.md` (D3, D10, v0.4), `backend/firestore.indexes.json`, `backend/functions/src/limits.ts`, `backend/functions/src/index.ts`, `.farm/runbooks/P3-03-firebase.md` (etap 8).
 
@@ -67,6 +67,7 @@ Pole `updatedAt` w `usage/{uid}` zostaje jako znacznik diagnostyczny (model dany
 usage/{uid}
   day        string     "YYYY-MM-DD" (Europe/Warsaw, warsawDay)
   count      int        0..perUserDailyLimit
+  released   int        0..2  zwroty slotu w tej dobie (MAX_RELEASES_PER_DAY); bez indeksu
   updatedAt  timestamp  czas serwera ostatniego zapisu (diagnostyka)
   expireAt   timestamp  max(resetAt(updatedAt) + 2 d, updatedAt + 2 d)  ← polityka TTL
 
@@ -81,6 +82,7 @@ Dane osobowe: `usage/{uid}` = D10 (UID w ścieżce, `day`, `count`). `expireAt` 
 1. W transakcji rezerwacji odczyt `usage/{uid}` i `usage_global/{today}`. Jeśli `usage.day ≠ today`, licznik startuje od 0 (`effectiveCount`). Zapis przez `set` z pełnym kształtem: `day = today`, `count`, `updatedAt = now`, `expireAt = usageExpireAt(now)` (pkt 2.1).
 2. `usage_global/{today}`: `count + 1`, `expireAt = now + 7 d`.
 3. Zwrot slotu (błąd systemu po rezerwacji, ADR-0002): osobna transakcja; zmniejsza `count` **tylko gdy `day` nadal = doba rezerwacji** (po północy nie zwraca slotu do nowej doby), ustawia ponownie `updatedAt = now` i `expireAt = usageExpireAt(now)` (ta sama doba, więc to samo `resetAt`; wartość nie maleje). Gdy `day` ≠ doba rezerwacji, zwrot **nie zapisuje** dokumentu: `expireAt` z rezerwacji już wypada po końcu tamtej doby.
+   **Limit zwrotów (v0.3, O-TAM18-3):** zwrot tylko gdy `released < 2` (`MAX_RELEASES_PER_DAY`); wtedy `count − 1` i `released + 1` w tej samej transakcji. Przy `released = 2` zwrot nic nie zapisuje (próba zostaje wliczona). Rezerwacja zapisuje `released` przepisane z dokumentu tej doby, a w nowej dobie `released = 0` (`effectiveReleased`). Wartość zniekształcona (nie liczba całkowita) liczy się jako 0. Zwrot dotyczy wyłącznie `usage/{uid}`: **`usage_global/{day}.count` nigdy nie maleje** (bezpiecznik kosztu). Pole `released` nie jest używane w zapytaniach, więc nie wymaga własnego indeksu ani zmiany `backend/firestore.indexes.json`.
 4. `now` = czas serwera funkcji (`deps.now()`), nie czas klienta.
 5. Stałe retencji jako nazwane stałe w `limits.ts` (np. `USAGE_RETENTION_AFTER_RESET_MS = 2 × 86 400 000`, `GLOBAL_RETENTION_MS = 7 × 86 400 000`) i czyste funkcje: `usageExpireAt(now): Date` = `max(resetAt(now) + 2 d, now + 2 d)`, `globalExpireAt(now): Date` = `now + 7 d`. Testy jednostkowe wg pkt 7. Zapis do Firestore jako `Timestamp.fromDate(usageExpireAt(now))`.
 6. Kolejność istnienia użytkownika i zapisu bez zmian (ADR-0002 Aneks A pkt 1): brak zapisu dla nieistniejącego UID.
