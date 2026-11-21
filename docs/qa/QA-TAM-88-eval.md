@@ -6,7 +6,8 @@ model zwrócił (38), przeszła walidację **za pierwszym razem**. Koszt rzeczyw
 (0,51 PLN w liczeniu ostrożnym uruchamiacza). W ręcznej ocenie treść jest realna: nie znalazłem wymyślonych miejsc.
 Problemem jest powtarzanie tego samego miejsca w dwóch dniach (3 z 11 ocenionych planów). **Rekomendacja:** model
 spełnia próg i może być modelem w dev (TAM-90). Duplikaty miejsc i odporność na 429 warto naprawić osobnymi zadaniami
-(niżej). Właściciel decyduje, czy 95,0% z dwiema porażkami 429 uznaje za zaliczenie (pytanie O-TAM88-1).
+(niżej). **Decyzja właściciela (2026-11-21, O-TAM88-1): wynik 95,0% przyjęty jako zaliczenie progu, bez przebiegu
+kontrolnego; `gemini-3.1-flash-lite` zostaje modelem dla dev (TAM-90).**
 
 ## 1. Przebieg
 
@@ -110,8 +111,11 @@ Plan z powtórzonym miejscem nadal da się używać i nie wprowadza w błąd. Za
    **Rekomenduję `gemini-3.1-flash-lite` jako model dev (TAM-90)**, gdy spełnione będą pozostałe warunki z
    `deploy-dev-functions.md` (O4-2, B-1, W-1). Model zapasowy i etap B (3.8 Flash) nie są potrzebne.
    Pytanie o liczbę punktów z `p3-05-wymagania-generowania.md` sekcja 7 nie dotyczy tego wyniku, bo nie było błędów liczby punktów.
-2. **Zapas jest zerowy.** Przy kolejnym 429 wynik spadłby poniżej progu. Dlatego właściciel decyduje (O-TAM88-1),
+2. **Zapas jest zerowy.** Przy kolejnym 429 wynik spadłby poniżej progu. Dlatego właściciel decydował (O-TAM88-1),
    czy przyjmuje wynik, czy chce osobnego przebiegu kontrolnego (nowa zgoda, ok. 0,4–0,5 PLN).
+   **Odpowiedź właściciela 2026-11-21: wynik 38/40 = 95,0% przyjęty jako zaliczenie progu ADR-0001 pkt 2, bez testu
+   kontrolnego. `gemini-3.1-flash-lite` zostaje modelem dla dev (TAM-90).** Zalecenia z pkt 3 i 4 są w Jirze jako
+   P3-05-DEDUP (powtórzone miejsca) i P3-05-429 (odporność na przeciążenie).
 3. **Duplikaty miejsc (K4 c):** proponuję zadanie dla `plan-v2`: zakaz powtórzeń w prompcie oraz sprawdzenie
    w walidatorze (normalizacja nazw, np. „X” i „X Market”). Pełne wyłapanie nazw potocznych („Piazza della Vergogna”)
    wymagałoby wiedzy o miejscach, więc w MVP wystarczy prompt i prosta reguła.
