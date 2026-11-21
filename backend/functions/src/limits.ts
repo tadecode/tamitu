@@ -36,6 +36,22 @@ export function resetAt(now: Date): string {
 export interface UsageDoc {
   day: string;
   count: number;
+  /** Slots returned to this account on `day` (review PR #136 #2); missing = 0. */
+  released?: number | undefined;
+}
+
+/**
+ * Review PR #136 #2: at most this many slot releases per account and day. Further system errors
+ * keep the slot used, so one account cannot drain the global cost fuse (usage_global is never
+ * decremented) with requests that always fail while its own limit stays untouched.
+ * Worst case per account and day: perUserDailyLimit + MAX_RELEASES_PER_DAY generations.
+ */
+export const MAX_RELEASES_PER_DAY = 2;
+
+/** Releases already made today; a document from an earlier day counts as 0. */
+export function effectiveReleased(usage: UsageDoc | undefined, today: string): number {
+  const r = usage && usage.day === today ? usage.released ?? 0 : 0;
+  return Number.isInteger(r) && r > 0 ? r : 0;
 }
 
 /** Counter of the current day; a document from an earlier day counts as 0. */
@@ -95,8 +111,17 @@ export interface Reservation {
 
 /** Writes computed by planReservation (applied in one Firestore transaction in index.ts). */
 export interface ReservationWrites {
-  usage: { day: string; count: number; updatedAt: Date; expireAt: Date };
+  usage: UsageWrite;
   global: { count: number; expireAt: Date };
+}
+
+/** Full shape of usage/{uid} written by reservation and release. */
+export interface UsageWrite {
+  day: string;
+  count: number;
+  released: number;
+  updatedAt: Date;
+  expireAt: Date;
 }
 
 export type ReservationPlan =
@@ -128,7 +153,13 @@ export function planReservation(input: {
     allowed: true,
     reservation: { day, quota: { limit: input.userLimit, remainingToday: d.remainingAfter, resetAt: reset } },
     writes: {
-      usage: { day, count: userCount + 1, updatedAt: input.now, expireAt: usageExpireAt(input.now) },
+      usage: {
+        day,
+        count: userCount + 1,
+        released: effectiveReleased(input.usage, day),
+        updatedAt: input.now,
+        expireAt: usageExpireAt(input.now),
+      },
       global: { count: globalCount + 1, expireAt: globalExpireAt(input.now) },
     },
   };
@@ -136,14 +167,24 @@ export function planReservation(input: {
 
 /**
  * Pure part of the slot release (rule 3): decrement only when the stored day is still the
- * reservation day; otherwise no write (undefined). usage_global is NOT decremented: it is the
- * cost fuse and the model calls were made (and billed) anyway.
+ * reservation day and the account has releases left today (MAX_RELEASES_PER_DAY); otherwise no
+ * write (undefined) and the slot stays used. usage_global is NOT decremented: it is the cost fuse
+ * and the model calls were made (and billed) anyway - the cost-safer variant (review PR #136 #2).
  */
-export function planRelease(
-  usage: UsageDoc | undefined,
-  reservationDay: string,
-  now: Date,
-): { day: string; count: number; updatedAt: Date; expireAt: Date } | undefined {
+export function planRelease(usage: UsageDoc | undefined, reservationDay: string, now: Date): UsageWrite | undefined {
   if (!usage || usage.day !== reservationDay || usage.count <= 0) return undefined;
-  return { day: usage.day, count: usage.count - 1, updatedAt: now, expireAt: usageExpireAt(now) };
+  const released = effectiveReleased(usage, reservationDay);
+  if (released >= MAX_RELEASES_PER_DAY) return undefined;
+  return { day: usage.day, count: usage.count - 1, released: released + 1, updatedAt: now, expireAt: usageExpireAt(now) };
+}
+
+/**
+ * usage/{uid} as stored -> UsageDoc. Malformed `day`/`count` = "no document" (counter 0 for today);
+ * a malformed `released` counts as 0 releases. Pure so the mapping is unit-tested (review PR #136 #10).
+ */
+export function usageFromDoc(data: unknown): UsageDoc | undefined {
+  const d = data as { day?: unknown; count?: unknown; released?: unknown } | null | undefined;
+  if (typeof d?.day !== "string" || !Number.isInteger(d.count)) return undefined;
+  const released = Number.isInteger(d.released) ? (d.released as number) : 0;
+  return { day: d.day, count: d.count as number, released };
 }

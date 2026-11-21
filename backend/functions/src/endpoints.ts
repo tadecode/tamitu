@@ -58,6 +58,8 @@ export interface Deps {
   releaseQuota: (uid: string, reservationDay: string, now: Date) => Promise<void>;
   /** Clock for attempt durations (tests inject a fake). */
   clock?: () => number;
+  /** Wait before a retry after 429/5xx/timeout (tests inject a no-op). */
+  sleep?: (ms: number) => Promise<void>;
 }
 
 export type CallableReq = CallerRequest & { data: unknown };
@@ -71,8 +73,11 @@ export interface GeneratePlanResponse {
   quota: QuotaInfo;
 }
 
-/** Error codes after which the reserved slot is returned (contract pkt 2; ADR-0002 "Rezerwacja limitu"). */
-const RELEASE_ON: ReadonlySet<string> = new Set(["ai_unavailable", "ai_invalid_response", "internal"]);
+/**
+ * Error codes after which the reserved slot is returned - exactly the contract list (posrednik-api.md pkt 2;
+ * review PR #136 #8). After `internal` the slot stays used (cost-safer; the model may have been billed).
+ */
+const RELEASE_ON: ReadonlySet<string> = new Set(["ai_unavailable", "ai_invalid_response"]);
 
 export async function generatePlanCore(
   req: CallableReq,
@@ -127,7 +132,7 @@ export async function generatePlanCore(
     });
   };
   try {
-    const { plan } = await generateValidPlan(request, model, { clock: deps.clock, onAttempt });
+    const { plan } = await generateValidPlan(request, model, { clock: deps.clock, sleep: deps.sleep, onAttempt });
     return {
       apiVersion: 1,
       requestId: request.requestId,

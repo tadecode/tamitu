@@ -83,14 +83,15 @@ export function memoryQuota() {
     reserveQuota: async (uid: string, limits: { userLimit: number; globalLimit: number }, now: Date): Promise<ReservationPlan> => {
       const real = planReservation({ usage: usage.get(uid), globalCount: global.get(warsawDay(now)), ...limits, now });
       if (real.allowed) {
-        usage.set(uid, { day: real.writes.usage.day, count: real.writes.usage.count, expireAt: real.writes.usage.expireAt });
+        const w = real.writes.usage;
+        usage.set(uid, { day: w.day, count: w.count, released: w.released, expireAt: w.expireAt });
         global.set(real.reservation.day, real.writes.global.count);
       }
       return real;
     },
     releaseQuota: async (uid: string, day: string, now: Date) => {
       const w = planRelease(usage.get(uid), day, now);
-      if (w) usage.set(uid, { day: w.day, count: w.count, expireAt: w.expireAt });
+      if (w) usage.set(uid, { day: w.day, count: w.count, released: w.released, expireAt: w.expireAt });
     },
   };
 }

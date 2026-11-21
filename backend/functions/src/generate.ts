@@ -10,6 +10,15 @@ import type { GeneratePlanRequest } from "./schemas.js";
 /** Contract: max. 2 model calls per generation. */
 export const MAX_ATTEMPTS = 2;
 
+/** Wait before retrying a retryable model error: 1-2 s with jitter (fits the 120 s function limit). */
+export const RETRY_BACKOFF_MS = { min: 1000, max: 2000 } as const;
+
+export function retryBackoffMs(random: () => number = Math.random): number {
+  return Math.round(RETRY_BACKOFF_MS.min + random() * (RETRY_BACKOFF_MS.max - RETRY_BACKOFF_MS.min));
+}
+
+const defaultSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
 /** Metadata of one attempt (sekcja 6). No prompt, no trip data, no model output. */
 export interface AttemptLog {
   attempt: number;
@@ -47,9 +56,10 @@ const safeToken = (v: string | undefined) => (v !== undefined && ERROR_CODE_PATT
 export async function generateValidPlan(
   request: GeneratePlanRequest,
   model: PlanModel,
-  opts: { clock?: () => number; onAttempt?: (log: AttemptLog) => void } = {},
+  opts: { clock?: () => number; onAttempt?: (log: AttemptLog) => void; sleep?: (ms: number) => Promise<void> } = {},
 ): Promise<GenerationResult> {
   const clock = opts.clock ?? Date.now;
+  const sleep = opts.sleep ?? defaultSleep;
   const targets = computeDayTargets(request);
   let hints: string[] | undefined;
   let lastFailure: "invalid" | "unavailable" = "unavailable";
@@ -71,6 +81,8 @@ export async function generateValidPlan(
         if (e.kind === "config") throw new AppError("ai_unavailable");
         lastFailure = "unavailable";
         hints = undefined; // nothing to correct; same request again
+        // Review PR #136 #7: an immediate retry after 429/503 usually gets the same answer.
+        if (attempt < MAX_ATTEMPTS) await sleep(retryBackoffMs());
         continue;
       }
       opts.onAttempt?.({ ...base, durationMs, outcome: "error" });
@@ -102,6 +114,7 @@ export async function generateValidPlan(
       validationErrors: v.issues.map((i) => i.code).join(","),
     });
     lastFailure = "invalid";
+    if (v.final) break; // blocked answer: same input, same result - do not pay for a second call
     hints = retryHints(v.issues);
   }
   throw new AppError(lastFailure === "invalid" ? "ai_invalid_response" : "ai_unavailable");

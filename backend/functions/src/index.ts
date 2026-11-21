@@ -23,7 +23,7 @@ import {
 } from "./consents.js";
 import { budgetGuardCore, deleteAccountCore, generatePlanCore, recordConsentCore, type Deps } from "./endpoints.js";
 import { runGuarded } from "./handler.js";
-import { planRelease, planReservation, warsawDay, type ReservationPlan, type UsageDoc } from "./limits.js";
+import { planRelease, planReservation, usageFromDoc, warsawDay, type ReservationPlan } from "./limits.js";
 import { serviceAccountFor } from "./service-accounts.js";
 
 const REGION = "europe-west4";
@@ -78,12 +78,6 @@ const writeConsent: ConsentWriter = async (uid, consentId, doc) => {
     return { receivedAt: doc.receivedAt };
   });
 };
-
-/** usage/{uid} as stored; anything malformed counts as "no document" (counter 0 for today). */
-function usageFromDoc(data: unknown): UsageDoc | undefined {
-  const d = data as { day?: unknown; count?: unknown } | undefined;
-  return typeof d?.day === "string" && Number.isInteger(d.count) ? { day: d.day, count: d.count as number } : undefined;
-}
 
 /**
  * P3-05 quota reservation: ONE transaction reads usage/{uid} and usage_global/{today} and writes both
