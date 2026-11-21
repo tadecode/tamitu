@@ -32,12 +32,12 @@ const HTTPS_CODE: Record<AppCode, FunctionsErrorCode> = {
 
 /**
  * Error carrying a contract code. `details` must never contain user-provided values
- * (field paths and constants only).
+ * (field paths, constants and fixed flags such as `slotReleased` only).
  */
 export class AppError extends Error {
   constructor(
     readonly appCode: AppCode,
-    readonly details: Record<string, string | number> = {},
+    readonly details: Record<string, string | number | boolean> = {},
   ) {
     // Fixed message: nothing user-controlled ever ends up in message.
     super(appCode);

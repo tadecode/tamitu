@@ -64,6 +64,7 @@ class AppFailure implements Exception {
     this.field,
     this.limit,
     this.resetAt,
+    this.slotReleased,
   });
 
   final FailureKind kind;
@@ -71,6 +72,11 @@ class AppFailure implements Exception {
   final String? field;
   final int? limit;
   final DateTime? resetAt;
+
+  /// `details.slotReleased` of `ai_unavailable` / `ai_invalid_response` (contract v0.5):
+  /// true = the attempt did not use the daily limit, false = it counted,
+  /// null = unknown (field missing, older server) -> "may have counted".
+  final bool? slotReleased;
 
   @override
   String toString() => 'AppFailure(${kind.name})';
@@ -113,9 +119,15 @@ AppFailure classifyCallableError({required String code, Object? details}) {
               : null,
         );
       case 'ai_unavailable':
-        return const AppFailure(FailureKind.aiUnavailable);
+        return AppFailure(
+          FailureKind.aiUnavailable,
+          slotReleased: _slotReleased(map),
+        );
       case 'ai_invalid_response':
-        return const AppFailure(FailureKind.aiInvalidResponse);
+        return AppFailure(
+          FailureKind.aiInvalidResponse,
+          slotReleased: _slotReleased(map),
+        );
       case 'test_data_only':
         return const AppFailure(FailureKind.testDataOnly);
       case 'reauth_required':
@@ -135,6 +147,12 @@ AppFailure classifyCallableError({required String code, Object? details}) {
     default:
       return const AppFailure(FailureKind.generic);
   }
+}
+
+/// `details.slotReleased` only when it is a real bool; anything else = unknown (null).
+bool? _slotReleased(Map<Object?, Object?> details) {
+  final v = details['slotReleased'];
+  return v is bool ? v : null;
 }
 
 /// Maps a `FirebaseAuthException.code` to a failure (ADR-0011 pkt 2).

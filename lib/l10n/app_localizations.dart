@@ -434,17 +434,41 @@ abstract class AppLocalizations {
   /// **'Couldn\'t create the plan'**
   String get errorGenerateTitle;
 
-  /// No description provided for @errorAiUnavailableBody.
+  /// EK-16 ai_unavailable with details.slotReleased = true: the attempt did not use the daily limit (TAM-94)
   ///
   /// In en, this message translates to:
-  /// **'The AI service is temporarily unavailable. This attempt doesn\'t count towards your limit. Please try again shortly.'**
+  /// **'The AI service is temporarily unavailable. This attempt doesn\'t count towards today\'s limit. Please try again shortly.'**
   String get errorAiUnavailableBody;
 
-  /// No description provided for @errorAiInvalidBody.
+  /// EK-16 ai_unavailable with details.slotReleased = false: the attempt counted (max 2 give-backs per day) (TAM-94)
   ///
   /// In en, this message translates to:
-  /// **'The AI returned an incomplete plan, so we didn\'t save it. This attempt doesn\'t count towards your limit. Please try again.'**
+  /// **'The AI service is temporarily unavailable. This attempt counted towards today\'s limit, because we give back failed attempts at most twice a day. Please try again later.'**
+  String get errorAiUnavailableCountedBody;
+
+  /// EK-16 ai_unavailable without details.slotReleased (older server): unknown whether the attempt counted (TAM-94)
+  ///
+  /// In en, this message translates to:
+  /// **'The AI service is temporarily unavailable. This attempt may have counted towards today\'s limit. Please try again shortly.'**
+  String get errorAiUnavailableMaybeBody;
+
+  /// EK-16 ai_invalid_response with details.slotReleased = true: the attempt did not use the daily limit (TAM-94)
+  ///
+  /// In en, this message translates to:
+  /// **'The AI returned an incomplete plan, so we didn\'t save it. This attempt doesn\'t count towards today\'s limit. Please try again.'**
   String get errorAiInvalidBody;
+
+  /// EK-16 ai_invalid_response with details.slotReleased = false: the attempt counted (max 2 give-backs per day) (TAM-94)
+  ///
+  /// In en, this message translates to:
+  /// **'The AI returned an incomplete plan, so we didn\'t save it. This attempt counted towards today\'s limit, because we give back failed attempts at most twice a day.'**
+  String get errorAiInvalidCountedBody;
+
+  /// EK-16 ai_invalid_response without details.slotReleased (older server): unknown whether the attempt counted (TAM-94)
+  ///
+  /// In en, this message translates to:
+  /// **'The AI returned an incomplete plan, so we didn\'t save it. This attempt may have counted towards today\'s limit. Please try again.'**
+  String get errorAiInvalidMaybeBody;
 
   /// No description provided for @errorTimeoutBody.
   ///

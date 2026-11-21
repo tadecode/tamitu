@@ -4,6 +4,7 @@ import {
   globalExpireAt,
   MAX_RELEASES_PER_DAY,
   planRelease,
+  planReleaseOutcome,
   planReservation,
   resetAt,
   usageExpireAt,
@@ -91,6 +92,13 @@ describe("planReservation / planRelease (pkt 3.2)", () => {
     expect(MAX_RELEASES_PER_DAY).toBe(2);
     expect(planRelease({ day: "2026-11-21", count: 3, released: 1 }, "2026-11-21", later)?.released).toBe(2);
     expect(planRelease({ day: "2026-11-21", count: 3, released: 2 }, "2026-11-21", later)).toBeUndefined();
+  });
+  it("TAM-94: planReleaseOutcome names why a slot stays used (released / capped / stale_day)", () => {
+    const later = new Date("2026-11-21T10:01:00Z");
+    expect(planReleaseOutcome({ day: "2026-11-21", count: 2 }, "2026-11-21", later).outcome).toBe("released");
+    expect(planReleaseOutcome({ day: "2026-11-21", count: 3, released: 2 }, "2026-11-21", later)).toEqual({ outcome: "capped" });
+    expect(planReleaseOutcome({ day: "2026-11-22", count: 1 }, "2026-11-21", later)).toEqual({ outcome: "stale_day" });
+    expect(planReleaseOutcome(undefined, "2026-11-21", later)).toEqual({ outcome: "stale_day" });
   });
 });
 

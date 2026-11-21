@@ -30,6 +30,22 @@ void main() {
       },
     );
 
+    test('TAM-94: details.slotReleased is read only as a bool (v0.5)', () {
+      bool? slot(String code, Map<String, Object?> extra) =>
+          classifyCallableError(
+            code: 'internal',
+            details: {'code': code, ...extra},
+          ).slotReleased;
+      for (final code in ['ai_unavailable', 'ai_invalid_response']) {
+        expect(slot(code, {'slotReleased': true}), isTrue);
+        expect(slot(code, {'slotReleased': false}), isFalse);
+        expect(slot(code, {}), isNull);
+        expect(slot(code, {'slotReleased': 'true'}), isNull);
+        expect(slot(code, {'slotReleased': 1}), isNull);
+      }
+      expect(slot('internal', {'slotReleased': true}), isNull);
+    });
+
     test(
       'deadline-exceeded -> timeout; unauthenticated -> unauthenticated',
       () {

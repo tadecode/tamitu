@@ -23,7 +23,14 @@ import {
 } from "./consents.js";
 import { budgetGuardCore, deleteAccountCore, generatePlanCore, recordConsentCore, type Deps } from "./endpoints.js";
 import { runGuarded } from "./handler.js";
-import { planRelease, planReservation, usageFromDoc, warsawDay, type ReservationPlan } from "./limits.js";
+import {
+  planReleaseOutcome,
+  planReservation,
+  usageFromDoc,
+  warsawDay,
+  type ReleaseOutcome,
+  type ReservationPlan,
+} from "./limits.js";
 import { serviceAccountFor } from "./service-accounts.js";
 
 const REGION = "europe-west4";
@@ -111,12 +118,16 @@ async function reserveQuota(
 }
 
 /** Rule 3: separate transaction; decrements only when the stored day is still the reservation day. */
-async function releaseQuota(uid: string, reservationDay: string, now: Date): Promise<void> {
+async function releaseQuota(uid: string, reservationDay: string, now: Date): Promise<ReleaseOutcome> {
   const db = getFirestore();
   const ref = db.doc(`usage/${uid}`);
-  await db.runTransaction(async (tx) => {
-    const w = planRelease(usageFromDoc((await tx.get(ref)).data()), reservationDay, now);
-    if (w) tx.set(ref, { ...w, updatedAt: Timestamp.fromDate(w.updatedAt), expireAt: Timestamp.fromDate(w.expireAt) });
+  return db.runTransaction(async (tx) => {
+    const r = planReleaseOutcome(usageFromDoc((await tx.get(ref)).data()), reservationDay, now);
+    if (r.outcome === "released") {
+      const w = r.write;
+      tx.set(ref, { ...w, updatedAt: Timestamp.fromDate(w.updatedAt), expireAt: Timestamp.fromDate(w.expireAt) });
+    }
+    return r.outcome;
   });
 }
 

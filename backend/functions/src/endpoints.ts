@@ -25,7 +25,7 @@ import {
 import { AppError } from "./errors.js";
 import type { HandlerContext } from "./handler.js";
 import { generateValidPlan, type AttemptLog } from "./generate.js";
-import { shouldDisableAi, type QuotaInfo, type ReservationPlan } from "./limits.js";
+import { shouldDisableAi, type QuotaInfo, type ReleaseOutcome, type ReservationPlan } from "./limits.js";
 import { logEvent, uidHash } from "./logger.js";
 import type { PlanDay } from "./plan-validator.js";
 import { PROMPT_VERSION } from "./prompt/plan-v1.js";
@@ -54,8 +54,8 @@ export interface Deps {
    * decision and written shape: limits.planReservation.
    */
   reserveQuota: (uid: string, limits: { userLimit: number; globalLimit: number }, now: Date) => Promise<ReservationPlan>;
-  /** Slot release after a system error (separate transaction; limits.planRelease). */
-  releaseQuota: (uid: string, reservationDay: string, now: Date) => Promise<void>;
+  /** Slot release after a system error (separate transaction; limits.planReleaseOutcome). */
+  releaseQuota: (uid: string, reservationDay: string, now: Date) => Promise<ReleaseOutcome>;
   /** Clock for attempt durations (tests inject a fake). */
   clock?: () => number;
   /** Wait before a retry after 429/5xx/timeout (tests inject a no-op). */
@@ -79,6 +79,19 @@ export interface GeneratePlanResponse {
  */
 const RELEASE_ON: ReadonlySet<string> = new Set(["ai_unavailable", "ai_invalid_response"]);
 
+/**
+ * Fixed `quotaRelease` log codes (posrednik-api.md pkt 2, review PR #138 N2). Metadata only.
+ * `release_stale_day` (reservation day passed at midnight) is not in contract v0.5 yet - TAM-94 log.
+ */
+const RELEASE_LOG: Record<ReleaseOutcome, string> = {
+  released: "released",
+  capped: "release_capped",
+  stale_day: "release_stale_day",
+};
+
+/** `ai_unavailable` before the reservation: no slot was used, so `details.slotReleased = true` (v0.5). */
+const unavailableNoSlot = () => new AppError("ai_unavailable", { slotReleased: true });
+
 export async function generatePlanCore(
   req: CallableReq,
   deps: Deps,
@@ -100,11 +113,11 @@ export async function generatePlanCore(
   // log the fixed code `configError` (never the values).
   const current = currentVersionNumbers(runtime, ctx);
   assertConsents(current, await deps.loadLatestConsents(caller.uid));
-  if (!runtime.aiEnabled) throw new AppError("ai_unavailable");
+  if (!runtime.aiEnabled) throw unavailableNoSlot();
   const model = deps.model;
   if (!model) {
     ctx.configError = "ai_config_invalid";
-    throw new AppError("ai_unavailable");
+    throw unavailableNoSlot();
   }
 
   // ADR-0002 step 5: reserve BEFORE calling the model.
@@ -117,7 +130,7 @@ export async function generatePlanCore(
     if (reservation.appCode === "limit_exceeded") {
       throw new AppError("limit_exceeded", { limit: reservation.quota.limit, resetAt: reservation.quota.resetAt });
     }
-    throw new AppError("ai_unavailable");
+    throw unavailableNoSlot();
   }
 
   ctx.attempts = 0;
@@ -142,14 +155,18 @@ export async function generatePlanCore(
       quota: reservation.reservation.quota,
     };
   } catch (e) {
-    const code = e instanceof AppError ? e.appCode : "internal";
-    if (RELEASE_ON.has(code)) {
+    if (e instanceof AppError && RELEASE_ON.has(e.appCode)) {
+      let slotReleased = false;
       try {
-        await deps.releaseQuota(caller.uid, reservation.reservation.day, deps.now());
+        const outcome = await deps.releaseQuota(caller.uid, reservation.reservation.day, deps.now());
+        ctx.quotaRelease = RELEASE_LOG[outcome];
+        slotReleased = outcome === "released";
       } catch {
         // Never mask the original error; the fixed code tells the owner a slot stayed used.
         ctx.quotaRelease = "release_failed";
       }
+      // Same contract code; the app picks its message by details.slotReleased (TAM-94).
+      throw new AppError(e.appCode, { ...e.details, slotReleased });
     }
     throw e;
   }

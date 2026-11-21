@@ -88,7 +88,7 @@ describe("generatePlan - success", () => {
     const model = echoValidModel();
     const { deps, quota } = mkDeps({ model }, { globalDailyLimit: 1 });
     quota.global.set("2026-11-21", 1);
-    expect(await err(run(body(), deps))).toEqual({ code: "ai_unavailable" });
+    expect(await err(run(body(), deps))).toEqual({ code: "ai_unavailable", slotReleased: true });
     expect(model.calls).toHaveLength(0);
   });
 });
@@ -105,7 +105,7 @@ describe("generatePlan - order and fail-closed", () => {
   it("missing AI configuration -> ai_unavailable, configError logged, no reservation", async () => {
     const reserveQuota = vi.fn();
     const { deps } = mkDeps({ model: undefined, reserveQuota });
-    expect(await err(run(body(), deps))).toEqual({ code: "ai_unavailable" });
+    expect(await err(run(body(), deps))).toEqual({ code: "ai_unavailable", slotReleased: true });
     expect(reserveQuota).not.toHaveBeenCalled();
     expect(JSON.stringify(logged)).toContain('"configError":"ai_config_invalid"');
   });
@@ -115,13 +115,13 @@ describe("generatePlan - slot release (contract pkt 2)", () => {
   it("after ai_invalid_response the slot is returned (global counter stays)", async () => {
     const bad = ok({ language: "pl", days: [] });
     const { deps, quota } = mkDeps({ model: scriptedModel([bad, bad]) });
-    expect(await err(run(body(), deps))).toEqual({ code: "ai_invalid_response" });
+    expect(await err(run(body(), deps))).toEqual({ code: "ai_invalid_response", slotReleased: true });
     expect(quota.usage.get("owner")?.count).toBe(0);
     expect(quota.global.get("2026-11-21")).toBe(1);
   });
   it("after ai_unavailable (400) the slot is returned; after internal it is NOT (contract list, review #8)", async () => {
     const { deps, quota } = mkDeps({ model: scriptedModel([new ModelError("config", "400")]) });
-    expect(await err(run(body(), deps))).toEqual({ code: "ai_unavailable" });
+    expect(await err(run(body(), deps))).toEqual({ code: "ai_unavailable", slotReleased: true });
     expect(quota.usage.get("owner")).toMatchObject({ count: 0, released: 1 });
     const { deps: d2, quota: q2 } = mkDeps({ model: scriptedModel([new TypeError(CANARY)]) });
     expect(await err(run(body(), d2))).toEqual({ code: "internal" });
@@ -145,9 +145,43 @@ describe("generatePlan - slot release (contract pkt 2)", () => {
         throw new Error(CANARY);
       },
     });
-    expect(await err(run(body(), deps))).toEqual({ code: "ai_unavailable" });
+    expect(await err(run(body(), deps))).toEqual({ code: "ai_unavailable", slotReleased: false });
     expect(JSON.stringify(logged)).toContain('"quotaRelease":"release_failed"');
     expect(JSON.stringify(logged)).not.toContain(CANARY);
+  });
+  it("TAM-94: 3rd failure of the day -> slotReleased=false, quotaRelease released x2 then release_capped", async () => {
+    const bad = ok({ language: "pl", days: [] });
+    const { deps, quota } = mkDeps({ model: scriptedModel(Array(6).fill(bad)) });
+    const results: unknown[] = [];
+    const releaseLogs: unknown[] = [];
+    for (let i = 0; i < 3; i++) {
+      logged.length = 0;
+      results.push(await err(run(body(), deps)));
+      releaseLogs.push(fields().find((f) => f["fn"] === "generatePlan")?.["quotaRelease"]);
+    }
+    expect(results).toEqual([
+      { code: "ai_invalid_response", slotReleased: true },
+      { code: "ai_invalid_response", slotReleased: true },
+      { code: "ai_invalid_response", slotReleased: false },
+    ]);
+    expect(releaseLogs).toEqual(["released", "released", "release_capped"]);
+    expect(quota.usage.get("owner")).toMatchObject({ count: 1, released: 2 });
+  });
+  it("TAM-94: ai_unavailable before the reservation -> slotReleased=true, no release attempted, no quotaRelease", async () => {
+    const releaseQuota = vi.fn();
+    const { deps } = mkDeps({ releaseQuota }, { aiEnabled: false });
+    expect(await err(run(body(), deps))).toEqual({ code: "ai_unavailable", slotReleased: true });
+    expect(releaseQuota).not.toHaveBeenCalled();
+    expect(JSON.stringify(logged)).not.toContain("quotaRelease");
+  });
+  it("TAM-94: release after midnight (stale day) -> slotReleased=false, quotaRelease release_stale_day", async () => {
+    const { deps } = mkDeps({ model: scriptedModel([new ModelError("config", "400")]), releaseQuota: async () => "stale_day" });
+    expect(await err(run(body(), deps))).toEqual({ code: "ai_unavailable", slotReleased: false });
+    expect(JSON.stringify(logged)).toContain('"quotaRelease":"release_stale_day"');
+  });
+  it("TAM-94: internal carries no slotReleased", async () => {
+    const { deps } = mkDeps({ model: scriptedModel([new TypeError(CANARY)]) });
+    expect(await err(run(body(), deps))).toEqual({ code: "internal" });
   });
   it("limit_exceeded does not touch the counter", async () => {
     const releaseQuota = vi.fn();
