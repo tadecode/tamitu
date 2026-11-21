@@ -41,6 +41,13 @@ describe("validatePlanOutput – valid plans", () => {
 describe("validatePlanOutput – rejects (sekcja 5 order)", () => {
   it("1. finishReason other than STOP (e.g. MAX_TOKENS)", () => {
     expect(codes(run(validOutput(intense4), intense4, "pl", "MAX_TOKENS"))).toEqual(["finish_MAX_TOKENS"]);
+    expect(run(validOutput(intense4), intense4, "pl", "MAX_TOKENS")).not.toHaveProperty("final");
+    expect(run(validOutput(intense4), intense4, "pl", "OTHER")).not.toHaveProperty("final");
+    // review #136 #5: blocked answers are final (no paid retry with the same input)
+    for (const reason of ["SAFETY", "PROHIBITED_CONTENT", "SPII", "BLOCKLIST", "RECITATION"]) {
+      expect(run(validOutput(intense4), intense4, "pl", reason)).toMatchObject({ ok: false, final: true });
+    }
+    expect(validatePlanOutput({ finishReason: undefined, text: undefined, planLanguage: "pl", targets: intense4 })).toMatchObject({ final: true });
     expect(validatePlanOutput({ finishReason: undefined, text: "{}", planLanguage: "pl", targets: intense4 }).ok).toBe(false);
   });
   it("2. invalid JSON and wrong shape", () => {
@@ -108,6 +115,10 @@ describe("validatePlanOutput – rejects (sekcja 5 order)", () => {
       ["<b>Bold</b> place", "description_url_markup@day2"],
       ["[link](x)", "description_url_markup@day2"],
       ["**Great** view", "description_url_markup@day2"],
+      ["Info: visitporto.pt", "description_url_markup@day2"], // review #136 #6
+      ["See ticket.de/x for hours", "description_url_markup@day2"],
+      ["museum.it, open 9-17", "description_url_markup@day2"],
+      ["Program na kultura.gov.hu/program", "description_url_markup@day2"],
       ["Hidden​text", "description_chars@day2"],
       ["Line\u0007bell", "description_chars@day2"],
     ];
@@ -119,6 +130,12 @@ describe("validatePlanOutput – rejects (sekcja 5 order)", () => {
     const fine = validOutput(intense4);
     fine.days[1]!.items[0]!.description = "Zamek Królewski na Wawelu – dziedziniec, 3 sale i widok na Wisłę (ok. 2 h).";
     expect(run(fine).ok).toBe(true);
+    // no false alarms on ordinary sentences (missing space after a full stop, abbreviations, times)
+    for (const text of ["Walk to the square.It is lively at 19.30.", "Ok. 2 h, np. kawa i ciasto.", "St. Stephen's Basilica, 9.00-17.00."]) {
+      const b = validOutput(intense4);
+      b.days[1]!.items[0]!.description = text;
+      expect(run(b).ok).toBe(true);
+    }
   });
 });
 
