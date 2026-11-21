@@ -63,3 +63,87 @@ export function decideQuota(input: {
 export function shouldDisableAi(costAmount: number, budgetAmount: number): boolean {
   return Number.isFinite(costAmount) && Number.isFinite(budgetAmount) && budgetAmount > 0 && costAmount >= budgetAmount;
 }
+
+/** Retention of usage/{uid} after the end of the quota day (O4-b, firestore-ttl-indexes.md pkt 2.1). */
+export const USAGE_RETENTION_AFTER_RESET_MS = 2 * 86_400_000;
+/** Retention of usage_global/{day} after its last write. */
+export const GLOBAL_RETENTION_MS = 7 * 86_400_000;
+
+/** TTL field of usage/{uid}: max(resetAt(now) + 2 d, now + 2 d). */
+export function usageExpireAt(now: Date): Date {
+  const fromReset = new Date(resetAt(now)).getTime() + USAGE_RETENTION_AFTER_RESET_MS;
+  return new Date(Math.max(fromReset, now.getTime() + USAGE_RETENTION_AFTER_RESET_MS));
+}
+
+/** TTL field of usage_global/{day}: now + 7 d. */
+export function globalExpireAt(now: Date): Date {
+  return new Date(now.getTime() + GLOBAL_RETENTION_MS);
+}
+
+/** Quota block of the generatePlan response (posrednik-api.md pkt 2). */
+export interface QuotaInfo {
+  limit: number;
+  remainingToday: number;
+  resetAt: string;
+}
+
+/** Result of a successful reservation; `day` is needed to release the slot later. */
+export interface Reservation {
+  day: string;
+  quota: QuotaInfo;
+}
+
+/** Writes computed by planReservation (applied in one Firestore transaction in index.ts). */
+export interface ReservationWrites {
+  usage: { day: string; count: number; updatedAt: Date; expireAt: Date };
+  global: { count: number; expireAt: Date };
+}
+
+export type ReservationPlan =
+  | { allowed: true; reservation: Reservation; writes: ReservationWrites }
+  | { allowed: false; appCode: "limit_exceeded" | "ai_unavailable"; quota: QuotaInfo };
+
+/**
+ * Pure part of the reservation transaction (firestore-ttl-indexes.md pkt 3.2, rules 1-2):
+ * the caller reads usage/{uid} and usage_global/{today} inside a transaction, passes them here
+ * and writes `writes` when allowed. Global limit first (cost kill-switch), then per user.
+ */
+export function planReservation(input: {
+  usage: UsageDoc | undefined;
+  globalCount: number | undefined;
+  userLimit: number;
+  globalLimit: number;
+  now: Date;
+}): ReservationPlan {
+  const day = warsawDay(input.now);
+  const reset = resetAt(input.now);
+  const userCount = effectiveCount(input.usage, day);
+  const globalCount = Math.max(0, input.globalCount ?? 0);
+  const d = decideQuota({ userCount, userLimit: input.userLimit, globalCount, globalLimit: input.globalLimit });
+  if (!d.allowed) {
+    const remaining = Math.max(0, input.userLimit - userCount);
+    return { allowed: false, appCode: d.appCode, quota: { limit: input.userLimit, remainingToday: remaining, resetAt: reset } };
+  }
+  return {
+    allowed: true,
+    reservation: { day, quota: { limit: input.userLimit, remainingToday: d.remainingAfter, resetAt: reset } },
+    writes: {
+      usage: { day, count: userCount + 1, updatedAt: input.now, expireAt: usageExpireAt(input.now) },
+      global: { count: globalCount + 1, expireAt: globalExpireAt(input.now) },
+    },
+  };
+}
+
+/**
+ * Pure part of the slot release (rule 3): decrement only when the stored day is still the
+ * reservation day; otherwise no write (undefined). usage_global is NOT decremented: it is the
+ * cost fuse and the model calls were made (and billed) anyway.
+ */
+export function planRelease(
+  usage: UsageDoc | undefined,
+  reservationDay: string,
+  now: Date,
+): { day: string; count: number; updatedAt: Date; expireAt: Date } | undefined {
+  if (!usage || usage.day !== reservationDay || usage.count <= 0) return undefined;
+  return { day: usage.day, count: usage.count - 1, updatedAt: now, expireAt: usageExpireAt(now) };
+}
