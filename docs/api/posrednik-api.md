@@ -1,6 +1,6 @@
 # Kontrakt API pośrednika (Cloud Functions callable)
 
-Stan: 2026-11-16, wersja 0.4 (v0.2 zatwierdzona na G2 wraz z ADR-0002 i jego Aneksem A; v0.3 z ADR-0011 i v0.4 z ADR-0012, oba zatwierdzone przez właściciela 2026-11-16 – historia w pkt 7), autor: architect. ADR-0002, ADR-0011, ADR-0012. Schematy: `schemas/generate-plan.request.schema.json`, `schemas/generate-plan.response.schema.json`.
+Stan: 2026-11-21, wersja 0.5 (zwrot próby i pole `slotReleased`, TAM-93/TAM-91 – pkt 2 „Slot limitu i zwrot próby”, pkt 7); wcześniej 0.4 (v0.2 zatwierdzona na G2 wraz z ADR-0002 i jego Aneksem A; v0.3 z ADR-0011 i v0.4 z ADR-0012, oba zatwierdzone przez właściciela 2026-11-16 – historia w pkt 7), autor: architect. ADR-0002, ADR-0011, ADR-0012. Schematy: `schemas/generate-plan.request.schema.json`, `schemas/generate-plan.response.schema.json`.
 Region: `europe-west4`. Wywołanie przez SDK `cloud_functions` (callable): token ID Firebase i token App Check dołączane automatycznie. Format: JSON, UTF-8, `Content-Type: application/json`.
 
 ## 1. Zasady wspólne
@@ -84,7 +84,7 @@ Nieznane pola są odrzucane (`invalid_argument`) – brak przypadkowego przesył
   "quota": { "limit": 5, "remainingToday": 3, "resetAt": "2026-11-16T23:00:00Z" }
 }
 ```
-Gwarancje po walidacji serwerowej: liczba dni = `trip.days`; `dayNumber` kolejne od 1; punktów w dniu: `relaxed` 2–3, `moderate` 4–5, `intense` 6–7 (dzień 1 może mieć mniej, także 0, wg bufora); **ostatni dzień (przy co najmniej 2 dniach): od 1 do górnej granicy tempa – propozycja O-TAM4-1, do potwierdzenia przez właściciela**; zakres dla każdego dnia liczy kod i przekazuje modelowi, `docs/architecture/p3-05-wymagania-generowania.md` sekcja 4; godziny rosnące w dniu; **dzień 1: wszystkie `startTime` ≥ przylot + bufor (3 h przy `flight`, 0 przy `car`, N6)**, a jeśli próg przekracza 22:00 – brak aktywności w dniu 1; teksty bez URL-i, znaczników i znaków sterujących, w długościach: `title` ≤ 80, `name` ≤ 100, `locality` ≤ 80, `description` ≤ 300; język odpowiedzi zgodny z `planLanguage`. Pola `startTime`, `name`, `locality` służą aplikacji do budowy linku Maps (`name, locality, destination`); model nie zwraca URL-i ani współrzędnych (T5).
+Gwarancje po walidacji serwerowej: liczba dni = `trip.days`; `dayNumber` kolejne od 1; punktów w dniu: `relaxed` 2–3, `moderate` 4–5, `intense` 6–7 (dzień 1 może mieć mniej, także 0, wg bufora); **ostatni dzień (przy co najmniej 2 dniach): od 1 do górnej granicy tempa** (O-TAM4-1, zatwierdzone przez właściciela 2026-11-21); zakres dla każdego dnia liczy kod i przekazuje modelowi, `docs/architecture/p3-05-wymagania-generowania.md` sekcja 4; godziny rosnące w dniu; **dzień 1: wszystkie `startTime` ≥ przylot + bufor (3 h przy `flight`, 0 przy `car`, N6)**, a jeśli próg przekracza 22:00 – brak aktywności w dniu 1; teksty bez URL-i, znaczników i znaków sterujących, w długościach: `title` ≤ 80, `name` ≤ 100, `locality` ≤ 80, `description` ≤ 300; język odpowiedzi zgodny z `planLanguage`. Pola `startTime`, `name`, `locality` służą aplikacji do budowy linku Maps (`name, locality, destination`); model nie zwraca URL-i ani współrzędnych (T5).
 
 ### Błędy
 | `details.code` | Kod HttpsError | Znaczenie | Dodatkowe `details` |
@@ -95,12 +95,31 @@ Gwarancje po walidacji serwerowej: liczba dni = `trip.days`; `dayNumber` kolejne
 | `unsupported_version` | `failed-precondition` | niezgodna `apiVersion` | `minVersion` |
 | `consent_required` | `failed-precondition` | brak aktualnej akceptacji polityki lub zgody AI (ADR-0012) | `consentType` ∈ {`privacy_policy`, `ai_processing`} |
 | `limit_exceeded` | `resource-exhausted` | limit konta wyczerpany | `limit`, `resetAt` |
-| `ai_unavailable` | `unavailable` | model niedostępny, limit globalny, `aiEnabled=false`, przekroczony czas | `retryAfterSec` (opcjonalnie) |
-| `ai_invalid_response` | `internal` | odpowiedź niepoprawna po 2 próbach | – |
+| `ai_unavailable` | `unavailable` | model niedostępny, limit globalny, `aiEnabled=false`, brak konfiguracji modelu, przekroczony czas | `slotReleased` (bool, zawsze od v0.5), `retryAfterSec` (opcjonalnie) |
+| `ai_invalid_response` | `internal` | odpowiedź niepoprawna po 2 próbach (blokada treści, np. `SAFETY`, kończy od razu, bez drugiej próby) | `slotReleased` (bool, zawsze od v0.5) |
 | `test_data_only` | `permission-denied` | `ALLOW_REAL_DATA=false`, a konto/żądanie nie testowe; także fail-closed w prod przy `allowRealData=true` i `ENFORCE_APP_CHECK=false` (ADR-0002, Aneks A pkt 3) | – |
 | `internal` | `internal` | nieoczekiwany błąd | – |
 
-Slot limitu jest zwracany przy `ai_unavailable` i `ai_invalid_response`. **Nie** jest zwracany po anulowaniu przez użytkownika, jeśli wywołanie modelu już ruszyło (Q12). Callable nie ma przerwania żądania: anulowanie = porzucenie wyniku po stronie aplikacji (odpowiedź z tym `requestId` jest odrzucana, nic nie zapisujemy); żądanie na serwerze kończy się normalnie (ADR-0011). Timeout klienta: 120 s.
+### Slot limitu i zwrot próby
+Co to znaczy dla użytkownika: gdy plan nie powstanie z naszej winy (AI niedostępne albo zła odpowiedź), zwykle oddajemy próbę, ale **najwyżej 2 razy na dobę**. Trzecia i kolejna taka awaria w tej samej dobie zużywa już limit konta. Tak zdecydował właściciel 2026-11-21 (O-TAM18-3), bo każda nieudana próba i tak kosztuje wywołania modelu.
+
+Reguły (serwer: `backend/functions/src/limits.ts`, `endpoints.ts`):
+1. Slot konta (`usage/{uid}`) jest rezerwowany **przed** wywołaniem modelu (ADR-0002 krok 5). Błędy wykryte wcześniej (zgody, `aiEnabled=false`, brak konfiguracji modelu, limit globalny wyczerpany przy rezerwacji) slotu nie zużywają.
+2. Po rezerwacji slot wraca **tylko** po `ai_unavailable` i `ai_invalid_response`, i tylko wtedy, gdy konto ma w tej dobie wolny zwrot: **najwyżej 2 zwroty na konto na dobę** (`MAX_RELEASES_PER_DAY = 2`, pole `usage/{uid}.released`, zerowane w nowej dobie). Od trzeciego takiego błędu w dobie próba zostaje wliczona do limitu.
+3. Po `internal` slot **nie** wraca (nieoczekiwany błąd; kosztowo bezpieczniej).
+4. Zwrot zmniejsza tylko `usage/{uid}.count`. **`usage_global` nigdy nie maleje**: licznik globalny jest bezpiecznikiem kosztu, a wywołania modelu zostały już opłacone (O-TAM18-1). Jedno konto zużywa więc najwyżej `perUserDailyLimit + 2` slotów globalnych na dobę (dziś 5 + 2 = 7).
+5. Zwrot po północy nie przenosi slotu do nowej doby (`docs/data/schema/firestore-ttl-indexes.md` pkt 3.2).
+6. Nieudany zapis zwrotu (błąd Firestore) nie zmienia kodu błędu dla aplikacji; slot zostaje zużyty.
+
+**Pole `details.slotReleased`** (od v0.5; przy `ai_unavailable` i `ai_invalid_response` serwer wysyła je zawsze):
+- `true` – ta próba **nie** zużyła limitu konta: slotu nie zarezerwowano (reguła 1) albo zwrot się udał (reguła 2);
+- `false` – próba **została wliczona** do limitu: wyczerpany limit zwrotów w dobie, zwrot po północy albo nieudany zapis zwrotu.
+
+Pole to jedna wartość logiczna: bez danych osobowych i bez stanu limitu. Aplikacja wybiera według niej tekst komunikatu (pkt 6). Brak pola (starszy serwer) oznacza „nie wiadomo”, więc aplikacja mówi, że próba **mogła** zostać wliczona. Starsza aplikacja ignoruje nieznane pole w `details`, więc zmiana jest zgodna wstecz, a `apiVersion` zostaje 1.
+
+**Logi** (bez danych osobowych): wpis `generatePlan` ma pole `quotaRelease` ze stałym kodem: `released` (zwrot zapisany), `release_capped` (limit 2 zwrotów wyczerpany), `release_failed` (błąd zapisu zwrotu). Z tego właściciel widzi, jak często działa limit zwrotów (dane do przeglądu O-TAM18-3). Wpis `generatePlan.attempt` ma pole `validationErrors`: kody błędów walidacji odpowiedzi modelu, zbudowane przez serwer, rozdzielone przecinkiem, do 200 znaków (np. `items_count@day5`), bez treści odpowiedzi (`docs/architecture/p3-05-wymagania-generowania.md` sekcja 6).
+
+Slot **nie** jest zwracany po anulowaniu przez użytkownika, jeśli wywołanie modelu już ruszyło (Q12). Callable nie ma przerwania żądania: anulowanie = porzucenie wyniku po stronie aplikacji (odpowiedź z tym `requestId` jest odrzucana, nic nie zapisujemy); żądanie na serwerze kończy się normalnie (ADR-0011). Timeout klienta: 120 s.
 
 ### Prompt (zasady, bez treści)
 Instrukcje systemowe po angielsku w `systemInstruction`; dane użytkownika jako wartości w obiekcie JSON w osobnej turze, z poleceniem traktowania ich jako danych; wymuszony `responseSchema`; brak narzędzi; wersja promptu w `promptVersion`. Treść promptu w repozytorium (`backend/functions/src/prompt`), nie w kontrakcie.
@@ -134,9 +153,11 @@ Wyzwalacz Pub/Sub z powiadomień budżetowych; brak publicznego punktu wejścia.
 - Przed `generatePlan` aplikacja wysyła oczekujące rekordy zgód (`synced = 0`) (ADR-0012 pkt 5).
 - `consent_required`: `consentType = privacy_policy` → EK-03, `ai_processing` → EK-06. Gdy aplikacja ma już zsynchronizowany rekord tego typu w wersji wbudowanej w aplikację → komunikat „Zaktualizuj aplikację" (bez pętli; ADR-0011 pkt 7, ADR-0012 pkt 5). Serwer podnosi `aiConsentVersionCurrent` dopiero po wydaniu aplikacji z nowym tekstem zgody.
 - `limit_exceeded.resetAt` jest w UTC; aplikacja formatuje w czasie lokalnym (US-011).
+- `ai_unavailable` i `ai_invalid_response`: tekst według `details.slotReleased`. `true` → „próba nie wlicza się do limitu”, `false` → „próba została wliczona” (z wyjaśnieniem, że zwracamy najwyżej 2 próby na dobę), brak pola → „próba mogła zostać wliczona”. Aplikacja nie obiecuje zwrotu bez `slotReleased = true`. Przy `internal` – bez obietnicy zwrotu.
 - Brak automatycznych ponowień `generatePlan` w aplikacji (każde ponowienie zużywa slot limitu); ponowienie wyłącznie z decyzji użytkownika. `recordConsent` i `deleteAccount` są idempotentne i mogą być ponawiane automatycznie.
 
 ## 7. Historia zmian
+- **v0.5 (2026-11-21, architect, TAM-93/TAM-91):** zwrot slotu opisany zgodnie z kodem P3-05 i decyzją właściciela O-TAM18-3: najwyżej 2 zwroty na konto na dobę, bez zwrotu po `internal`, `usage_global` bez zwrotu. Nowe pole `details.slotReleased` przy `ai_unavailable` i `ai_invalid_response` (zgodne wstecz, `apiVersion` bez zmian; implementacja – mobile-dev). Kody `quotaRelease` i `validationErrors` w logach. Reguła ostatniego dnia zatwierdzona (O-TAM4-1).
 - **v0.4.1 (2026-11-20, mobile-dev, TAM-58/59/60 – doprecyzowanie bez zmiany pól i kodów):** „po oczyszczeniu” dla pól tekstowych = NFC + odrzucenie `Cc`/`Cf`/`Zl`/`Zp` (SEC-21); lista dozwolonych wzorców kodu i klasy błędu w logach (SEC-19). Granice limitów z `config/runtime` (SEC-22) nie zmieniają kontraktu.
 - **v0.4 (2026-11-16, ADR-0012 zatwierdzony przez właściciela; S17, SEC-26):** `generatePlan` egzekwuje aktualną akceptację `privacy_policy` (`consent_required`, `consentType=privacy_policy`); porównanie wersji „≥ bieżąca" dla obu zgód; wzorzec i lista znanych wersji w `recordConsent`; wysyłka oczekujących zgód przed `generatePlan`. Implementacja – mobile-dev (P3-04/P3-05).
 - **v0.3 (2026-11-16, ADR-0011 zatwierdzony przez właściciela):** data przylotu „dziś − 2 dni" (Warsaw); `deleteAccount` bez wymogu dostawcy i bez `unsupported_version`; `dev` tylko dane testowe (SEC-24); mapowanie błędów klienta i pętli `consent_required`; `testData` ze stałej kompilacji; anulowanie = porzucenie wyniku; `config/runtime` niedostępne dla klienta. Implementacja w `backend/functions` – zadanie mobile-dev (`docs/architecture/przeglad-ekranow-p3-14c.md` pkt 5).
