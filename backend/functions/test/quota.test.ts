@@ -1,6 +1,14 @@
 // P3-05: TTL formula (firestore-ttl-indexes.md pkt 2.1 and 7) and the pure reservation/release logic.
 import { describe, expect, it } from "vitest";
-import { globalExpireAt, planRelease, planReservation, resetAt, usageExpireAt } from "../src/limits.js";
+import {
+  globalExpireAt,
+  MAX_RELEASES_PER_DAY,
+  planRelease,
+  planReservation,
+  resetAt,
+  usageExpireAt,
+  usageFromDoc,
+} from "../src/limits.js";
 
 const H = 3_600_000;
 
@@ -38,7 +46,7 @@ describe("planReservation / planRelease (pkt 3.2)", () => {
       allowed: true,
       reservation: { day: "2026-11-21", quota: { limit: 5, remainingToday: 4, resetAt: "2026-11-21T23:00:00Z" } },
       writes: {
-        usage: { day: "2026-11-21", count: 1, updatedAt: now, expireAt: usageExpireAt(now) },
+        usage: { day: "2026-11-21", count: 1, released: 0, updatedAt: now, expireAt: usageExpireAt(now) },
         global: { count: 1, expireAt: globalExpireAt(now) },
       },
     });
@@ -47,6 +55,12 @@ describe("planReservation / planRelease (pkt 3.2)", () => {
     const r = planReservation({ usage: { day: "2026-11-20", count: 5 }, globalCount: 3, ...limits, now });
     expect(r.allowed && r.writes.usage.count).toBe(1);
     expect(r.allowed && r.writes.global.count).toBe(4);
+  });
+  it("keeps today's release counter and resets it on a new day", () => {
+    const today = planReservation({ usage: { day: "2026-11-21", count: 1, released: 2 }, globalCount: 0, ...limits, now });
+    expect(today.allowed && today.writes.usage.released).toBe(2);
+    const fresh = planReservation({ usage: { day: "2026-11-20", count: 3, released: 2 }, globalCount: 0, ...limits, now });
+    expect(fresh.allowed && fresh.writes.usage.released).toBe(0);
   });
   it("per-user limit -> limit_exceeded with quota; global first -> ai_unavailable", () => {
     expect(planReservation({ usage: { day: "2026-11-21", count: 5 }, globalCount: 0, ...limits, now })).toEqual({
@@ -64,11 +78,30 @@ describe("planReservation / planRelease (pkt 3.2)", () => {
     expect(planRelease({ day: "2026-11-21", count: 2 }, "2026-11-21", later)).toEqual({
       day: "2026-11-21",
       count: 1,
+      released: 1,
       updatedAt: later,
       expireAt: usageExpireAt(later),
     });
     expect(planRelease({ day: "2026-11-22", count: 1 }, "2026-11-21", later)).toBeUndefined();
     expect(planRelease({ day: "2026-11-21", count: 0 }, "2026-11-21", later)).toBeUndefined();
     expect(planRelease(undefined, "2026-11-21", later)).toBeUndefined();
+  });
+  it(`review #2: at most ${MAX_RELEASES_PER_DAY} releases per day, then the slot stays used`, () => {
+    const later = new Date("2026-11-21T10:01:00Z");
+    expect(MAX_RELEASES_PER_DAY).toBe(2);
+    expect(planRelease({ day: "2026-11-21", count: 3, released: 1 }, "2026-11-21", later)?.released).toBe(2);
+    expect(planRelease({ day: "2026-11-21", count: 3, released: 2 }, "2026-11-21", later)).toBeUndefined();
+  });
+});
+
+describe("usageFromDoc (stored usage/{uid})", () => {
+  it("maps a valid document and treats malformed ones as missing", () => {
+    expect(usageFromDoc({ day: "2026-11-21", count: 2, released: 1, expireAt: {} })).toEqual({ day: "2026-11-21", count: 2, released: 1 });
+    expect(usageFromDoc({ day: "2026-11-21", count: 2 })).toEqual({ day: "2026-11-21", count: 2, released: 0 });
+    expect(usageFromDoc({ day: "2026-11-21", count: 2, released: "x" })?.released).toBe(0);
+    expect(usageFromDoc({ day: 1, count: 2 })).toBeUndefined();
+    expect(usageFromDoc({ day: "2026-11-21", count: 1.5 })).toBeUndefined();
+    expect(usageFromDoc(undefined)).toBeUndefined();
+    expect(usageFromDoc(null)).toBeUndefined();
   });
 });
