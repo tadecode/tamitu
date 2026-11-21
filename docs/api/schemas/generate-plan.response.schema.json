@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "tamitu/generate-plan.response.v1",
-  "title": "generatePlan response (v1) - sketch; also used as the model responseSchema (structure only)",
+  "title": "generatePlan response (v1) - sketch; full server-side validation schema (NOT sent to Vertex as-is, see $comment)",
   "type": "object",
   "additionalProperties": false,
   "required": ["apiVersion", "requestId", "language", "promptVersion", "days", "quota"],
@@ -50,5 +50,5 @@
       }
     }
   },
-  "$comment": "Model returns only language, days (and optionally nothing else); server adds apiVersion, requestId, promptVersion, quota. Semantic checks (day count, items per pace, day-1 time floor, language, no URLs) are performed in code, not by this schema."
+  "$comment": "Model returns only language, days (and optionally nothing else); server adds apiVersion, requestId, promptVersion, quota. Semantic checks (day count, items per pace, day-1 time floor, language, no URLs) are performed in code, not by this schema. Vertex rejects (HTTP 400) a responseSchema that combines minItems/maxItems on days with maxItems on days[].items (ARCH-01, 2026-11-21); the schema sent to the model is a reduced subset without nested item limits - see docs/architecture/p3-05-wymagania-generowania.md section 3."
 }
