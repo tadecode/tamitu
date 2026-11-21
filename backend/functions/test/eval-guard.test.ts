@@ -13,6 +13,7 @@ let g: {
   canStart: (spent: number, model: string, e: { input: number; output: number }, stop: number) => boolean;
   GuardError: new (m: string) => Error;
   MAX_STOP_PLN: number;
+  parsePromptVersion: (raw: string | undefined, known: string[]) => string;
 };
 
 beforeAll(async () => {
@@ -68,5 +69,16 @@ describe("prices and charging", () => {
     expect(g.canStart(0, "gemini-3.1-flash-lite", est, 2.5)).toBe(true);
     expect(g.canStart(2.5 - worst + 0.0001, "gemini-3.1-flash-lite", est, 2.5)).toBe(false);
     expect(g.canStart(2.5 - worst - 0.0001, "gemini-3.1-flash-lite", est, 2.5)).toBe(true);
+  });
+});
+
+describe("parsePromptVersion (TAM-95, review PR #148 #2)", () => {
+  const known = ["plan-v1", "plan-v2"];
+  it("defaults to the production prompt plan-v1 and accepts a known version", () => {
+    expect(g.parsePromptVersion(undefined, known)).toBe("plan-v1");
+    expect(g.parsePromptVersion("plan-v2", known)).toBe("plan-v2");
+  });
+  it.each(["plan-v3", "PLAN-V2", "", " plan-v2", "latest"])("refuses %j (never evaluates another prompt silently)", (raw) => {
+    expect(() => g.parsePromptVersion(raw, known)).toThrow(g.GuardError);
   });
 });

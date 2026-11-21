@@ -71,3 +71,14 @@ export function canStart(spentPln, modelId, estimate, stopPln) {
   const worstNext = 2 * 1.5 * costPln(modelId, estimate.input, estimate.output);
   return spentPln + worstNext <= stopPln;
 }
+
+/**
+ * --prompt (TAM-95, review PR #148 #2): absent -> "plan-v1" (production default); otherwise the exact name
+ * of a known version (keys of functions/lib/prompt/index.js PROMPTS). Anything else -> GuardError: the
+ * runner never silently evaluates a different prompt than the one asked for.
+ */
+export function parsePromptVersion(raw, known) {
+  if (raw === undefined) return "plan-v1";
+  if (!known.includes(raw)) throw new GuardError(`--prompt must be one of: ${known.join(", ")}`);
+  return raw;
+}
