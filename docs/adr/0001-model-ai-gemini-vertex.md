@@ -100,3 +100,30 @@ Zmiany nie zmieniają decyzji (model, region, abstrakcja); doprecyzowują warunk
 **Pozytywne:** opis zgodny z gwarancją Google (UE), brak zmiany infrastruktury; usunięte ryzyko wyboru wycofanego modelu.
 **Negatywne / ryzyka:** przetwarzanie może odbywać się w innym państwie UE niż dane w spoczynku (bez wpływu na transfer poza EOG); zależność od testu obsługi modelu w `europe-west4`.
 **Dane osobowe:** zakres D6 bez zmian; zmienia się opis miejsca przetwarzania (UE). Wymaga aktualizacji opisu w rejestrze i polityce (Security).
+
+## Aneks C (2026-11-21, po ARCH-01): model startowy `gemini-3.1-flash-lite` na punkcie `eu`
+- Status aneksu: **zatwierdzony przez właściciela 2026-11-21** (decyzja w zadaniu TAM-4 / ARCH-01, przekazał orkiestrator).
+- Autor (rola): architect. Zadanie: TAM-4 (ARCH-01). Źródła: `docs/architecture/arch-01-gemini-test.md` sekcja 6 (wyniki), `docs/architecture/costs.md` sekcja 0 (koszt), `docs/architecture/p3-05-wymagania-generowania.md` (wymagania dla P3-05).
+- Aneks **uzupełnia** pkt 2–3 decyzji i Aneks B pkt 3–4 i 7. Nie zmienia dostawcy, abstrakcji (`PlanGenerator`), zakazu punktu `global` ani reguły końcowego wyboru (pełna ewaluacja, ≥ 95%).
+
+### Co i po co
+Test ARCH-01 (etap A, 5 fikcyjnych przypadków na model, dane bez danych osobowych) sprawdził dwa najtańsze modele.
+Oba działały tylko na punkcie `eu`, odpowiadały w 2–14 s i bez tokenów myślenia. Oba miały ten sam błąd:
+za mało punktów w niektórych dniach długich planów. Właściciel wybrał tańszy z nich, a błąd ma usunąć prompt
+i walidacja w P3-05.
+
+### Decyzja
+1. **Model startowy P3-05:** `AI_MODEL_ID = gemini-3.1-flash-lite` (GA, wycofanie 2027-05-07 lub później). Zapasowy (zmiana konfiguracji, bez zmiany kodu): `gemini-3.5-flash-lite` – sprawdzony w tym samym teście, ok. 1,6–1,9× droższy.
+2. **Myślenie:** `generationConfig.thinkingConfig.thinkingLevel = MINIMAL`. Nie używać `thinkingBudget` (przestarzały dla Gemini 3+). Zmierzone myślenie: 0 tokenów.
+3. **Punkt końcowy:** multi-region **`eu`** (`https://aiplatform.eu.rep.googleapis.com`, lokalizacja `eu`) w **dev i prod**. Sonda: `europe-west4` – błąd 417 dla obu modeli Flash-Lite, `eu` – OK. To jest wynik testu z Aneksu B pkt 4 i przypadek „`eu`, gdy model nie działa na `europe-west4`" z Aneksu B pkt 2. Walidacja startu nadal przyjmuje tylko `europe-west4` lub `eu`. Region funkcji, Firestore i logów – bez zmian (`europe-west4`).
+4. **Pozostałe parametry bez zmian** (pkt 3): `responseMimeType: application/json` + `responseSchema`, temperatura 0,7, `maxOutputTokens` 10 000 (zmierzone maks. 5 870), bez narzędzi, groundingu i jawnego cache; buforowanie Vertex wyłączone (`disableCache=true`; w dev potwierdzone, w prod – warunek przed pierwszym wywołaniem w prod).
+5. **Ograniczenie `responseSchema` (fakt z testu):** Vertex zwraca **400**, gdy schemat ma jednocześnie `minItems`/`maxItems` dla `days` i `maxItems` dla punktów dnia. Schemat wysyłany do modelu jest więc **uproszczony**, a pełne reguły (liczba punktów wg tempa, dni, godziny, długości) sprawdza **walidator po stronie serwera** – zgodnie z pkt 3 i T4/T5. Szczegóły: `p3-05-wymagania-generowania.md` sekcja 3.
+6. **Braki K1 w teście (liczba punktów):** nie dyskwalifikują modelu startowego (decyzja właściciela; `arch-01-gemini-test.md` sekcja 7, wiersz 3). P3-05 przekazuje modelowi docelową liczbę punktów dla każdego dnia, a serwer odrzuca i ponawia (maks. 2 próby, bez zmian) odpowiedź, która jej nie spełnia. Reguła dla ostatniego dnia – propozycja w O-TAM4-1.
+7. **Etap B pominięty:** `gemini-3.8-flash` i `gemini-3.5-flash` – nie testowane. Wracamy do nich tylko wtedy, gdy pełna ewaluacja z promptem P3-05 nie osiągnie ≥ 95% dla obu Flash-Lite (osobna decyzja właściciela; koszt ok. 3–6× wyższy).
+
+### Konsekwencje
+**Pozytywne:** najniższy koszt zmienny z kandydatów (plan typowy ok. 0,015 PLN, maks. ok. 0,055 PLN; `costs.md` sekcja 0); krótki czas odpowiedzi (C3, 14 dni: 13 s); brak kosztu myślenia.
+**Negatywne / ryzyka:** (a) najkrótszy cykl życia z kandydatów – przed startem publicznym sprawdzić następcę (zadanie proponowane w `.farm/log`); (b) model słabiej trzyma liczbę punktów w długich planach – więcej ponowień, jeśli prompt nie pomoże (koszt nadal pomijalny, ale gorszy czas oczekiwania i ryzyko `ai_invalid_response`); (c) wybór oparty na 5 przypadkach – potwierdza go pełna ewaluacja P3.
+**Dane osobowe:** zakres D6 bez zmian. Miejsce przetwarzania: UE (multi-region `eu`), jak w Aneksie B pkt 1. Lista SEC-15 poz. 3 i 8 – do potwierdzenia przez Security dla `gemini-3.1-flash-lite` (SEC-15 / TAM-54 pozostaje otwarte; `ALLOW_REAL_DATA=false` do czasu zamknięcia).
+**Koszt (zasada 10):** aneks obniża koszt względem klasy Flash; nie zwiększa żadnego limitu. Limity bez zmian: 5/dobę na konto, 25/dobę globalnie, spend cap dev 15 PLN / prod 80 PLN.
+**Uwaga o Aneksie B:** pkt 1–6 Aneksu B mają status „proponowany". Aneks C opiera się na pkt 2 i 4 (punkt `eu`), które właściciel tą decyzją faktycznie stosuje; formalne zatwierdzenie Aneksu B – bramka „architektura" (pytanie dla orkiestratora w `.farm/log`).

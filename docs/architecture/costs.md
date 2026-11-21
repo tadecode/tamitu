@@ -1,10 +1,56 @@
 # Szacunek kosztów zmiennych – Tamitu (MVP)
 
-Stan: **2026-11-20 (SEC-09 – decyzje właściciela: limit globalny 25/dobę, spend cap zatwierdzony)**, autor: architect. Poprzednie wersje: 2026-11-18 (ARCH-01), 2026-11-15 (po G2; scenariusze A/B/C – historia w sekcji 10). **To szacunek, nie wycena.**
+Stan: **2026-11-21 (TAM-4 / ARCH-01 – model wybrany: `gemini-3.1-flash-lite`, MINIMAL, `eu`; tokeny zmierzone)**, autor: architect. Poprzednie wersje: 2026-11-20 (SEC-09 – limit globalny 25/dobę, spend cap), 2026-11-18 (ARCH-01), 2026-11-15 (po G2; scenariusze A/B/C – historia w sekcji 10). **To szacunek, nie wycena.**
 
 > **Status cen modeli (2026-11-18):** stawki tokenów odczytane bezpośrednio z oficjalnej strony cennika Google Cloud (źródło i data w sekcji 1.1) dla kandydatów z ADR-0001 Aneks B pkt 3. **Do weryfikacji w P3-10:** (1) kurs PLN/USD i VAT, (2) SKU w Cloud Billing (rzeczywista stawka w rozliczeniu, w tym mechanizm promocji 3.8 Flash – sekcja 1.1, uwaga c), (3) tokeny rzeczywiste (wejście, wyjście, **myślenie**) – pomiar w teście ARCH-01 (`docs/architecture/arch-01-gemini-test.md`). Do tego czasu liczby służą do porównania modeli i rzędu wielkości budżetu.
 
 Kurs przyjęty: **4,0 PLN za 1 USD** (zaokrąglenie ostrożne; **do weryfikacji w P3-10**). Ceny nie zawierają VAT.
+
+## 0. Wybrany model – `gemini-3.1-flash-lite` (decyzja właściciela 2026-11-21, ADR-0001 Aneks C)
+
+**W skrócie:** jeden plan kosztuje typowo ok. **1,5 grosza**, najdłuższy ok. **5,5 grosza**. Przy obecnych limitach
+(25 generowań na dobę dla całej aplikacji) normalne użycie to ok. **12 PLN miesięcznie** – poniżej spend cap dev
+(15 PLN) i prod (80 PLN). Drogie jest tylko celowe nadużycie limitu najdłuższymi planami; zatrzymują je spend cap i `budgetGuard`.
+
+Ustawienia: punkt `eu` (stawka „Non-global": 0,275 USD wejście / 1,65 USD wyjście za 1 mln tokenów), `thinkingLevel=MINIMAL`,
+buforowanie wyłączone (bez zniżki za cache), `maxOutputTokens` 10 000, maks. 2 próby na generowanie.
+
+**Pomiar ARCH-01 (2026-11-21, prompt testowy, 5 przypadków)** – założenia z sekcji 1 zostają, bo są ostrożniejsze:
+
+| Wielkość | Założenie (sekcja 1) | Zmierzone (3.1 Flash-Lite) | Komentarz |
+|---|---|---|---|
+| Tokeny wejścia | 1 000 | 711–747 (śr. 724) | prompt produkcyjny P3-05 będzie dłuższy (docelowe liczby punktów na dzień) – zostawiamy 1 000 |
+| Wyjście, plan typowy (5 dni, umiarkowane) | 2 100 | 1 495 (C5; ostatni dzień niepełny) | ok. 75 tokenów na punkt – zgodnie z założeniem 80 |
+| Wyjście, plan maksymalny (14 dni intensywnie) | 8 100 | 5 180 (C3, ale za mało punktów: ok. 5 zamiast 6–7 dziennie) | po poprawce promptu bliżej 7 500–8 100 – zostawiamy 8 100 |
+| Tokeny myślenia | „do zmierzenia" | **0** we wszystkich 5 wywołaniach | przy MINIMAL koszt myślenia pomijamy |
+| Czas, plan maksymalny | 10–40 s | 13,1 s | |
+| Koszt (szacunek z tokenów) | – | C5: 0,011 PLN; C3: 0,035 PLN; 5 wywołań razem: 0,063 PLN | |
+
+**Koszt wybranego modelu** (wzór i założenia jak w sekcjach 2–4, bez myślenia):
+
+| Pozycja | USD | PLN |
+|---|---|---|
+| Jedna próba – plan typowy (5 dni) | 0,0037 | **0,015** |
+| Jedna próba – plan duży (14 dni umiarkowanie) | 0,0100 | 0,040 |
+| Jedna próba – plan maksymalny (14 dni intensywnie) | 0,0136 | **0,055** |
+| Miesiąc: 40 planów (5 testerów) | 0,16 | ≈ 0,7 |
+| Miesiąc: 200 planów (20 testerów) | 0,82 | ≈ 3,3 |
+| Miesiąc: 400 planów (100 użytkowników) | 1,65 | ≈ 6,6 |
+| Pułap globalny 25/dobę, plany typowe, +10% ponowień, 30 dób | 3,1 | **≈ 12** |
+| Pułap globalny 25/dobę, plany maksymalne, 2 próby, 30 dób (nadużycie) | 20 | ≈ 82 |
+| Jedno konto, 5/dobę, plany maksymalne, 2 próby – doba / miesiąc | 0,14 / 4,1 | 0,55 / ≈ 16 |
+
+Wnioski:
+- **Dev (cap 15 PLN, budżet 20 PLN):** normalne testy (do 25 planów typowych dziennie) mieszczą się w capie przez cały
+  miesiąc (≈ 0,4 PLN/dobę). Pełne nadużycie planami maksymalnymi (≈ 2,75 PLN/dobę) wyczerpie cap po ok. 5 dniach.
+- **Prod (cap 80 PLN, budżet 100 PLN):** typowe użycie przy pełnym limicie globalnym ≈ 12 PLN/mies. Pełne nadużycie
+  planami maksymalnymi ≈ 82 PLN – tuż powyżej capu 80 PLN; zatrzymuje je cap (z opóźnieniem, ADR-0014 F4) i `budgetGuard`.
+- **Ponowienia:** w teście 2 z 5 odpowiedzi nie spełniły reguły liczby punktów. Gdyby tak zostało po P3-05, ponowień
+  byłoby ok. 40% zamiast 10% – plan typowy ≈ 0,021 PLN zamiast 0,016 PLN (nadal pomijalnie). Ważniejsze są dłuższy czas
+  oczekiwania i ryzyko `ai_invalid_response`. Odsetek ponowień – wskaźnik do śledzenia w P3-05 i pełnej ewaluacji.
+- **Zapasowy `gemini-3.5-flash-lite`:** ok. 1,6× drożej wg cennika (w teście 1,9×, bo dłuższe odpowiedzi);
+  pułap typowy ≈ 20 PLN/mies. (kolumny w sekcjach 2–4).
+- Względem klasy Flash wybrany model jest ok. 5–6× tańszy. Zasada 10: decyzja **obniża** koszt; limity bez zmian.
 
 ## 1. Założenia
 - Wejście do modelu (prompt systemowy + dane): ok. **1 000 tokenów** (do potwierdzenia pomiarem ARCH-01).
@@ -12,9 +58,9 @@ Kurs przyjęty: **4,0 PLN za 1 USD** (zaokrąglenie ostrożne; **do weryfikacji 
   - **Typowy:** 5 dni, tempo umiarkowane (5 punktów/dzień) ≈ 2 100 tokenów.
   - **Duży:** 14 dni umiarkowane ≈ 5 900.
   - **Maksymalny:** 14 dni intensywne (7 punktów/dzień) ≈ 8 100 (limit `maxOutputTokens` 10 000).
-- **Myślenie (thinking):** tabele w sekcjach 2–4 liczą wyjście **bez** tokenów myślenia. Tokeny myślenia są rozliczane jak wyjście („Text output (response and reasoning)"). `gemini-3.5-flash`, `-3.5-flash-lite`, `-3.1-flash-lite` pozwalają ustawić `thinkingLevel=MINIMAL`; **`gemini-3.8-flash` – najniżej `LOW`** (MINIMAL niedostępne). Narzut na każde 1 000 tokenów myślenia – sekcja 2, kolumna ostatnia; liczba tokenów myślenia – **do weryfikacji** testem ARCH-01.
+- **Myślenie (thinking):** tabele w sekcjach 2–4 liczą wyjście **bez** tokenów myślenia. Tokeny myślenia są rozliczane jak wyjście („Text output (response and reasoning)"). `gemini-3.5-flash`, `-3.5-flash-lite`, `-3.1-flash-lite` pozwalają ustawić `thinkingLevel=MINIMAL`; **`gemini-3.8-flash` – najniżej `LOW`** (MINIMAL niedostępne). Narzut na każde 1 000 tokenów myślenia – sekcja 2, kolumna ostatnia; zmierzone w ARCH-01 (2026-11-21): **0** dla `3.1-flash-lite` i `3.5-flash-lite` przy MINIMAL; dla `3.8-flash` (LOW) nie mierzono (etap B pominięty).
 - Ponowienia: średnio +10% prób; maksimum 2 próby na generowanie.
-- **Punkt końcowy:** żaden kandydat nie jest wymieniony jako dostępny w `europe-west4`; oczekiwany punkt to multi-region **`eu`** (Aneks B pkt 2, potwierdza test ARCH-01). Oba (`europe-west4`, `eu`) rozliczane są stawką **„Non-global"** – stosujemy ją we wszystkich tabelach. `global` (tańszy o ok. 10%) jest zakazany (ADR-0001).
+- **Punkt końcowy:** multi-region **`eu`** – **potwierdzone testem ARCH-01 2026-11-21** (`europe-west4`: błąd 417 dla obu Flash-Lite; ADR-0001 Aneks C pkt 3). Oba (`europe-west4`, `eu`) rozliczane są stawką **„Non-global"** – stosujemy ją we wszystkich tabelach. `global` (tańszy o ok. 10%) jest zakazany (ADR-0001).
 - **Buforowanie wyłączone** (SEC-17 B-1, `disableCache=true`): brak zniżki „cached input" (0,1× ceny wejścia). Przy ok. 1 000 tokenów wejścia na plan wpływ jest pomijalny (wejście to 2–9% kosztu wywołania) – zgodnie z zasadą 10 odnotowane, bez zmiany szacunku.
 
 ### 1.1 Cennik kandydatów (USD za 1 mln tokenów, tryb Standard PayGo, kontekst ≤ 200 tys.)
@@ -89,7 +135,7 @@ Koszty poza zakresem: konto Google Play (jednorazowa opłata), domena/strona pol
 
 ## 6. Koszty testów i CI
 - Standardowe testy CI używają atrapy modelu – 0 wywołań.
-- **Test ARCH-01** (decyzja właściciela 2026-11-20: najpierw Flash-Lite; jednorazowo, dev, `arch-01-gemini-test.md` sekcja 3): **etap A** – `3.1-flash-lite` i `3.5-flash-lite` (MINIMAL), 4 sondy + 10 wywołań: najgorszy ok. 0,9 PLN, oczekiwany ok. 0,2–0,4 PLN; **etap B** (tylko gdy Flash-Lite nie wystarczy) – `3.8-flash` (LOW), 2 sondy + 5 wywołań: najgorszy ok. 1,7 PLN, oczekiwany ok. 0,6–1,0 PLN. Razem najgorszy ok. 2,6 PLN (wcześniej 4,7 PLN dla 4 modeli); limit testu 3 PLN, skrypt zatrzymuje się po 1,5 PLN (A) / 2,5 PLN (A+B). `3.5-flash` nie jest testowany.
+- **Test ARCH-01 – wykonany 2026-11-21:** etap A, 4 sondy + 10 wywołań, koszt szacunkowy **ok. 0,18 PLN** (3.1 Flash-Lite 0,063 PLN, 3.5 Flash-Lite 0,119 PLN); etap B pominięty. Koszt w Billing – do uzupełnienia przez właściciela (O-TAM4-3). Plan testu (dla porządku): (decyzja właściciela 2026-11-20: najpierw Flash-Lite; jednorazowo, dev, `arch-01-gemini-test.md` sekcja 3): **etap A** – `3.1-flash-lite` i `3.5-flash-lite` (MINIMAL), 4 sondy + 10 wywołań: najgorszy ok. 0,9 PLN, oczekiwany ok. 0,2–0,4 PLN; **etap B** (tylko gdy Flash-Lite nie wystarczy) – `3.8-flash` (LOW), 2 sondy + 5 wywołań: najgorszy ok. 1,7 PLN, oczekiwany ok. 0,6–1,0 PLN. Razem najgorszy ok. 2,6 PLN (wcześniej 4,7 PLN dla 4 modeli); limit testu 3 PLN, skrypt zatrzymuje się po 1,5 PLN (A) / 2,5 PLN (A+B). `3.5-flash` nie jest testowany.
 - Ewaluacja pełna (min. 20 przypadków × PL/EN = 40 wywołań, mieszane długości, bez myślenia) na jeden model: 3.8 Flash ok. 1,8 USD (≈ 7,3 PLN), 3.5 Flash ok. 2,2 USD (≈ 8,8 PLN), 3.5 Flash-Lite ok. 0,6 USD (≈ 2,4 PLN), 3.1 Flash-Lite ok. 0,37 USD (≈ 1,5 PLN). **Przebieg dla wszystkich czterech ≈ 20 PLN – cały budżet dev.** Zasada: ewaluacja jednego–dwóch modeli dziennie (najtańsze najpierw), ręcznie lub przy zmianie promptu, **maks. 1 przebieg dziennie na model**, w projekcie `dev`, dane syntetyczne; przed przebiegiem sprawdzić zużycie budżetu dev; spend cap dev 15 PLN (ADR-0014) może zatrzymać ewaluację w trakcie miesiąca – planować przebiegi na początek miesiąca lub tymczasowo podnieść budżet (decyzja właściciela).
 
 ## 7. Co najmocniej zmienia koszt
@@ -102,12 +148,13 @@ Koszty poza zakresem: konto Google Play (jednorazowa opłata), domena/strona pol
 7. Punkt `eu`/`europe-west4` vs `global`: +10% (świadomy koszt wymogu UE; `global` zakazany).
 
 ## 8. Alerty i wyłączniki (patrz ADR-0002, ADR-0003, ADR-0014)
-Budżety zatwierdzone przez właściciela (Q3, 2026-11-15; ustawia właściciel): dev 20 PLN, prod 100 PLN, alerty 50/90/100%, automatyczne wyłączenie AI przy 100% prod, limit na konto 5/dobę (doba kalendarzowa Europe/Warsaw, Q5), limit globalny **25/dobę** (decyzja właściciela 2026-11-20, ADR-0014 Aneks A pkt 3; wcześniej 50 – Q3), `maxInstances` 10, `maxOutputTokens` 10 000, kwoty Vertex ograniczone w konsoli. Dodatkowo alert na wyczerpanie limitu globalnego i przegląd limitów przed wydaniem publicznym (ADR-0002, Aneks A pkt 5). Spend cap `aiplatform` (prod 80 / dev 15 PLN) – ADR-0014, **zatwierdzony 2026-11-20** (kwoty ostateczne). `budgetGuard` tylko w prod; w dev: cap + budżet 20 PLN z alertami e-mail (ADR-0014 Aneks A pkt 2). Klasa modelu: **najpierw Flash-Lite** (decyzja właściciela 2026-11-20, ADR-0001 Aneks B pkt 7; wcześniej Q4 – start od Flash), wybór ostateczny po ewaluacji w fazie 3; rekomendacja zależna od wyników – `arch-01-gemini-test.md` sekcja 7.
+Budżety zatwierdzone przez właściciela (Q3, 2026-11-15; ustawia właściciel): dev 20 PLN, prod 100 PLN, alerty 50/90/100%, automatyczne wyłączenie AI przy 100% prod, limit na konto 5/dobę (doba kalendarzowa Europe/Warsaw, Q5), limit globalny **25/dobę** (decyzja właściciela 2026-11-20, ADR-0014 Aneks A pkt 3; wcześniej 50 – Q3), `maxInstances` 10, `maxOutputTokens` 10 000, kwoty Vertex ograniczone w konsoli. Dodatkowo alert na wyczerpanie limitu globalnego i przegląd limitów przed wydaniem publicznym (ADR-0002, Aneks A pkt 5). Spend cap `aiplatform` (prod 80 / dev 15 PLN) – ADR-0014, **zatwierdzony 2026-11-20** (kwoty ostateczne). `budgetGuard` tylko w prod; w dev: cap + budżet 20 PLN z alertami e-mail (ADR-0014 Aneks A pkt 2). Model startowy: **`gemini-3.1-flash-lite`, MINIMAL, `eu`** (decyzja właściciela 2026-11-21, ADR-0001 Aneks C; wcześniej Aneks B pkt 7 – najpierw Flash-Lite; Q4 – start od Flash); wybór ostateczny potwierdza pełna ewaluacja w fazie 3.
 
 ## 9. Koszt wynikający z decyzji G2
 Czwarte konto usług, sprawdzanie istnienia użytkownika (jedno wywołanie Admin API na żądanie), handler wyjątków i dodatkowy alert nie zmieniają kosztów w istotny sposób (pula bezpłatna). SQLCipher zwiększa rozmiar APK, nie koszt zmienny.
 
 ## 10. Historia
+- **2026-11-21 (TAM-4 / ARCH-01):** dodana sekcja 0 – wybrany model `gemini-3.1-flash-lite` (MINIMAL, `eu`), pomiar tokenów i czasu z testu, koszt testu (ok. 0,18 PLN), wpływ ponowień. Punkt `eu` i myślenie 0 – potwierdzone. Stawki, kurs i założenia sekcji 1 bez zmian (ostrożniejsze niż pomiar).
 - **2026-11-20 (SEC-09, ARCH-01):** koszt testu ARCH-01 przeliczony dla kolejności „najpierw Flash-Lite" (sekcja 6); limit globalny 50 → 25/dobę (O-ARCH01-1); pułapy w sekcji 4 przeliczone dla 25/dobę (wiersze dla 50/dobę zostawione jako historyczne); ADR-0014 zatwierdzony – spend cap prod 80 / dev 15 PLN ostateczne; `budgetGuard` tylko prod. Stawki i założenia bez zmian.
 - **2026-11-18 (ARCH-01):** scenariusze A/B/C zastąpione kandydatami z ADR-0001 Aneks B pkt 3; ceny z oficjalnej strony cennika (stawki „Non-global"); dodane: myślenie (3.8 Flash min. `LOW`), buforowanie wyłączone (B-1), koszt testu ARCH-01, wnioski o pułapach dla klasy Flash. Ostrzeżenie „ceny niezweryfikowane" zastąpione statusem z listą weryfikacji w P3-10.
 - **2026-11-15 (po G2):** scenariusze A 0,30/2,50 USD (2.5 Flash – wycofany 2026-10-20), B 1,50/7,50 (nowsza Flash; promocja 0,75/3,75 do 2026-12-31 – odpowiada 3.8 Flash „Global"), C 0,10/0,40 (Flash-Lite 2.x – wycofany); kurs 4,0 PLN/USD. Skrót w ADR-0001 („Szacunek kosztów") pozostaje historyczny – zatwierdzonego ADR nie zmieniamy; aktualne liczby są w tym pliku.

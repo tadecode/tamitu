@@ -1,6 +1,6 @@
 # ARCH-01: test modeli Gemini 3.x na Vertex AI (dev) przed P3-05
 
-Stan: **2026-11-20** (decyzja właściciela: najpierw Flash-Lite; poprzednio 2026-11-18), autor: architect. Wykonuje: **właściciel** (sam loguje się do `gcloud`; agenci nie mają dostępu do GCP).
+Stan: **2026-11-21 – test wykonany, model wybrany** (wyniki: sekcja 6; decyzja: ADR-0001 Aneks C; poprzednio 2026-11-20, 2026-11-18), autor: architect. Wykonuje: **właściciel** (sam loguje się do `gcloud`; agenci nie mają dostępu do GCP).
 Podstawa: ADR-0001 (pkt 2–3) i Aneks B (proponowany, pkt 2–4), ADR-0014, `docs/security/review-SEC-17-iam.md` (B-1),
 koszty: `docs/architecture/costs.md` (v2026-11-18).
 
@@ -146,6 +146,11 @@ $cases = @(
 | C4 | EN | przylot 20:30 → próg 23:30 > 22:00 → **dzień 1 pusty** |
 | C5 | PL | plan typowy (5 dni), region górski, rodzina |
 
+> **Odchylenie w przebiegu 2026-11-21:** Vertex odrzucił powyższy `$schema` błędem **400**, gdy w jednym schemacie
+> były `minItems`/`maxItems` dla `days` (1–14) i `maxItems = 7` dla `items` (punkty dnia). Usunięto tylko
+> wewnętrzne `maxItems = 7`; liczbę punktów sprawdza `Test-Plan` (4.4). Skutek dla P3-05: sekcja 6 i
+> `p3-05-wymagania-generowania.md` sekcja 3.
+
 ### 4.4 Walidacja (struktura i reguły kontraktu, bez oceny jakości)
 ```powershell
 function Test-Plan([string]$json, $c) {
@@ -244,25 +249,63 @@ i regułami (lista błędów), szacowany koszt. Dodatkowo: data i godzina testu,
 
 **Nie zapisywać:** tokenów dostępu, nagłówków żądań, identyfikatorów kont, treści odpowiedzi w repozytorium.
 
-## 6. Tabela wyników (wypełnia właściciel; przenosi architekt/orkiestrator przez PR)
+## 6. Wyniki testu (etap A, 2026-11-21) i decyzja właściciela
 
-Data testu: ____  W1 `disableCache=True`: tak / nie  Koszt w Billing (D+1): ____ PLN
+**W skrócie:** oba modele Flash-Lite działają na punkcie `eu`, szybko i tanio. Oba popełniły ten sam błąd:
+za mało punktów w niektórych dniach długich planów, zwłaszcza w ostatnich dniach. Treść miejsc była realna.
+Właściciel wybrał **`gemini-3.1-flash-lite`** (myślenie `MINIMAL`, punkt `eu`). Etap B (3.8 Flash) pominięto.
+Brak punktów rozwiązuje P3-05 promptem i walidacją po stronie serwera (`p3-05-wymagania-generowania.md`).
+
+Przebieg: test wykonał orkiestrator przez `gcloud` za zgodą właściciela (odchylenie od sekcji 0 – „wykonuje właściciel").
+Próby 2026-11-20 odrzucił Vertex (HTTP 403 „eligible paid billing account" – konto rozliczeniowe w okresie
+próbnym, potem opóźnienie po aktywacji pełnego konta; koszt 0 PLN). Udany przebieg: **2026-11-21, ok. 01:40**.
+
+Data testu: **2026-11-21**  W1 `disableCache=True`: **tak** (sprawdzone 2026-11-20)  Koszt szacunkowy: **ok. 0,18 PLN**
+Koszt w Billing (D+1): **do uzupełnienia przez właściciela** (rozliczenie z opóźnieniem; O-TAM4-3)
 
 **Sonda punktów (4.2)**
 
 | Etap | Model | `europe-west4` | `eu` | `modelVersion` |
 |---|---|---|---|---|
-| A | `gemini-3.1-flash-lite` | | | |
-| A | `gemini-3.5-flash-lite` | | | |
-| B (warunkowo) | `gemini-3.8-flash` | | | |
+| A | `gemini-3.1-flash-lite` | **błąd 417** (strona błędu Google zamiast odpowiedzi API) | **OK** | `gemini-3.1-flash-lite` |
+| A | `gemini-3.5-flash-lite` | **błąd 417** (jw.) | **OK** | `gemini-3.5-flash-lite` |
+| B (warunkowo) | `gemini-3.8-flash` | nie testowano (etap B pominięty) | – | – |
 
-**Przebieg (4.5) – podsumowanie na model**
+Wniosek: zgodnie z sekcją 1 i Aneksem B pkt 2 obowiązuje punkt **`eu`** (`aiplatform.eu.rep.googleapis.com`)
+w dev i w prod. `europe-west4` dla tych modeli nie działa.
+
+**Przebieg (4.5) – podsumowanie na model** (punkt `eu`, `thinkingLevel=MINIMAL`, temperatura 0,7, schemat bez wewnętrznego `maxItems` – odchylenie w 4.3)
 
 | Etap | Model | Punkt | Zgodne 5/5? (lista błędów) | Śr. czas [s] | Czas C3 [s] | Śr. tokeny wej. | Śr. tokeny wyj. | Śr. tokeny myśl. | Tokeny wyj.+myśl. C3 | Koszt szac. [PLN] | Kryterium 4.6 (K1–K4: wystarczy tak/nie, uwagi) |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| A | `gemini-3.1-flash-lite` | | | | | | | | | | |
-| A | `gemini-3.5-flash-lite` | | | | | | | | | | |
-| B | `gemini-3.8-flash` (tylko gdy A: oba „nie") | | | | | | | | | | |
+| A | `gemini-3.1-flash-lite` | `eu` | **3/5** – C3: za mało punktów w dniach 5, 6, 9–14 (5 zamiast 6–7; dzień 13: 4, dzień 14: 3); C5: dzień 5 (ostatni) 3 zamiast 4–5 | 5,3 | 13,1 | 724 | 1 818 | 0 | 5 180 | 0,063 | K1 **nie** (tylko liczba punktów); K2 tak; K3, K4 – wstępny przegląd (C1, C5): miejsca realne i sensowne; właściciel przyjął model jako startowy (szczegółowej oceny K3/K4 nie zapisano – O-TAM4-3). **Wybrany.** |
+| A | `gemini-3.5-flash-lite` | `eu` | **3/5** – C3: dzień 13 (5 zamiast 6–7), dzień 14 (ostatni) 2; C5: dzień 5 (ostatni) 3 zamiast 4–5 | 5,5 | 13,7 | 724 | 2 043 | 0 | 5 870 | 0,119 | K1 **nie** (jw.); K2 tak; wstępnie: więcej ogólnych punktów (kolacja, czas wolny). Zapasowy. |
+| B | `gemini-3.8-flash` (tylko gdy A: oba „nie") | – | nie uruchomiono | – | – | – | – | – | – | – | Pominięty decyzją właściciela 2026-11-21 |
+
+Wyniki szczegółowe (bez treści planów):
+
+| Model | Przypadek | Czas [s] | Tokeny wej. | Tokeny wyj. | `finish` | Zgodny | Koszt szac. [PLN] |
+|---|---|---|---|---|---|---|---|
+| 3.1 Flash-Lite | C1 (PL, 4 dni) | 4,4 | 728 | 1 318 | STOP | tak | 0,009 |
+| 3.1 Flash-Lite | C2 (EN, 3 dni) | 2,3 | 715 | 708 | STOP | tak | 0,005 |
+| 3.1 Flash-Lite | C3 (PL, 14 dni intens.) | 13,1 | 747 | 5 180 | STOP | nie | 0,035 |
+| 3.1 Flash-Lite | C4 (EN, dzień 1 pusty) | 1,8 | 711 | 389 | STOP | tak | 0,003 |
+| 3.1 Flash-Lite | C5 (PL, 5 dni) | 4,8 | 718 | 1 495 | STOP | nie | 0,011 |
+| 3.5 Flash-Lite | C1 | 4,3 | 728 | 1 347 | STOP | tak | 0,016 |
+| 3.5 Flash-Lite | C2 | 2,3 | 715 | 705 | STOP | tak | 0,009 |
+| 3.5 Flash-Lite | C3 | 13,7 | 747 | 5 870 | STOP | nie | 0,066 |
+| 3.5 Flash-Lite | C4 | 2,0 | 711 | 419 | STOP | tak | 0,006 |
+| 3.5 Flash-Lite | C5 | 5,0 | 718 | 1 872 | STOP | nie | 0,022 |
+
+Co działało bez zarzutu w obu modelach: poprawny JSON, `finish = STOP`, liczba dni, numeracja dni, godziny
+rosnące, próg dnia 1 (C1, C3, C5), pusty dzień 1 (C4), język PL/EN, długości tekstów, brak URL-i. Myślenie przy
+`MINIMAL` = 0 tokenów. Żadne wywołanie nie przekroczyło progów z 4.5 (wejście < 2 000, wyjście < 10 000).
+
+**Decyzja właściciela (2026-11-21):** model startowy P3-05 = `gemini-3.1-flash-lite`, `thinkingLevel=MINIMAL`,
+punkt `eu`. Etap B pominięty. Braki K1 (liczba punktów, zwłaszcza w ostatnich dniach) – do rozwiązania promptem
+i walidacją w P3-05 (wiersz 3 tabeli w sekcji 7). Zapis w ADR: **ADR-0001 Aneks C**. Pełna ewaluacja P3
+(ADR-0001 pkt 2, ≥ 95%) nadal potwierdza wybór – już z promptem produkcyjnym P3-05.
+Pliki surowe (`%TEMP%\tamitu-arch01`) – nie trafiają do repozytorium; po przepisaniu tabeli do usunięcia (4.7).
 
 ## 7. Rekomendacja modelu – zależna od wyników
 
@@ -277,7 +320,7 @@ Zasada (decyzja właściciela 2026-11-20, ADR-0001 Aneks B pkt 7): **start od na
 |---|---|
 | A: `gemini-3.1-flash-lite` wystarczy | **`gemini-3.1-flash-lite`** (MINIMAL) na punkcie z sondy (oczekiwane `eu`). Ma najwcześniejsze wycofanie (≥ 2027-05-07) – przed startem publicznym sprawdzić następcę; zapasowo `gemini-3.5-flash-lite` (sprawdzony w tym samym etapie). Etap B pominięty. |
 | A: tylko `gemini-3.5-flash-lite` wystarczy | **`gemini-3.5-flash-lite`** (MINIMAL). Etap B pominięty. Uwagi do 3.1 Flash-Lite – opisać (sygnał dla promptu P3-05: może po poprawce promptu wystarczy w pełnej ewaluacji). |
-| A: oba Flash-Lite nie wystarczają tylko z powodu K1 (reguły kontraktu, np. dzień 1, liczba punktów) | Najpierw sygnał dla promptu P3-05 (reguły można też egzekwować w walidacji/naprawie po stronie funkcji) – zgłosić architektowi przed etapem B; etap B tylko na decyzję właściciela. |
+| A: oba Flash-Lite nie wystarczają tylko z powodu K1 (reguły kontraktu, np. dzień 1, liczba punktów) – **ten wiersz wystąpił 2026-11-21; właściciel wybrał `gemini-3.1-flash-lite` bez etapu B (sekcja 6)** | Najpierw sygnał dla promptu P3-05 (reguły można też egzekwować w walidacji/naprawie po stronie funkcji) – zgłosić architektowi przed etapem B; etap B tylko na decyzję właściciela. |
 | A: oba Flash-Lite nie wystarczają (K3/K4 – treść) → etap B: `gemini-3.8-flash` wystarczy | **`gemini-3.8-flash`** (LOW). Architekt przelicza `costs.md` z pomiarem `thoughtTok`; od 2027-01-01 stawka podwójna. |
 | Etap B: 3.8 Flash też nie wystarcza | Stop; eskalacja do architekta i właściciela (prompt, ewentualnie `gemini-3.5-flash` – osobna decyzja). |
 | Żaden model nie działa na `europe-west4` ani `eu` | Stop P3-05; eskalacja do architekta (nowy ADR – region/model). |
