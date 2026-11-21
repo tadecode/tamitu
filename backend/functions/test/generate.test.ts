@@ -102,6 +102,25 @@ describe("generateValidPlan", () => {
     expect(logs2[0]?.modelError).toBe("unknown");
   });
 
+  it("TAM-95: a repeated place is logged as a quality warning, without a second (paid) call", async () => {
+    const body = validOutput(targets);
+    body.days[1]!.items[0]!.name = "Campo de' Fiori";
+    body.days[3]!.items[0]!.name = "Campo de' Fiori Morning Market";
+    const m = scriptedModel([ok(body), good]);
+    const logs: AttemptLog[] = [];
+    const r = await generateValidPlan(request, m, { onAttempt: (l) => logs.push(l) });
+    expect(r.attempts).toBe(1);
+    expect(m.calls).toHaveLength(1);
+    expect(logs).toEqual([expect.objectContaining({ outcome: "ok", qualityWarnings: "dup_place@day4" })]);
+    expect(JSON.stringify(logs)).not.toContain("Fiori");
+  });
+
+  it("a plan without repeats logs no qualityWarnings field", async () => {
+    const logs: AttemptLog[] = [];
+    await generateValidPlan(request, scriptedModel([good]), { onAttempt: (l) => logs.push(l) });
+    expect(logs[0]).not.toHaveProperty("qualityWarnings");
+  });
+
   it("sends the simplified schema and the plan-v2 system instruction", async () => {
     const m = scriptedModel([good]);
     await generateValidPlan(request, m);

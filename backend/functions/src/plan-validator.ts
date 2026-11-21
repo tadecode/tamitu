@@ -57,7 +57,8 @@ export interface ValidationIssue {
  * generation ends at once with ai_invalid_response (review PR #136 #5).
  */
 export type ValidationResult =
-  | { ok: true; plan: ValidPlan }
+  /** `warnings`: quality codes for the log only (no content), e.g. `dup_place@day14`; never a retry. */
+  | { ok: true; plan: ValidPlan; warnings: string[] }
   | { ok: false; issues: ValidationIssue[]; final?: true };
 
 /** finishReason values worth one retry: cut off by length, or an unspecified stop. */
@@ -174,7 +175,75 @@ export function validatePlanOutput(input: {
   });
 
   if (issues.length > 0) return { ok: false, issues: dedupe(issues) };
-  return { ok: true, plan: { language: out.language, days } };
+  return { ok: true, plan: { language: out.language, days }, warnings: findRepeatedPlaces(days) };
+}
+
+/**
+ * Words the model adds to a place name without changing the place (QA TAM-88 K4 c: "Campo de' Fiori" and
+ * "Campo de' Fiori Morning Market", "Restauracja X" and "Tarihi X Selim Usta"). Kept short on purpose:
+ * each extra word makes two different places look alike.
+ */
+const NAME_FILLERS: ReadonlySet<string> = new Set([
+  "the",
+  "market",
+  "morning",
+  "evening",
+  "night",
+  "restaurant",
+  "ristorante",
+  "restaurante",
+  "restauracja",
+  "cafe",
+  "caffe",
+  "kawiarnia",
+  "visit",
+  "wizyta",
+]);
+
+/** Letters that NFKD does not split into base letter + mark. */
+const FOLD: Readonly<Record<string, string>> = { ł: "l", ø: "o", đ: "d", ı: "i", ß: "ss", æ: "ae", œ: "oe" };
+
+/** Lower case, no diacritics, no punctuation, no filler words: "Campo de' Fiori Market" -> [campo, de, fiori]. */
+export function placeNameTokens(name: string): string[] {
+  return name
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/\p{M}/gu, "")
+    .replace(/[łøđıßæœ]/g, (c) => FOLD[c] ?? c)
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter((t) => t.length > 0 && !NAME_FILLERS.has(t));
+}
+
+/**
+ * Same place when the token lists are equal, or the shorter one (>= 2 tokens) appears as a contiguous
+ * run inside the longer one. One-word names only match exactly ("Vatican" vs "Vatican Museums" is not a
+ * repeat). Colloquial names ("Fontana Pretoria" / "Piazza della Vergogna") need knowledge of places and
+ * are out of reach of this rule; the prompt covers them.
+ */
+export function isSamePlace(a: readonly string[], b: readonly string[]): boolean {
+  if (a.length === 0 || b.length === 0) return false;
+  const [short, long] = a.length <= b.length ? [a, b] : [b, a];
+  if (short.length === long.length) return short.every((t, i) => t === long[i]);
+  if (short.length < 2) return false;
+  for (let start = 0; start + short.length <= long.length; start++) {
+    if (short.every((t, i) => t === long[start + i])) return true;
+  }
+  return false;
+}
+
+/**
+ * The same place on two different days (TAM-95). Returns codes `dup_place@dayN` (N = the later day),
+ * at most one per day. Repeats within one day are not checked (QA saw none).
+ */
+export function findRepeatedPlaces(days: readonly PlanDay[]): string[] {
+  const earlier: string[][] = [];
+  const codes: string[] = [];
+  days.forEach((d, i) => {
+    const current = d.items.map((it) => placeNameTokens(it.name));
+    if (current.some((t) => earlier.some((e) => isSamePlace(e, t)))) codes.push(`dup_place@day${i + 1}`);
+    earlier.push(...current);
+  });
+  return codes;
 }
 
 function dedupe(issues: ValidationIssue[]): ValidationIssue[] {

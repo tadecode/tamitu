@@ -34,6 +34,8 @@ export interface AttemptLog {
   outcome: string;
   /** Validation issue codes joined with ",", e.g. `items_count@day5,time_order@day2`. */
   validationErrors?: string | undefined;
+  /** Quality warnings of a valid plan joined with ",", e.g. `dup_place@day14` (TAM-95); log only, no retry. */
+  qualityWarnings?: string | undefined;
   /** ModelError code (HTTP status / timeout / network). */
   modelError?: string | undefined;
 }
@@ -103,7 +105,8 @@ export async function generateValidPlan(
       targets,
     });
     if (v.ok) {
-      opts.onAttempt?.({ ...base, ...usage, durationMs, outcome: "ok" });
+      const qualityWarnings = v.warnings.length > 0 ? v.warnings.join(",") : undefined;
+      opts.onAttempt?.({ ...base, ...usage, durationMs, outcome: "ok", ...(qualityWarnings ? { qualityWarnings } : {}) });
       return { plan: v.plan, attempts: attempt, targets };
     }
     opts.onAttempt?.({

@@ -1,7 +1,7 @@
 // Synthetic cases shaped like the ARCH-01 failures (p3-05 sekcja 7); no files from the ARCH-01 run.
 import { describe, expect, it } from "vitest";
 import type { DayTarget } from "../src/plan-targets.js";
-import { MAX_RETRY_HINTS, retryHints, validatePlanOutput } from "../src/plan-validator.js";
+import { isSamePlace, MAX_RETRY_HINTS, placeNameTokens, retryHints, validatePlanOutput } from "../src/plan-validator.js";
 import { validOutput } from "./helpers/fakes.js";
 
 const intense4: DayTarget[] = [
@@ -153,5 +153,68 @@ describe("issue codes and hints carry no content", () => {
     const r = run(b);
     expect(r.ok).toBe(false);
     if (!r.ok) expect(retryHints(r.issues).length).toBeLessThanOrEqual(MAX_RETRY_HINTS);
+  });
+});
+
+// TAM-95: the same place on two days (QA TAM-88 K4 c). Synthetic plans; names shaped like the QA findings.
+describe("repeated places (TAM-95) – warning only, plan stays valid", () => {
+  const targets3: DayTarget[] = [
+    { dayNumber: 1, minItems: 2, maxItems: 2, earliestStart: "09:00" },
+    { dayNumber: 2, minItems: 2, maxItems: 2 },
+    { dayNumber: 3, minItems: 2, maxItems: 2 },
+  ];
+  const withNames = (names: [string, string][], lang: "pl" | "en" = "en") => {
+    const body = validOutput(targets3, lang);
+    names.forEach((pair, d) => pair.forEach((name, i) => (body.days[d]!.items[i]!.name = name)));
+    return run(body, targets3, lang);
+  };
+  const warnings = (r: ReturnType<typeof run>) => (r.ok ? r.warnings : ["NOT_OK"]);
+
+  it("no repeats -> no warnings", () => {
+    expect(warnings(withNames([["Colosseum", "Roman Forum"], ["Pantheon", "Trevi Fountain"], ["Villa Borghese", "Galleria Borghese"]]))).toEqual([]);
+  });
+  it('E03-en: "X" and "X Morning Market" on two days', () => {
+    expect(warnings(withNames([["Colosseum", "Campo de' Fiori"], ["Pantheon", "Trevi Fountain"], ["Vatican Museums", "Campo de' Fiori Morning Market"]]))).toEqual(["dup_place@day3"]);
+  });
+  it('E17-pl: "Restauracja X" and "Tarihi X Selim Usta" (filler word + longer name)', () => {
+    expect(
+      warnings(withNames([["Hagia Sophia", "Restauracja Sultanahmet Koftecisi"], ["Tarihi Sultanahmet Koftecisi Selim Usta", "Cysterna Bazyliki"], ["Wielki Bazar", "Galata"]], "pl")),
+    ).toEqual(["dup_place@day2"]);
+  });
+  it("case, diacritics, Polish ł and punctuation do not hide a repeat", () => {
+    expect(warnings(withNames([["Wawel", "Sukiennice"], ["Kościół Mariacki", "Muzeum Czartoryskich"], ["KOSCIOL MARIACKI", "Kładka Bernatka"]], "pl"))).toEqual(["dup_place@day3"]);
+    expect(warnings(withNames([["Wawel", "Kladka Bernatka"], ["Kładka  Bernatka!", "Sukiennice"], ["Kazimierz", "Podgorze"]], "pl"))).toEqual(["dup_place@day2"]);
+  });
+  it('E13-en: a colloquial name ("Fontana Pretoria" / "Piazza della Vergogna") is out of reach (documented limit)', () => {
+    expect(warnings(withNames([["Palermo Cathedral", "Fontana Pretoria"], ["Teatro Massimo", "Ballaro Market"], ["Monreale", "Piazza della Vergogna"]]))).toEqual([]);
+  });
+  it("borderline from QA is not a repeat: Pantheon and Piazza della Rotonda; one-word name inside a longer one", () => {
+    expect(warnings(withNames([["Pantheon", "Colosseum"], ["Piazza della Rotonda", "Trevi Fountain"], ["Vatican", "Vatican Museums"]]))).toEqual([]);
+  });
+  it("same name twice in one day is not reported (rule covers different days)", () => {
+    expect(warnings(withNames([["Colosseum", "Colosseum"], ["Pantheon", "Trevi Fountain"], ["Villa Borghese", "Spanish Steps"]]))).toEqual([]);
+  });
+  it("one code per later day; warnings never turn into retry issues", () => {
+    const r = withNames([["Colosseum", "Pantheon"], ["The Colosseum", "Pantheon"], ["Colosseum", "Trevi Fountain"]]);
+    expect(r.ok).toBe(true);
+    expect(warnings(r)).toEqual(["dup_place@day2", "dup_place@day3"]);
+  });
+  it("names that are only filler words are ignored", () => {
+    expect(warnings(withNames([["Restaurant", "Colosseum"], ["Restaurant", "Pantheon"], ["Night Market", "Night Market"]]))).toEqual([]);
+  });
+});
+
+describe("placeNameTokens / isSamePlace", () => {
+  it("folds case, marks, punctuation and filler words", () => {
+    expect(placeNameTokens("Campo de' Fiori Morning Market")).toEqual(["campo", "de", "fiori"]);
+    expect(placeNameTokens("Restauracja Łazienki Królewskie")).toEqual(["lazienki", "krolewskie"]);
+    expect(placeNameTokens("Café Central")).toEqual(["central"]);
+  });
+  it("matches equal lists and contiguous runs of >= 2 tokens only", () => {
+    expect(isSamePlace(["a", "b"], ["x", "a", "b", "y"])).toBe(true);
+    expect(isSamePlace(["a", "b"], ["a", "x", "b"])).toBe(false);
+    expect(isSamePlace(["a"], ["a", "b"])).toBe(false);
+    expect(isSamePlace(["a"], ["a"])).toBe(true);
+    expect(isSamePlace([], [])).toBe(false);
   });
 });
