@@ -206,11 +206,27 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get errorAiUnavailableBody =>
-      'Usługa AI jest chwilowo niedostępna. Ta próba nie wlicza się do limitu. Spróbuj ponownie za chwilę.';
+      'Usługa AI jest chwilowo niedostępna. Ta próba nie wlicza się do dzisiejszego limitu. Spróbuj ponownie za chwilę.';
+
+  @override
+  String get errorAiUnavailableCountedBody =>
+      'Usługa AI jest chwilowo niedostępna. Ta próba została wliczona do dzisiejszego limitu, bo nieudane próby zwracamy najwyżej 2 razy dziennie. Spróbuj ponownie później.';
+
+  @override
+  String get errorAiUnavailableMaybeBody =>
+      'Usługa AI jest chwilowo niedostępna. Ta próba mogła zostać wliczona do dzisiejszego limitu. Spróbuj ponownie za chwilę.';
 
   @override
   String get errorAiInvalidBody =>
-      'AI zwróciło niepełny plan, więc go nie zapisaliśmy. Ta próba nie wlicza się do limitu. Spróbuj ponownie.';
+      'AI zwróciło niepełny plan, więc go nie zapisaliśmy. Ta próba nie wlicza się do dzisiejszego limitu. Spróbuj ponownie.';
+
+  @override
+  String get errorAiInvalidCountedBody =>
+      'AI zwróciło niepełny plan, więc go nie zapisaliśmy. Ta próba została wliczona do dzisiejszego limitu, bo nieudane próby zwracamy najwyżej 2 razy dziennie.';
+
+  @override
+  String get errorAiInvalidMaybeBody =>
+      'AI zwróciło niepełny plan, więc go nie zapisaliśmy. Ta próba mogła zostać wliczona do dzisiejszego limitu. Spróbuj ponownie.';
 
   @override
   String get errorTimeoutBody =>

@@ -205,11 +205,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errorAiUnavailableBody =>
-      'The AI service is temporarily unavailable. This attempt doesn\'t count towards your limit. Please try again shortly.';
+      'The AI service is temporarily unavailable. This attempt doesn\'t count towards today\'s limit. Please try again shortly.';
+
+  @override
+  String get errorAiUnavailableCountedBody =>
+      'The AI service is temporarily unavailable. This attempt counted towards today\'s limit, because we give back failed attempts at most twice a day. Please try again later.';
+
+  @override
+  String get errorAiUnavailableMaybeBody =>
+      'The AI service is temporarily unavailable. This attempt may have counted towards today\'s limit. Please try again shortly.';
 
   @override
   String get errorAiInvalidBody =>
-      'The AI returned an incomplete plan, so we didn\'t save it. This attempt doesn\'t count towards your limit. Please try again.';
+      'The AI returned an incomplete plan, so we didn\'t save it. This attempt doesn\'t count towards today\'s limit. Please try again.';
+
+  @override
+  String get errorAiInvalidCountedBody =>
+      'The AI returned an incomplete plan, so we didn\'t save it. This attempt counted towards today\'s limit, because we give back failed attempts at most twice a day.';
+
+  @override
+  String get errorAiInvalidMaybeBody =>
+      'The AI returned an incomplete plan, so we didn\'t save it. This attempt may have counted towards today\'s limit. Please try again.';
 
   @override
   String get errorTimeoutBody =>

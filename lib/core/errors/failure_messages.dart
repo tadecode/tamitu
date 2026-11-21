@@ -43,15 +43,24 @@ FailureMessage failureMessage(
         title: l10n.errorLimitTitle,
         body: l10n.errorLimitBody(limit, formatTime(resetAt.toLocal())),
       );
+    // posrednik-api.md v0.5 pkt 6: never promise a give-back without slotReleased = true.
     case FailureKind.aiUnavailable:
       return FailureMessage(
         title: l10n.errorGenerateTitle,
-        body: l10n.errorAiUnavailableBody,
+        body: switch (f.slotReleased) {
+          true => l10n.errorAiUnavailableBody,
+          false => l10n.errorAiUnavailableCountedBody,
+          null => l10n.errorAiUnavailableMaybeBody,
+        },
       );
     case FailureKind.aiInvalidResponse:
       return FailureMessage(
         title: l10n.errorGenerateTitle,
-        body: l10n.errorAiInvalidBody,
+        body: switch (f.slotReleased) {
+          true => l10n.errorAiInvalidBody,
+          false => l10n.errorAiInvalidCountedBody,
+          null => l10n.errorAiInvalidMaybeBody,
+        },
       );
     case FailureKind.testDataOnly:
       return FailureMessage(
