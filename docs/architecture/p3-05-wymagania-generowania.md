@@ -53,11 +53,12 @@ Po usunięciu samego wewnętrznego `maxItems = 7` żądanie przechodzi. Szkic
 3. Błąd 400 z Vertex (np. po zmianie schematu) – traktować jak błąd konfiguracji: log metadanych, `ai_unavailable`,
    **bez** ponowienia (ponowienie nic nie da i kosztuje slot limitu). Tak samo inne kody 4xx (403, 404, 417).
    **Ponawiane** są tylko: **408, 429, 5xx, przekroczenie czasu** (45 s na próbę), **błąd sieci** i `bad_body`.
-   **Od TAM-96 (ADR-0016, status: proponowany):** odczekanie z narastaniem i losowym rozrzutem, **2–4 s** przed wywołaniem 2
+   **Od TAM-96 (ADR-0016, zatwierdzony warunkowo; merge implementacji po sprawdzeniu w Billing):** odczekanie z narastaniem i losowym rozrzutem, **2–4 s** przed wywołaniem 2
    i **4–8 s** przed wywołaniem 3. Najwyżej **3 wywołania i najwyżej 2 próby płatne** na generowanie, a wywołanie z 429
    nie jest płatne, więc trzecie wywołanie jest możliwe tylko po 429. Generowanie ma **budżet 100 s** od pierwszego
    wywołania, a kolejne wywołanie rusza tylko wtedy, gdy zostało ≥ 45 s. Lista błędów walidacji z ostatniej płatnej próby
-   przechodzi przez 429. Szczegóły i przykłady: ADR-0016 „Decyzja”. (Do czasu implementacji kod działa po staremu:
+   przechodzi przez 429. Gdy **wszystkie** wywołania dostały 429 (0 prób płatnych), wynik to **`ai_busy`**: slot wraca
+poza limitem 2 zwrotów, a aplikacja raz sama ponawia po 60 s. Szczegóły i przykłady: ADR-0016 „Decyzja”, `posrednik-api.md` v0.6. (Do czasu implementacji kod działa po staremu:
    jedno ponowienie po 1–2 s.) Treści błędu z Vertex ani nagłówka `Retry-After` nie czytamy i nie logujemy. **Blokady treści nie są ponawiane**: `finishReason` `SAFETY`, `PROHIBITED_CONTENT`,
    `SPII`, `BLOCKLIST`, `RECITATION` i brak kandydata kończą od razu `ai_invalid_response`, bez drugiego płatnego
    wywołania. Druga próba po niepoprawnej odpowiedzi jest tylko dla `MAX_TOKENS`, `OTHER` i błędów walidacji (sekcja 5).
@@ -117,7 +118,7 @@ TAM-88), limit funkcji 120 s. Od TAM-96 generowanie ma budżet 100 s, a wywołan
 
 Logować tylko metadane: `AI_MODEL_ID`, `modelVersion`, lokalizacja, `promptVersion`, tokeny (wejście, wyjście,
 myślenie), czas, numer próby, kody błędów walidacji (np. `items_count@day5`), wynik końcowy. Od TAM-96 także
-`waitMs` i `billable` przy próbie oraz `calls` i `stopReason` w wyniku (ADR-0016 pkt 9). Z nich liczymy odsetek
+`waitMs` i `billable` przy próbie oraz `calls` i `stopReason` w wyniku (ADR-0016 pkt 15). Z nich liczymy odsetek
 porażek przez 429 (ADR-0016 „Pomiar i próg ponownej oceny”). **Nie logować** promptu,
 danych podróży ani odpowiedzi modelu (ADR-0001 „Dane osobowe"). Odsetek drugich prób to główny wskaźnik jakości promptu
 i kosztu (`costs.md` sekcja 0 – w teście 2 z 5 odpowiedzi nie spełniłyby reguł).
