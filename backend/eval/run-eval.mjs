@@ -26,22 +26,29 @@ const { generateValidPlan } = lib("generate.js");
 const { computeDayTargets } = lib("plan-targets.js");
 const { parseGeneratePlan } = lib("schemas.js");
 
-// ---- prices (docs/architecture/costs.md sekcja 0, endpoint `eu` = Non-global, 2026-11-18) ----
-const PRICE_USD_PER_M = { "gemini-3.1-flash-lite": [0.275, 1.65], "gemini-3.5-flash-lite": [0.33, 2.75] };
-const USD_PLN = 4.0;
+import { attemptCostPln, canStart, costPln, GuardError, parseStopPln, priceFor, rawOption } from "./eval-guard.mjs";
+
 const DEV_PROJECT = "tamitu-dev-tadecode";
 
 const args = process.argv.slice(2);
 const flag = (n) => args.includes(n);
-const opt = (n, d) => {
-  const i = args.indexOf(n);
-  return i >= 0 && args[i + 1] ? args[i + 1] : d;
-};
-const mode = flag("--paid") ? "paid" : flag("--dry-run") ? "dry-run" : "estimate";
-const stopPln = Number(opt("--stop-pln", "2.5"));
-const modelId = opt("--model", "gemini-3.1-flash-lite");
-const only = opt("--only", "")?.split(",").filter(Boolean);
-const langs = opt("--lang", "") ? [opt("--lang")] : ["pl", "en"];
+let mode, stopPln, modelId, only, langs, location;
+try {
+  // Fail-closed (review PR #136 #3): a malformed option stops the run in EVERY mode.
+  mode = flag("--paid") ? "paid" : flag("--dry-run") ? "dry-run" : "estimate";
+  stopPln = parseStopPln(rawOption(args, "--stop-pln"));
+  modelId = rawOption(args, "--model") ?? "gemini-3.1-flash-lite";
+  priceFor(modelId);
+  only = (rawOption(args, "--only") ?? "").split(",").filter(Boolean);
+  const lang = rawOption(args, "--lang");
+  if (lang !== undefined && lang !== "pl" && lang !== "en") throw new GuardError("--lang must be pl or en");
+  langs = lang ? [lang] : ["pl", "en"];
+  location = rawOption(args, "--location") ?? "eu";
+} catch (e) {
+  if (!(e instanceof GuardError)) throw e;
+  console.error(`Refusing: ${e.message}`);
+  process.exit(2);
+}
 
 const set = JSON.parse(readFileSync(join(here, "cases.json"), "utf8"));
 const cases = set.cases.filter((c) => !only?.length || only.includes(c.id));
@@ -78,20 +85,16 @@ function estimateTokens(request) {
   return { input: 1100 + 25 * targets.length, output: 80 * items + 20 * targets.length + 50 };
 }
 
-const costPln = (model, input, output) => {
-  const [pi, po] = PRICE_USD_PER_M[model] ?? PRICE_USD_PER_M["gemini-3.5-flash-lite"];
-  return ((input * pi + output * po) / 1e6) * USD_PLN;
-};
-
 const runs = [];
 cases.forEach((c) => langs.forEach((lang) => runs.push({ c, lang, request: buildRequest(c, lang, runs.length) })));
 
 // ---------------- estimate ----------------
 const est = runs.map((r) => estimateTokens(r.request));
+runs.forEach((r, i) => (r.estimate = est[i]));
 const oneAttempt = est.reduce((s, e) => s + costPln(modelId, e.input, e.output), 0);
 console.log(`Eval set ${set.version}: ${cases.length} cases x ${langs.length} languages = ${runs.length} generations (model ${modelId})`);
 console.log(`Calls: min ${runs.length}, max ${runs.length * 2} (2 attempts each)`);
-console.log(`Estimated cost: ~${oneAttempt.toFixed(2)} PLN at 1 attempt each, ~${(oneAttempt * 1.4).toFixed(2)} PLN with 40% retries, worst case ${(oneAttempt * 2).toFixed(2)} PLN; hard stop at ${stopPln} PLN`);
+console.log(`Estimated cost: ~${oneAttempt.toFixed(2)} PLN at 1 attempt each, ~${(oneAttempt * 1.4).toFixed(2)} PLN with 40% retries, worst case ${(oneAttempt * 2).toFixed(2)} PLN; ceiling ${stopPln} PLN (a generation starts only if its worst case still fits)`);
 if (mode === "estimate") process.exit(0);
 
 // ---------------- model ----------------
@@ -106,7 +109,7 @@ if (mode === "paid") {
     console.error("Refusing: set VERTEX_ACCESS_TOKEN (owner: gcloud auth print-access-token). Never write it to a file.");
     process.exit(2);
   }
-  const cfg = parseAiConfig({ AI_MODEL_ID: modelId, AI_LOCATION: opt("--location", "eu"), GCLOUD_PROJECT: DEV_PROJECT });
+  const cfg = parseAiConfig({ AI_MODEL_ID: modelId, AI_LOCATION: location, GCLOUD_PROJECT: DEV_PROJECT });
   if (!cfg) {
     console.error("Refusing: invalid model/location (allowed locations: eu, europe-west4).");
     process.exit(2);
@@ -143,8 +146,8 @@ mkdirSync(outDir, { recursive: true });
 let spent = 0;
 const results = [];
 for (const r of runs) {
-  if (spent >= stopPln) {
-    console.warn(`STOP: ${spent.toFixed(3)} PLN >= ${stopPln} PLN`);
+  if (mode === "paid" && !canStart(spent, modelId, r.estimate, stopPln)) {
+    console.warn(`STOP: spent ${spent.toFixed(3)} PLN; next generation could exceed the ${stopPln} PLN ceiling`);
     break;
   }
   const attempts = [];
@@ -156,7 +159,8 @@ for (const r of runs) {
   } catch (e) {
     outcome = e?.appCode ?? "error";
   }
-  const cost = attempts.reduce((s, a) => s + costPln(modelId, a.tokensIn ?? 0, (a.tokensOut ?? 0) + (a.tokensThought ?? 0)), 0);
+  // Attempts without usage data (timeout, 5xx) are charged at the estimate: they may be billed.
+  const cost = attempts.reduce((s, a) => s + attemptCostPln(modelId, a, r.estimate), 0);
   spent += mode === "paid" ? cost : 0;
   const row = {
     case: r.c.id,

@@ -21,8 +21,12 @@ tryby bez sieci (`--estimate`, `--dry-run`).
 | `gemini-3.1-flash-lite` | ok. 0,70 PLN | ok. 1,00 PLN | ok. 1,40 PLN |
 | `gemini-3.5-flash-lite` (zapasowy) | ok. 1,15 PLN | ok. 1,60 PLN | ok. 2,30 PLN |
 
-Wywołań: od 40 do 80. Uruchamiacz zatrzymuje się po przekroczeniu `--stop-pln` (domyślnie 2,5 PLN), liczonym
-z tokenów zwróconych przez Vertex. Przebieg mieści się w spend cap dev (15 PLN). Uruchamiacz wywołuje Vertex
+Wywołań: od 40 do 80. `--stop-pln` (domyślnie i najwyżej **2,5 PLN**; przyjmuje `2.5` i `2,5`) to **sufit**:
+kolejne generowanie startuje tylko wtedy, gdy nawet jego najgorszy wariant (2 próby × szacunek × 1,5) zmieści się
+w limicie. Koszt liczy się z tokenów zwróconych przez Vertex, a próbę bez danych o tokenach (przekroczenie czasu,
+5xx) doliczamy po szacunku. Wartość nieliczbowa, spoza zakresu (0; 2,5], flaga bez wartości albo model spoza
+cennika → uruchamiacz odmawia startu (fail-closed, w każdym trybie). Logikę sprawdza `eval-guard.mjs`, a testy są w
+`backend/functions/test/eval-guard.test.ts`. Przebieg mieści się w spend cap dev (15 PLN). Uruchamiacz wywołuje Vertex
 bezpośrednio z konta właściciela, z pominięciem funkcji, więc **nie** zużywa limitu 25/dobę w Firestore
 (spend cap dev nadal obowiązuje).
 
