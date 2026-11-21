@@ -1,5 +1,5 @@
 // Function bodies with injected dependencies (testable without Firebase). P3-02 skeletons; P3-04 adds
-// the idempotent recordConsent write. Other business logic still returns not_implemented.
+// the idempotent recordConsent write; P3-05 the generatePlan flow (quota, model, validation, retry).
 import type { PlanModel } from "./ai.js";
 import {
   requireAppCheck,
@@ -24,8 +24,11 @@ import {
 } from "./consents.js";
 import { AppError } from "./errors.js";
 import type { HandlerContext } from "./handler.js";
-import { shouldDisableAi } from "./limits.js";
-import { uidHash } from "./logger.js";
+import { generateValidPlan, type AttemptLog } from "./generate.js";
+import { shouldDisableAi, type QuotaInfo, type ReservationPlan } from "./limits.js";
+import { logEvent, uidHash } from "./logger.js";
+import type { PlanDay } from "./plan-validator.js";
+import { PROMPT_VERSION } from "./prompt/plan-v1.js";
 import {
   budgetNotificationSchema,
   parseDeleteAccount,
@@ -44,12 +47,38 @@ export interface Deps {
   writeConsent: ConsentWriter;
   pepper?: string | undefined;
   now: () => Date;
-  model: PlanModel;
+  /** undefined = AI configuration missing/invalid (AI_MODEL_ID, AI_LOCATION): ai_unavailable, no reservation. */
+  model: PlanModel | undefined;
+  /**
+   * Quota reservation in ONE Firestore transaction (usage/{uid}, usage_global/{today});
+   * decision and written shape: limits.planReservation.
+   */
+  reserveQuota: (uid: string, limits: { userLimit: number; globalLimit: number }, now: Date) => Promise<ReservationPlan>;
+  /** Slot release after a system error (separate transaction; limits.planRelease). */
+  releaseQuota: (uid: string, reservationDay: string, now: Date) => Promise<void>;
+  /** Clock for attempt durations (tests inject a fake). */
+  clock?: () => number;
 }
 
 export type CallableReq = CallerRequest & { data: unknown };
 
-export async function generatePlanCore(req: CallableReq, deps: Deps, ctx: HandlerContext): Promise<never> {
+export interface GeneratePlanResponse {
+  apiVersion: 1;
+  requestId: string;
+  language: "pl" | "en";
+  promptVersion: string;
+  days: PlanDay[];
+  quota: QuotaInfo;
+}
+
+/** Error codes after which the reserved slot is returned (contract pkt 2; ADR-0002 "Rezerwacja limitu"). */
+const RELEASE_ON: ReadonlySet<string> = new Set(["ai_unavailable", "ai_invalid_response", "internal"]);
+
+export async function generatePlanCore(
+  req: CallableReq,
+  deps: Deps,
+  ctx: HandlerContext,
+): Promise<GeneratePlanResponse> {
   ctx.requestBytes = requestSizeBytes(req.data);
   const caller = await verifyCaller(req, deps.verifier);
   ctx.uidHash = uidHash(caller.uid, deps.pepper);
@@ -67,8 +96,58 @@ export async function generatePlanCore(req: CallableReq, deps: Deps, ctx: Handle
   const current = currentVersionNumbers(runtime, ctx);
   assertConsents(current, await deps.loadLatestConsents(caller.uid));
   if (!runtime.aiEnabled) throw new AppError("ai_unavailable");
-  // TODO P3-05: quota reservation (limits.decideQuota), prompt, validation, retry.
-  return deps.model.generate(request);
+  const model = deps.model;
+  if (!model) {
+    ctx.configError = "ai_config_invalid";
+    throw new AppError("ai_unavailable");
+  }
+
+  // ADR-0002 step 5: reserve BEFORE calling the model.
+  const reservation = await deps.reserveQuota(
+    caller.uid,
+    { userLimit: runtime.perUserDailyLimit, globalLimit: runtime.globalDailyLimit },
+    deps.now(),
+  );
+  if (!reservation.allowed) {
+    if (reservation.appCode === "limit_exceeded") {
+      throw new AppError("limit_exceeded", { limit: reservation.quota.limit, resetAt: reservation.quota.resetAt });
+    }
+    throw new AppError("ai_unavailable");
+  }
+
+  ctx.attempts = 0;
+  const onAttempt = (a: AttemptLog) => {
+    ctx.attempts = a.attempt;
+    logEvent({
+      fn: "generatePlan.attempt",
+      result: a.outcome,
+      ...(ctx.uidHash !== undefined ? { uidHash: ctx.uidHash } : {}),
+      days: request.trip.days,
+      ...a,
+    });
+  };
+  try {
+    const { plan } = await generateValidPlan(request, model, { clock: deps.clock, onAttempt });
+    return {
+      apiVersion: 1,
+      requestId: request.requestId,
+      language: plan.language,
+      promptVersion: PROMPT_VERSION,
+      days: plan.days,
+      quota: reservation.reservation.quota,
+    };
+  } catch (e) {
+    const code = e instanceof AppError ? e.appCode : "internal";
+    if (RELEASE_ON.has(code)) {
+      try {
+        await deps.releaseQuota(caller.uid, reservation.reservation.day, deps.now());
+      } catch {
+        // Never mask the original error; the fixed code tells the owner a slot stayed used.
+        ctx.quotaRelease = "release_failed";
+      }
+    }
+    throw e;
+  }
 }
 
 export interface RecordConsentResponse {

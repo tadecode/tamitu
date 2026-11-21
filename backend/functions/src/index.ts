@@ -1,10 +1,10 @@
-import { getApps, initializeApp } from "firebase-admin/app";
+import { applicationDefault, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore, Timestamp } from "firebase-admin/firestore";
 import { defineSecret } from "firebase-functions/params";
 import { onCall, type CallableRequest } from "firebase-functions/v2/https";
 import { onMessagePublished } from "firebase-functions/v2/pubsub";
-import { stubModel } from "./ai.js";
+import { parseAiConfig, vertexModel, type FetchLike, type PlanModel } from "./ai.js";
 import {
   assertStartupConfig,
   parseRuntimeConfig,
@@ -23,6 +23,7 @@ import {
 } from "./consents.js";
 import { budgetGuardCore, deleteAccountCore, generatePlanCore, recordConsentCore, type Deps } from "./endpoints.js";
 import { runGuarded } from "./handler.js";
+import { planRelease, planReservation, warsawDay, type ReservationPlan, type UsageDoc } from "./limits.js";
 import { serviceAccountFor } from "./service-accounts.js";
 
 const REGION = "europe-west4";
@@ -78,6 +79,68 @@ const writeConsent: ConsentWriter = async (uid, consentId, doc) => {
   });
 };
 
+/** usage/{uid} as stored; anything malformed counts as "no document" (counter 0 for today). */
+function usageFromDoc(data: unknown): UsageDoc | undefined {
+  const d = data as { day?: unknown; count?: unknown } | undefined;
+  return typeof d?.day === "string" && Number.isInteger(d.count) ? { day: d.day, count: d.count as number } : undefined;
+}
+
+/**
+ * P3-05 quota reservation: ONE transaction reads usage/{uid} and usage_global/{today} and writes both
+ * (firestore-ttl-indexes.md pkt 3.2, rules 1-2). Concurrent calls retry the transaction, so the
+ * counters cannot be overshot. Decision logic: limits.planReservation (unit-tested).
+ */
+async function reserveQuota(
+  uid: string,
+  limits: { userLimit: number; globalLimit: number },
+  now: Date,
+): Promise<ReservationPlan> {
+  const db = getFirestore();
+  const usageRef = db.doc(`usage/${uid}`);
+  return db.runTransaction(async (tx) => {
+    const globalRef = db.doc(`usage_global/${warsawDay(now)}`);
+    const [u, g] = await Promise.all([tx.get(usageRef), tx.get(globalRef)]);
+    const gc = g.get("count");
+    const plan = planReservation({
+      usage: usageFromDoc(u.data()),
+      globalCount: Number.isInteger(gc) ? (gc as number) : 0,
+      ...limits,
+      now,
+    });
+    if (plan.allowed) {
+      const w = plan.writes;
+      tx.set(usageRef, { ...w.usage, updatedAt: Timestamp.fromDate(w.usage.updatedAt), expireAt: Timestamp.fromDate(w.usage.expireAt) });
+      tx.set(globalRef, { count: w.global.count, expireAt: Timestamp.fromDate(w.global.expireAt) });
+    }
+    return plan;
+  });
+}
+
+/** Rule 3: separate transaction; decrements only when the stored day is still the reservation day. */
+async function releaseQuota(uid: string, reservationDay: string, now: Date): Promise<void> {
+  const db = getFirestore();
+  const ref = db.doc(`usage/${uid}`);
+  await db.runTransaction(async (tx) => {
+    const w = planRelease(usageFromDoc((await tx.get(ref)).data()), reservationDay, now);
+    if (w) tx.set(ref, { ...w, updatedAt: Timestamp.fromDate(w.updatedAt), expireAt: Timestamp.fromDate(w.expireAt) });
+  });
+}
+
+/**
+ * Vertex model from AI_MODEL_ID / AI_LOCATION (.env.<project>); undefined when missing or not allowed
+ * (fail-closed: generatePlan answers ai_unavailable before reserving a slot). Token: the function's
+ * own service account (fn-ai-plan) via Application Default Credentials - no keys.
+ */
+const aiConfig = parseAiConfig(process.env);
+let credential: ReturnType<typeof applicationDefault> | undefined;
+const model: PlanModel | undefined = aiConfig
+  ? vertexModel(aiConfig, {
+      fetch: fetch as unknown as FetchLike,
+      // Lazy: created on the first model call, not at module load (deploy analysis, tests).
+      token: async () => (await (credential ??= applicationDefault()).getAccessToken()).access_token,
+    })
+  : undefined;
+
 function deps(): Deps {
   return {
     verifier: getAuth(),
@@ -87,7 +150,9 @@ function deps(): Deps {
     writeConsent,
     pepper: UID_PEPPER.value(),
     now: () => new Date(),
-    model: stubModel,
+    model,
+    reserveQuota,
+    releaseQuota,
   };
 }
 

@@ -15,6 +15,23 @@ export interface LogFields {
   errorCode?: string;
   /** Fixed configuration error code (ADR-0012 pkt 4), never a configured value. */
   configError?: string;
+  // P3-05 (p3-05-wymagania-generowania.md sekcja 6): model call metadata only, never prompt/output.
+  attempt?: number;
+  aiModel?: string;
+  aiLocation?: string;
+  modelVersion?: string;
+  promptVersion?: string;
+  tokensIn?: number;
+  tokensOut?: number;
+  tokensThought?: number;
+  /** `ok`, `invalid`, `model_config`, `model_retryable`, `error`. */
+  outcome?: string;
+  /** Validation issue codes built by the server (no content), e.g. `items_count@day5`. */
+  validationErrors?: string;
+  /** ModelError code: HTTP status, `timeout`, `network`. */
+  modelError?: string;
+  /** Fixed code when releasing a quota slot failed. */
+  quotaRelease?: string;
 }
 
 const ALLOWED: ReadonlyArray<keyof LogFields> = [
@@ -28,9 +45,23 @@ const ALLOWED: ReadonlyArray<keyof LogFields> = [
   "errorClass",
   "errorCode",
   "configError",
+  "attempt",
+  "aiModel",
+  "aiLocation",
+  "modelVersion",
+  "promptVersion",
+  "tokensIn",
+  "tokensOut",
+  "tokensThought",
+  "outcome",
+  "validationErrors",
+  "modelError",
+  "quotaRelease",
 ];
 
 const MAX_STRING = 64;
+/** validationErrors joins several server-built codes; longer cap, still content-free. */
+const MAX_STRING_BY_KEY: Partial<Record<keyof LogFields, number>> = { validationErrors: 200 };
 
 export function sanitizeFields(fields: Partial<LogFields>): Record<string, string | number> {
   const out: Record<string, string | number> = {};
@@ -38,7 +69,7 @@ export function sanitizeFields(fields: Partial<LogFields>): Record<string, strin
   for (const key of ALLOWED) {
     const v = src[key];
     if (typeof v === "number" && Number.isFinite(v)) out[key] = v;
-    else if (typeof v === "string") out[key] = v.slice(0, MAX_STRING);
+    else if (typeof v === "string") out[key] = v.slice(0, MAX_STRING_BY_KEY[key] ?? MAX_STRING);
   }
   return out;
 }
