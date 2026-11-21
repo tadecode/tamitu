@@ -1,7 +1,14 @@
 // Test doubles for P3-05: a scripted model (no network, 0 paid calls) and an in-memory quota store
 // using the same pure functions as the Firestore transactions in index.ts.
 import type { ModelCall, ModelResult, PlanModel } from "../../src/ai.js";
-import { planRelease, planReservation, warsawDay, type ReservationPlan, type UsageDoc } from "../../src/limits.js";
+import {
+  planReleaseOutcome,
+  planReservation,
+  warsawDay,
+  type ReleaseOutcome,
+  type ReservationPlan,
+  type UsageDoc,
+} from "../../src/limits.js";
 import type { DayTarget } from "../../src/plan-targets.js";
 
 /** Synthetic valid output for the given targets (max items, times from the day-1 floor or 09:00). */
@@ -89,9 +96,13 @@ export function memoryQuota() {
       }
       return real;
     },
-    releaseQuota: async (uid: string, day: string, now: Date) => {
-      const w = planRelease(usage.get(uid), day, now);
-      if (w) usage.set(uid, { day: w.day, count: w.count, released: w.released, expireAt: w.expireAt });
+    releaseQuota: async (uid: string, day: string, now: Date): Promise<ReleaseOutcome> => {
+      const r = planReleaseOutcome(usage.get(uid), day, now);
+      if (r.outcome === "released") {
+        const w = r.write;
+        usage.set(uid, { day: w.day, count: w.count, released: w.released, expireAt: w.expireAt });
+      }
+      return r.outcome;
     },
   };
 }

@@ -26,7 +26,7 @@ const rec = (policyVersion: string, granted = true) => ({ granted, policyVersion
 const both = (p: string, a: string): LatestConsents => ({ privacy: rec(p), ai: rec(a) });
 
 /** Returns details.consentType of a consent_required error, or "passed". */
-function consentTypeOf(fn: () => void): string | number | undefined {
+function consentTypeOf(fn: () => void): string | number | boolean | undefined {
   try {
     fn();
   } catch (e) {

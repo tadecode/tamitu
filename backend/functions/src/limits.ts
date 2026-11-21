@@ -166,16 +166,35 @@ export function planReservation(input: {
 }
 
 /**
+ * Result of a slot release attempt (TAM-94): `released` = count decremented; `capped` = the account
+ * already used its MAX_RELEASES_PER_DAY releases today; `stale_day` = no reservation of that day is
+ * stored any more (day changed at midnight, or no/zero counter). Only `released` means the attempt
+ * did not count towards the account limit.
+ */
+export type ReleaseOutcome = "released" | "capped" | "stale_day";
+
+export type ReleasePlan = { outcome: "released"; write: UsageWrite } | { outcome: "capped" | "stale_day" };
+
+/**
  * Pure part of the slot release (rule 3): decrement only when the stored day is still the
  * reservation day and the account has releases left today (MAX_RELEASES_PER_DAY); otherwise no
- * write (undefined) and the slot stays used. usage_global is NOT decremented: it is the cost fuse
+ * write and the slot stays used. usage_global is NOT decremented: it is the cost fuse
  * and the model calls were made (and billed) anyway - the cost-safer variant (review PR #136 #2).
  */
-export function planRelease(usage: UsageDoc | undefined, reservationDay: string, now: Date): UsageWrite | undefined {
-  if (!usage || usage.day !== reservationDay || usage.count <= 0) return undefined;
+export function planReleaseOutcome(usage: UsageDoc | undefined, reservationDay: string, now: Date): ReleasePlan {
+  if (!usage || usage.day !== reservationDay || usage.count <= 0) return { outcome: "stale_day" };
   const released = effectiveReleased(usage, reservationDay);
-  if (released >= MAX_RELEASES_PER_DAY) return undefined;
-  return { day: usage.day, count: usage.count - 1, released: released + 1, updatedAt: now, expireAt: usageExpireAt(now) };
+  if (released >= MAX_RELEASES_PER_DAY) return { outcome: "capped" };
+  return {
+    outcome: "released",
+    write: { day: usage.day, count: usage.count - 1, released: released + 1, updatedAt: now, expireAt: usageExpireAt(now) },
+  };
+}
+
+/** The write of planReleaseOutcome, or undefined when nothing is written (slot stays used). */
+export function planRelease(usage: UsageDoc | undefined, reservationDay: string, now: Date): UsageWrite | undefined {
+  const r = planReleaseOutcome(usage, reservationDay, now);
+  return r.outcome === "released" ? r.write : undefined;
 }
 
 /**
