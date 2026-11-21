@@ -119,13 +119,24 @@ describe("generatePlan - slot release (contract pkt 2)", () => {
     expect(quota.usage.get("owner")?.count).toBe(0);
     expect(quota.global.get("2026-11-21")).toBe(1);
   });
-  it("after ai_unavailable (400) and unexpected errors the slot is returned", async () => {
+  it("after ai_unavailable (400) the slot is returned; after internal it is NOT (contract list, review #8)", async () => {
     const { deps, quota } = mkDeps({ model: scriptedModel([new ModelError("config", "400")]) });
     expect(await err(run(body(), deps))).toEqual({ code: "ai_unavailable" });
-    expect(quota.usage.get("owner")?.count).toBe(0);
+    expect(quota.usage.get("owner")).toMatchObject({ count: 0, released: 1 });
     const { deps: d2, quota: q2 } = mkDeps({ model: scriptedModel([new TypeError(CANARY)]) });
     expect(await err(run(body(), d2))).toEqual({ code: "internal" });
-    expect(q2.usage.get("owner")?.count).toBe(0);
+    expect(q2.usage.get("owner")).toMatchObject({ count: 1, released: 0 });
+  });
+  it("review #2: at most 2 releases per account and day; always-failing requests then use the own limit", async () => {
+    const bad = ok({ language: "pl", days: [] });
+    const { deps, quota } = mkDeps({ model: scriptedModel(Array(20).fill(bad)) }, { perUserDailyLimit: 2 });
+    const codes: unknown[] = [];
+    for (let i = 0; i < 6; i++) codes.push((await err(run(body(), deps)))?.["code"]);
+    // releases 1-2 return the slot; requests 3-4 consume the limit of 2; then limit_exceeded (no model call)
+    expect(codes).toEqual(["ai_invalid_response", "ai_invalid_response", "ai_invalid_response", "ai_invalid_response", "limit_exceeded", "limit_exceeded"]);
+    expect(quota.usage.get("owner")).toMatchObject({ count: 2, released: 2 });
+    // global fuse counts every generation that reached the model: limit + MAX_RELEASES_PER_DAY = 4
+    expect(quota.global.get("2026-11-21")).toBe(4);
   });
   it("a failing release never masks the original error and is logged as a fixed code", async () => {
     const { deps } = mkDeps({

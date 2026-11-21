@@ -71,8 +71,11 @@ export interface GeneratePlanResponse {
   quota: QuotaInfo;
 }
 
-/** Error codes after which the reserved slot is returned (contract pkt 2; ADR-0002 "Rezerwacja limitu"). */
-const RELEASE_ON: ReadonlySet<string> = new Set(["ai_unavailable", "ai_invalid_response", "internal"]);
+/**
+ * Error codes after which the reserved slot is returned - exactly the contract list (posrednik-api.md pkt 2;
+ * review PR #136 #8). After `internal` the slot stays used (cost-safer; the model may have been billed).
+ */
+const RELEASE_ON: ReadonlySet<string> = new Set(["ai_unavailable", "ai_invalid_response"]);
 
 export async function generatePlanCore(
   req: CallableReq,
