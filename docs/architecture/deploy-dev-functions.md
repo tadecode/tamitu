@@ -34,7 +34,7 @@ App Check na telefonie testowym: decyzja właściciela – token debug dla QA (s
 |---|---|---|
 | `recordConsent` | **TAK** | Jedyna potrzebna do testu zgody (SIGN-11, CONS-01, RECON-03, AIC-04). Kod gotowy (P3-04, testy zielone). Nie woła AI. Konto `fn-consent` ma potrzebne role i dostęp do sekretu. Zapisuje tylko dane kont testowych (dev = tylko dane testowe, ADR-0011 pkt 5). |
 | `deleteAccount` | **NIE** (razem z P3-08) | Kod po sprawdzeniu tokenu zwraca `not_implemented` (P3-08) – w teście nic by nie dał. Konto `fn-account` ma dziś szeroką rolę `roles/firebaseauth.admin` (SEC-17 W-2 – do zawężenia **przed** wdrożeniem). Wdrożyć razem z P3-08 i po W-2. |
-| `generatePlan` | **NIE** (razem z P3-05) | Dziś to „zaślepka" (`stubModel` → `not_implemented`), więc nie woła Vertex AI i nic nie kosztuje – ale też nic nie daje. Wdrożenie wystawiłoby publicznie funkcję działającą jako `fn-ai-plan`, która ma szeroką rolę `roles/aiplatform.user` (SEC-17 W-1). Spend cap 15 PLN chroni koszt, ale nie zastępuje B-1 (wyłączenie buforowania Vertex) i W-1. Wdrożyć z P3-05, po: B-1 (`disableCache=true`), W-1, ARCH-01-RUN (wybór modelu). |
+| `generatePlan` | **NIE** (razem z P3-05) | Kod P3-05 jest w `main` (PR #136, #138), ale bez zmiennych `AI_MODEL_ID` i `AI_LOCATION` funkcja odpowiada `ai_unavailable` przed rezerwacją limitu (fail-closed): nie woła Vertex AI, nie zapisuje `usage/{uid}` i nic nie kosztuje. Wdrożenie wystawiłoby publicznie funkcję działającą jako `fn-ai-plan`, która ma szeroką rolę `roles/aiplatform.user` (SEC-17 W-1). Spend cap 15 PLN chroni koszt, ale nie zastępuje B-1 (wyłączenie buforowania Vertex) i W-1. **Zanim ktoś ustawi zmienne AI** (P3-05-CFG, TAM-90), muszą być spełnione: **O4-2** (polityki TTL na `usage.expireAt` i `usage_global.expireAt` wdrożone w dev, bo od tej chwili funkcja zapisuje licznik D10), **B-1** (`disableCache=true`) i **W-1** (zawężenie roli `fn-ai-plan`), a także TAM-93 (komunikat o zwrocie próby w aplikacji zgodny z limitem 2 zwrotów na dobę). |
 | `budgetGuard` | **NIE w dev** (nigdy) | ADR-0014 Aneks A: w `dev` nie ma `budgetGuard`, ochronę daje spend cap. W dev nie ma też tematu `budget-alerts` ani włączonego Eventarc – wdrożenie i tak by się nie udało albo włączyłoby dodatkowe API. |
 
 Ważne: **nigdy** nie uruchamiać samego `firebase deploy` ani `firebase deploy --only functions` – to wdraża
@@ -282,7 +282,7 @@ Vertex AI – nie chroni Cloud Run/Functions (świadoma decyzja ADR-0014 Aneks A
 
 ## 9. Później (poza TAM-84)
 
-- `generatePlan` – z P3-05, po B-1, W-1, ARCH-01-RUN; ten sam schemat (`--only functions:generatePlan`).
+- `generatePlan` – z P3-05; zmienne AI dopiero po O4-2, B-1 i W-1 (sekcja 2); ten sam schemat (`--only functions:generatePlan`).
 - `deleteAccount` – z P3-08, po W-2.
 - `budgetGuard` – tylko w prod (P3-09), z `run.invoker` dla `fn-budget` i bez `allUsers` (N-5).
 - Wdrożenia z CI – po zadaniu dla Stewarda z sekcji 4.3.

@@ -50,7 +50,13 @@ Po usunięciu samego wewnętrznego `maxItems = 7` żądanie przechodzi. Szkic
 2. **Test jednostkowy** pilnujący, że schemat dla modelu nie ma zagnieżdżonych limitów liczności (żeby ktoś
    nie „naprawił" go z powrotem do wersji dającej 400).
 3. Błąd 400 z Vertex (np. po zmianie schematu) – traktować jak błąd konfiguracji: log metadanych, `ai_unavailable`,
-   **bez** ponowienia (ponowienie nic nie da i kosztuje slot limitu). Tylko 429/503 i przekroczenie czasu mogą być ponowione.
+   **bez** ponowienia (ponowienie nic nie da i kosztuje slot limitu). Tak samo inne kody 4xx (403, 404, 417).
+   **Ponawiane** (jedna druga próba) są tylko: **408, 429, 5xx, przekroczenie czasu** (45 s na próbę) i **błąd sieci**,
+   zawsze z odczekaniem **1–2 s** z losowym rozrzutem (2 × 45 s + 2 s mieści się w 120 s funkcji). Treści błędu z Vertex
+   nie czytamy i nie logujemy. **Blokady treści nie są ponawiane**: `finishReason` `SAFETY`, `PROHIBITED_CONTENT`,
+   `SPII`, `BLOCKLIST`, `RECITATION` i brak kandydata kończą od razu `ai_invalid_response`, bez drugiego płatnego
+   wywołania. Druga próba po niepoprawnej odpowiedzi jest tylko dla `MAX_TOKENS`, `OTHER` i błędów walidacji (sekcja 5).
+   (Stan zgodny z kodem po PR #138, 2026-11-21.)
 4. Pomysł na później (nie w MVP, wymaga płatnego testu w dev): `minItems = maxItems = trip.days` ustawiane per żądanie
    zamiast 1–14. Nie wiadomo, czy Vertex to przyjmie – do tego czasu liczbę dni sprawdza walidator.
 
@@ -65,13 +71,13 @@ Zakres tempa: `relaxed` 2–3, `moderate` 4–5, `intense` 6–7 (bez zmian, `po
 |---|---|---|
 | Dzień 1 | 0 – górna granica tempa | bez zmian: wszystkie `startTime` ≥ próg (przylot + 3 h przy locie, 0 przy aucie); próg > 22:00 → 0 punktów (N6, US-006). Próg (`earliestStart`) liczy **kod** |
 | Dni 2 … N−1 | pełny zakres tempa (np. `intense` 6–7) | tu model 3.1 najczęściej dawał o 1 punkt za mało w długich planach – stąd jawne liczby w danych i w prompcie |
-| **Ostatni dzień (N ≥ 2)** | **1 – górna granica tempa** (propozycja, O-TAM4-1) | dzień wyjazdu: godziny wylotu/powrotu nie znamy (poza MVP, US-006), więc dzień może być krótszy. Oba modele w teście same skracały ostatni dzień (2–3 punkty) |
+| **Ostatni dzień (N ≥ 2)** | **1 – górna granica tempa** (O-TAM4-1, zatwierdzone 2026-11-21) | dzień wyjazdu: godziny wylotu/powrotu nie znamy (poza MVP, US-006), więc dzień może być krótszy. Oba modele w teście same skracały ostatni dzień (2–3 punkty) |
 | Podróż jednodniowa (N = 1) | jak dzień 1 | dzień 1 jest też ostatnim; obowiązuje próg dnia 1 |
 
 Dlaczego ostatni dzień 1 – górna granica, a nie pełny zakres: to symetria z dniem 1 (też „może mieć mniej"),
 zgodność z zachowaniem modeli (mniej ponowień, krótsze oczekiwanie) i realna sytuacja podróżnego (wymeldowanie,
-dojazd na lotnisko). Minimum 1, żeby ostatni dzień nie był pusty. **Do potwierdzenia przez właściciela (O-TAM4-1);**
-po potwierdzeniu architekt dopisuje regułę na stałe w `posrednik-api.md` (teraz jest tam oznaczona jako propozycja).
+dojazd na lotnisko). Minimum 1, żeby ostatni dzień nie był pusty. Właściciel zatwierdził regułę 2026-11-21 (O-TAM4-1);
+jest na stałe w `posrednik-api.md` („Gwarancje po walidacji serwerowej”, v0.5).
 Kryterium US-005 („wolne tempo – mniej punktów dziennie niż szybkie") sprawdzać na dniach 2 … N−1.
 
 Wymagania dla promptu (P3-05, `backend/functions/src/prompt`, wersja w `promptVersion`):
