@@ -69,9 +69,15 @@ sequenceDiagram
       FN->>FS: Zwrot slotu limitu
       FN-->>A: ai_invalid_response / ai_unavailable
       A->>U: Komunikat, formularz zachowany
+    else wszystkie wywołania 429 (ADR-0016)
+      FN->>FS: Zwrot slotu (poza limitem 2 zwrotów)
+      FN-->>A: ai_busy(retryAfterSec=60)
+      A->>U: „Asystent AI chwilowo przeciążony”, odliczanie, „Spróbuj teraz”
+      A->>FN: Jedno automatyczne ponowienie po odliczaniu
     end
   end
 ```
+Ponowienia na serwerze po 429 (do 3 wywołań, najwyżej 2 płatne, odczekanie 2–4 s i 4–8 s, budżet 100 s) i kod `ai_busy` opisuje ADR-0016 (zatwierdzony warunkowo).
 Anulowanie: aplikacja przerywa oczekiwanie i nic nie zapisuje lokalnie; slot limitu pozostaje zużyty, jeśli wywołanie modelu już ruszyło (ADR-0002, Q12 zatwierdzone). Dane formularza zostają w pamięci ekranu do powrotu.
 Wycofanie zgody AI (ADR-0002, Aneks A pkt 4): aplikacja zapisuje `recordConsent(granted=false)` przed pokazaniem stanu „wycofano"; bez sieci – komunikat, generowanie zablokowane lokalnie do synchronizacji.
 
