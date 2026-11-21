@@ -28,7 +28,7 @@ import { generateValidPlan, type AttemptLog } from "./generate.js";
 import { shouldDisableAi, type QuotaInfo, type ReleaseOutcome, type ReservationPlan } from "./limits.js";
 import { logEvent, uidHash } from "./logger.js";
 import type { PlanDay } from "./plan-validator.js";
-import { PROMPT_VERSION } from "./prompt/plan-v2.js";
+import type { PlanPrompt } from "./prompt/index.js";
 import {
   budgetNotificationSchema,
   parseDeleteAccount,
@@ -49,6 +49,8 @@ export interface Deps {
   now: () => Date;
   /** undefined = AI configuration missing/invalid (AI_MODEL_ID, AI_LOCATION): ai_unavailable, no reservation. */
   model: PlanModel | undefined;
+  /** Prompt from AI_PROMPT_VERSION (prompt/index.ts resolvePrompt, fail-closed to plan-v1); undefined = plan-v1. */
+  prompt?: PlanPrompt | undefined;
   /**
    * Quota reservation in ONE Firestore transaction (usage/{uid}, usage_global/{today});
    * decision and written shape: limits.planReservation.
@@ -145,12 +147,17 @@ export async function generatePlanCore(
     });
   };
   try {
-    const { plan } = await generateValidPlan(request, model, { clock: deps.clock, sleep: deps.sleep, onAttempt });
+    const { plan, promptVersion } = await generateValidPlan(request, model, {
+      clock: deps.clock,
+      sleep: deps.sleep,
+      onAttempt,
+      ...(deps.prompt ? { prompt: deps.prompt } : {}),
+    });
     return {
       apiVersion: 1,
       requestId: request.requestId,
       language: plan.language,
-      promptVersion: PROMPT_VERSION,
+      promptVersion,
       days: plan.days,
       quota: reservation.reservation.quota,
     };

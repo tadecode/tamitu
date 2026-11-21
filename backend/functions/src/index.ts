@@ -31,6 +31,7 @@ import {
   type ReleaseOutcome,
   type ReservationPlan,
 } from "./limits.js";
+import { resolvePrompt } from "./prompt/index.js";
 import { serviceAccountFor } from "./service-accounts.js";
 
 const REGION = "europe-west4";
@@ -137,6 +138,8 @@ async function releaseQuota(uid: string, reservationDay: string, now: Date): Pro
  * own service account (fn-ai-plan) via Application Default Credentials - no keys.
  */
 const aiConfig = parseAiConfig(process.env);
+/** AI_PROMPT_VERSION (.env.<project>, optional): plan-v1 unless exactly a known version (TAM-95, fail-closed). */
+const prompt = resolvePrompt(process.env["AI_PROMPT_VERSION"]);
 let credential: ReturnType<typeof applicationDefault> | undefined;
 const model: PlanModel | undefined = aiConfig
   ? vertexModel(aiConfig, {
@@ -156,6 +159,7 @@ function deps(): Deps {
     pepper: UID_PEPPER.value(),
     now: () => new Date(),
     model,
+    prompt,
     reserveQuota,
     releaseQuota,
   };
