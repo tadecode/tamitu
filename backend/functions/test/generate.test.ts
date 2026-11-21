@@ -1,7 +1,7 @@
 // Retry policy with a scripted model (0 paid calls).
 import { describe, expect, it } from "vitest";
 import { ModelError } from "../src/ai.js";
-import { generateValidPlan, type AttemptLog } from "../src/generate.js";
+import { generateValidPlan, retryBackoffMs, RETRY_BACKOFF_MS, type AttemptLog } from "../src/generate.js";
 import { computeDayTargets } from "../src/plan-targets.js";
 import { parseGeneratePlan } from "../src/schemas.js";
 import { ok, scriptedModel, validOutput } from "./helpers/fakes.js";
@@ -20,6 +20,7 @@ const request = parseGeneratePlan(
 const targets = computeDayTargets(request);
 const good = ok(validOutput(targets));
 const shortDay3 = ok(validOutput(targets, "pl", (t) => (t.dayNumber === 3 ? 5 : t.maxItems)));
+const noSleep = async () => {};
 const code = (p: Promise<unknown>) => p.then(() => "no-error", (e: { appCode?: string }) => e.appCode ?? "other");
 
 describe("generateValidPlan", () => {
@@ -45,6 +46,20 @@ describe("generateValidPlan", () => {
     expect(logs.map((l) => [l.outcome, l.validationErrors])).toEqual([["invalid", "items_count@day3"], ["ok", undefined]]);
   });
 
+  it("review #136 #5: a blocked answer (SAFETY) ends at once, no second paid call", async () => {
+    const m = scriptedModel([ok(validOutput(targets), "SAFETY"), good]);
+    const logs: AttemptLog[] = [];
+    expect(await code(generateValidPlan(request, m, { onAttempt: (l) => logs.push(l) }))).toBe("ai_invalid_response");
+    expect(m.calls).toHaveLength(1);
+    expect(logs[0]).toMatchObject({ outcome: "invalid", validationErrors: "finish_SAFETY" });
+  });
+
+  it("backoff is 1-2 s with jitter", () => {
+    expect(retryBackoffMs(() => 0)).toBe(1000);
+    expect(retryBackoffMs(() => 1)).toBe(2000);
+    expect(retryBackoffMs(() => 0.5)).toBe(1500);
+  });
+
   it("two invalid answers -> ai_invalid_response (max 2 calls)", async () => {
     const m = scriptedModel([shortDay3, ok(validOutput(targets), "MAX_TOKENS"), good]);
     expect(await code(generateValidPlan(request, m))).toBe("ai_invalid_response");
@@ -61,14 +76,19 @@ describe("generateValidPlan", () => {
 
   it("429/503/timeout -> one retry with the same request; twice -> ai_unavailable", async () => {
     const m = scriptedModel([new ModelError("retryable", "429"), good]);
-    expect((await generateValidPlan(request, m)).attempts).toBe(2);
+    const waits: number[] = [];
+    expect((await generateValidPlan(request, m, { sleep: async (ms) => void waits.push(ms) })).attempts).toBe(2);
+    // review #136 #7: 1-2 s backoff before the retry
+    expect(waits).toHaveLength(1);
+    expect(waits[0]).toBeGreaterThanOrEqual(RETRY_BACKOFF_MS.min);
+    expect(waits[0]).toBeLessThanOrEqual(RETRY_BACKOFF_MS.max);
     expect(m.calls[0]!.userText).toBe(m.calls[1]!.userText);
     const m2 = scriptedModel([new ModelError("retryable", "503"), new ModelError("retryable", "timeout")]);
-    expect(await code(generateValidPlan(request, m2))).toBe("ai_unavailable");
+    expect(await code(generateValidPlan(request, m2, { sleep: noSleep }))).toBe("ai_unavailable");
   });
 
   it("invalid then unavailable -> ai_unavailable; unexpected errors propagate", async () => {
-    expect(await code(generateValidPlan(request, scriptedModel([shortDay3, new ModelError("retryable", "503")])))).toBe("ai_unavailable");
+    expect(await code(generateValidPlan(request, scriptedModel([shortDay3, new ModelError("retryable", "503")]), { sleep: noSleep }))).toBe("ai_unavailable");
     await expect(generateValidPlan(request, scriptedModel([new TypeError("boom")]))).rejects.toBeInstanceOf(TypeError);
   });
 
