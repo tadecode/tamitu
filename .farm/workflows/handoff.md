@@ -62,3 +62,19 @@ Wyjście: <artefakt i ścieżka>
 Definicja ukończenia: <kryteria>
 Ograniczenia: <zakres uprawnień, czas, koszty>
 ```
+
+## Porządki po zakończeniu zadania (stała zasada właściciela, 2026-11-21)
+
+Właściciel: „zrób porządki przy każdym kończeniu zadania”. Orkiestrator po merge'u PR-a zadania:
+
+1. Zamyka zadanie w Jirze (`task.ps1 move <ID> done -Pr <nr>`) albo zostawia je z notatką, co zostało.
+2. Usuwa worktree zadania i lokalną gałąź:
+   `.farm/new-worktree.ps1 <zadanie> -Remove`, potem `git worktree prune` i `git branch -D <gałąź>`.
+   Gdy git nie może usunąć folderu (długie nazwy), użyj ścieżki `\?\C:\...`.
+3. Proponuje właścicielowi archiwizację zakończonej sesji roli, bo trzyma ona folder. Archiwizuje
+   dopiero po zgodzie, a potem usuwa pozostały folder.
+4. Usuwa pliki tymczasowe zadania (np. w `%TEMP%`). Przed usunięciem sprawdza, co w nich jest, a gdy
+   usunięcie byłoby nieodwracalne i zawiera wyniki, pyta właściciela.
+
+Nie rusza worktree Stewarda ani worktree farmy (`steward-ci`, `farm-jira`, `jira-farm-id`,
+`confluence-assets`, `FARM-CONFLUENCE-CI`, `gh-*`), chyba że właściciel każe.
