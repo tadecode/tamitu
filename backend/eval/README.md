@@ -1,6 +1,6 @@
 # Zestaw ewaluacyjny P3-05 (TAM-18)
 
-**Co i po co:** sprawdza, czy prompt produkcyjny `plan-v1` z wybranym modelem daje poprawne plany
+**Co i po co:** sprawdza, czy prompt produkcyjny `plan-v2` (od TAM-95; wcześniej `plan-v1`) z wybranym modelem daje poprawne plany
 w co najmniej 95% przypadków (ADR-0001 pkt 2). Używa tej samej ścieżki kodu co funkcja `generatePlan`
 (prompt, `responseSchema`, walidator, jedna ponowna próba), więc wynik mówi o prawdziwym zachowaniu aplikacji.
 
@@ -50,7 +50,28 @@ Token żyje ok. 1 h i nie jest nigdzie zapisywany.
 ## Wynik
 
 - W konsoli: odsetek poprawnych w ≤ 2 próbach (próg **95%**), odsetek poprawnych w 1. próbie (wskaźnik ponowień),
+  liczba planów z powtórzonym miejscem (`dup_place@dayN`, TAM-95; tylko ostrzeżenie, nie obniża wyniku),
   kody błędów walidacji, tokeny, czas, koszt.
 - W `%TEMP%\tamitu-eval-p305\<znacznik czasu>\`: `results.csv` i plany (`E01-pl.json` …) do ręcznej oceny K3/K4
   (`docs/architecture/arch-01-gemini-test.md` sekcja 4.6). Po ocenie folder usunąć.
 - Gdy wynik < 95% tylko z powodu liczby punktów – decyzja właściciela (`p3-05-wymagania-generowania.md` sekcja 7).
+
+## Powtórzone miejsca (TAM-95)
+
+**Co i po co:** w ocenie ręcznej TAM-88 (K4 c) to samo miejsce pojawiło się w dwóch dniach w 3 z 11 planów.
+Prompt `plan-v2` jawnie tego zabrania, a walidator wyłapuje proste przypadki i zapisuje kod `dup_place@dayN`
+(N = późniejszy dzień) w polu `qualityWarnings` logu próby i w kolumnie `qualityWarnings` pliku `results.csv`.
+
+- **To ostrzeżenie, a nie błąd.** Plan z powtórzeniem jest nadal poprawny i nie powoduje ponowienia. Powód: każde
+  ponowienie to drugie płatne wywołanie (ok. +100% kosztu tego generowania) i dłuższe czekanie, a QA uznało, że plan
+  z powtórzeniem da się używać. Reguła może się też pomylić (dwa różne miejsca o podobnej nazwie), a błąd walidacji
+  obniżałby wynik progu 95% (TAM-88 miał zerowy zapas). Gdy dane z dev pokażą, że powtórzeń jest dużo, można
+  rozważyć zmianę na błąd – to decyzja kosztowa właściciela.
+- **Jak działa reguła:** nazwy po normalizacji (małe litery, bez znaków diakrytycznych i interpunkcji, bez dopisków
+  typu „Market”, „Morning”, „Restauracja”, „Cafe”, „The”) są równe albo krótsza (co najmniej 2 słowa) jest ciągłym
+  fragmentem dłuższej. Przykład: „Campo de' Fiori” i „Campo de' Fiori Morning Market”.
+- **Czego nie wyłapie:** nazw potocznych lub innych nazw tego samego miejsca („Fontana Pretoria” i „Piazza della
+  Vergogna”). To wymagałoby wiedzy o miejscach; tu działa tylko prompt i ocena ręczna.
+- **Koszt promptu:** reguła w `plan-v2` to ok. 70 tokenów wejścia więcej na wywołanie, czyli ułamek grosza na 40
+  generowań; szacunek w tabeli wyżej się nie zmienia (zasada 10).
+- Porównanie `plan-v1` z `plan-v2` na prawdziwym modelu wymaga nowego płatnego przebiegu i osobnej zgody właściciela.

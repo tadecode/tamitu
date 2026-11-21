@@ -1,5 +1,5 @@
 // P3-05 evaluation runner (ADR-0001 pkt 2: >= 20 cases x PL/EN, >= 95% valid within 2 attempts).
-// Uses the PRODUCTION code path (prompt plan-v2, responseSchema, validator, retry) from functions/lib.
+// Uses the PRODUCTION code path (prompt plan-v2, responseSchema, validator incl. dup_place warnings, retry) from functions/lib.
 //
 // Modes (default = --estimate):
 //   --estimate   no network: number of generations/calls and a cost estimate (costs.md prices)
@@ -131,7 +131,7 @@ if (mode === "paid") {
           title: `Day ${t.dayNumber}`,
           items: Array.from({ length: n }, (_, i) => {
             const m = start + i * step;
-            return { startTime: `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`, name: `Place ${i + 1}`, locality: "Testville", description: "Synthetic." };
+            return { startTime: `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`, name: `Place ${t.dayNumber}.${i + 1}`, locality: "Testville", description: "Synthetic." };
           }),
         };
       });
@@ -171,6 +171,7 @@ for (const r of runs) {
     attempts: attempts.length,
     firstAttemptOk: attempts[0]?.outcome === "ok",
     issues: attempts.map((a) => a.validationErrors ?? a.modelError ?? "").filter(Boolean).join(" | "),
+    qualityWarnings: attempts.map((a) => a.qualityWarnings ?? "").filter(Boolean).join(" | "),
     tokensIn: attempts.reduce((s, a) => s + (a.tokensIn ?? 0), 0),
     tokensOut: attempts.reduce((s, a) => s + (a.tokensOut ?? 0), 0),
     tokensThought: attempts.reduce((s, a) => s + (a.tokensThought ?? 0), 0),
@@ -179,14 +180,16 @@ for (const r of runs) {
   };
   results.push(row);
   if (plan) writeFileSync(join(outDir, `${r.c.id}-${r.lang}.json`), JSON.stringify({ case: r.c, lang: r.lang, plan }, null, 2));
-  console.log(`${row.case} ${row.lang} ${row.outcome} attempts=${row.attempts} ${row.issues} ${row.seconds}s ${row.pln} PLN`);
+  console.log(`${row.case} ${row.lang} ${row.outcome} attempts=${row.attempts} ${row.issues} ${row.qualityWarnings} ${row.seconds}s ${row.pln} PLN`);
 }
 
 const okCount = results.filter((x) => x.outcome === "ok").length;
 const first = results.filter((x) => x.firstAttemptOk).length;
+const withRepeats = results.filter((x) => x.qualityWarnings).length;
 const csvHead = Object.keys(results[0] ?? { case: "" });
 writeFileSync(join(outDir, "results.csv"), [csvHead.join(","), ...results.map((x) => csvHead.map((k) => JSON.stringify(x[k] ?? "")).join(","))].join("\n"));
 console.log(`\nValid within 2 attempts: ${okCount}/${results.length} (${((100 * okCount) / Math.max(1, results.length)).toFixed(1)}%, threshold 95%)`);
 console.log(`Valid at first attempt: ${first}/${results.length} (retry rate ${(100 - (100 * first) / Math.max(1, results.length)).toFixed(1)}%)`);
+console.log(`Plans with a repeated place (dup_place, TAM-95; warning only, not counted as invalid): ${withRepeats}/${okCount}`);
 console.log(`Cost (from usage): ${spent.toFixed(3)} PLN. Output: ${outDir}`);
 console.log("Manual review K3/K4 (arch-01-gemini-test.md 4.6): the owner reads the plans in the output folder.");
