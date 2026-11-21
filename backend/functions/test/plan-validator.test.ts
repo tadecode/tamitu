@@ -1,7 +1,7 @@
 // Synthetic cases shaped like the ARCH-01 failures (p3-05 sekcja 7); no files from the ARCH-01 run.
 import { describe, expect, it } from "vitest";
 import type { DayTarget } from "../src/plan-targets.js";
-import { isSamePlace, MAX_RETRY_HINTS, placeNameTokens, retryHints, validatePlanOutput } from "../src/plan-validator.js";
+import { isSamePlace, MAX_RETRY_HINTS, placeKey, placeNameTokens, retryHints, sameTokens, validatePlanOutput } from "../src/plan-validator.js";
 import { validOutput } from "./helpers/fakes.js";
 
 const intense4: DayTarget[] = [
@@ -204,17 +204,78 @@ describe("repeated places (TAM-95) – warning only, plan stays valid", () => {
   });
 });
 
-describe("placeNameTokens / isSamePlace", () => {
+describe("placeNameTokens / sameTokens", () => {
   it("folds case, marks, punctuation and filler words", () => {
     expect(placeNameTokens("Campo de' Fiori Morning Market")).toEqual(["campo", "de", "fiori"]);
     expect(placeNameTokens("Restauracja Łazienki Królewskie")).toEqual(["lazienki", "krolewskie"]);
     expect(placeNameTokens("Café Central")).toEqual(["central"]);
   });
   it("matches equal lists and contiguous runs of >= 2 tokens only", () => {
-    expect(isSamePlace(["a", "b"], ["x", "a", "b", "y"])).toBe(true);
-    expect(isSamePlace(["a", "b"], ["a", "x", "b"])).toBe(false);
-    expect(isSamePlace(["a"], ["a", "b"])).toBe(false);
-    expect(isSamePlace(["a"], ["a"])).toBe(true);
-    expect(isSamePlace([], [])).toBe(false);
+    expect(sameTokens(["a", "b"], ["x", "a", "b", "y"])).toBe(true);
+    expect(sameTokens(["a", "b"], ["a", "x", "b"])).toBe(false);
+    expect(sameTokens(["a"], ["a", "b"])).toBe(false);
+    expect(sameTokens(["a"], ["a"])).toBe(true);
+    expect(sameTokens([], [])).toBe(false);
+  });
+});
+
+// Review PR #148 #1: false alarms of dup_place (synthetic, shaped like the reviewer's examples).
+describe("repeated places – no false alarms (review PR #148 #1)", () => {
+  const targets3: DayTarget[] = [
+    { dayNumber: 1, minItems: 2, maxItems: 2, earliestStart: "09:00" },
+    { dayNumber: 2, minItems: 2, maxItems: 2 },
+    { dayNumber: 3, minItems: 2, maxItems: 2 },
+  ];
+  type P = [name: string, locality: string];
+  const plan = (days: [P, P][], lang: "pl" | "en" = "en") => {
+    const body = validOutput(targets3, lang);
+    days.forEach((pair, d) =>
+      pair.forEach(([name, locality], i) => {
+        body.days[d]!.items[i]!.name = name;
+        body.days[d]!.items[i]!.locality = locality;
+      }),
+    );
+    const r = run(body, targets3, lang);
+    return r.ok ? r.warnings : ["NOT_OK"];
+  };
+
+  it("(a) the same name in two different towns is not a repeat", () => {
+    expect(plan([[["Stare Miasto", "Gdańsk"], ["Dwór Artusa", "Gdańsk"]], [["Zamek w Malborku", "Malbork"], ["Muzeum Zamkowe", "Malbork"]], [["Stare Miasto", "Toruń"], ["Main Square", "Toruń"]]], "pl")).toEqual([]);
+    expect(plan([[["Main Square", "Krakow"], ["Wawel", "Krakow"]], [["Main Square", "Wroclaw"], ["Ostrow Tumski", "Wroclaw"]], [["Old Town", "Gdansk"], ["Crane", "Gdansk"]]])).toEqual([]);
+  });
+  it("(a) locality is compared after normalisation: case and diacritics do not hide a repeat", () => {
+    expect(plan([[["Kosciol Mariacki", "Kraków"], ["Wawel", "Kraków"]], [["Kościół Mariacki", "KRAKOW"], ["Sukiennice", "Krakow"]], [["Kazimierz", "Krakow"], ["Podgorze", "Krakow"]]], "pl")).toEqual(["dup_place@day2"]);
+  });
+  it("(b) a generic two-word name inside a longer name is not a repeat", () => {
+    expect(plan([[["Old Town", "Riga"], ["Central Park", "Riga"]], [["Old Town Hall", "Riga"], ["Central Park Zoo", "Riga"]], [["Muzeum Narodowe", "Riga"], ["Muzeum Narodowe – Sukiennice", "Riga"]]])).toEqual([]);
+  });
+  it("(b) the exact generic name twice in one town still is a repeat", () => {
+    expect(plan([[["Old Town", "Riga"], ["Central Market", "Riga"]], [["The Old Town", "Riga"], ["Art Nouveau District", "Riga"]], [["Jurmala Beach", "Jurmala"], ["Dzintari", "Jurmala"]]])).toEqual(["dup_place@day2"]);
+  });
+  it("(c) a restaurant and a cafe with the same name stay two places; a restaurant named two ways is one", () => {
+    expect(plan([[["Ristorante Da Enzo", "Rome"], ["Colosseum", "Rome"]], [["Caffè Da Enzo", "Rome"], ["Pantheon", "Rome"]], [["Villa Borghese", "Rome"], ["Spanish Steps", "Rome"]]])).toEqual([]);
+    expect(plan([[["Ristorante Da Enzo", "Rome"], ["Colosseum", "Rome"]], [["Da Enzo al 29", "Rome"], ["Pantheon", "Rome"]], [["Villa Borghese", "Rome"], ["Spanish Steps", "Rome"]]])).toEqual(["dup_place@day2"]);
+  });
+  it("QA cases are still caught with a shared locality (E03-en, E17-pl)", () => {
+    expect(plan([[["Campo de' Fiori", "Rome"], ["Colosseum", "Rome"]], [["Pantheon", "Rome"], ["Trevi Fountain", "Rome"]], [["Campo de' Fiori Morning Market", "Rome"], ["Vatican Museums", "Vatican City"]]])).toEqual(["dup_place@day3"]);
+    expect(plan([[["Restauracja Sultanahmet Koftecisi", "Stambuł"], ["Hagia Sophia", "Stambuł"]], [["Tarihi Sultanahmet Koftecisi Selim Usta", "Stambuł"], ["Galata", "Stambuł"]], [["Wyspy Książęce", "Büyükada"], ["Pałac Dolmabahçe", "Stambuł"]]], "pl")).toEqual(["dup_place@day2"]);
+  });
+  it("placeKey keeps the venue kind and the normalised locality", () => {
+    expect(placeKey({ name: "Caffè Greco", locality: "Roma " })).toEqual({ locality: "roma", tokens: ["greco"], kind: "cafe" });
+    expect(isSamePlace(placeKey({ name: "Greco", locality: "Roma" }), placeKey({ name: "Greco", locality: "Milano" }))).toBe(false);
+  });
+});
+
+// Review PR #148 #4 a/b: the longest possible log value fits the 200-character cap of qualityWarnings.
+describe("qualityWarnings length (review PR #148 #4)", () => {
+  it("a 14-day plan with a repeat on every day 2-14 gives 13 codes within 200 characters", () => {
+    const t14: DayTarget[] = Array.from({ length: 14 }, (_, i) => ({ dayNumber: i + 1, minItems: 1, maxItems: 1, ...(i === 0 ? { earliestStart: "09:00" } : {}) }));
+    const body = validOutput(t14);
+    body.days.forEach((d) => (d.items[0]!.name = "Colosseum"));
+    const r = run(body, t14, "pl");
+    expect(r.ok).toBe(true);
+    const joined = r.ok ? r.warnings.join(",") : "";
+    expect(r.ok && r.warnings).toHaveLength(13);
+    expect(joined.length).toBeLessThanOrEqual(200);
   });
 });

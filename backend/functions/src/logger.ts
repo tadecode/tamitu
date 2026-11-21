@@ -64,6 +64,8 @@ const ALLOWED: ReadonlyArray<keyof LogFields> = [
 
 const MAX_STRING = 64;
 /** validationErrors joins several server-built codes; longer cap, still content-free. */
+// qualityWarnings: worst case 13 x `dup_place@dayNN` = 199 characters for 14 days (test in plan-validator.test.ts);
+// raise this cap together with MAX_DAYS.
 const MAX_STRING_BY_KEY: Partial<Record<keyof LogFields, number>> = { validationErrors: 200, qualityWarnings: 200 };
 
 export function sanitizeFields(fields: Partial<LogFields>): Record<string, string | number> {

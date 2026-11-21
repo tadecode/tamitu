@@ -183,48 +183,87 @@ export function validatePlanOutput(input: {
  * "Campo de' Fiori Morning Market", "Restauracja X" and "Tarihi X Selim Usta"). Kept short on purpose:
  * each extra word makes two different places look alike.
  */
-const NAME_FILLERS: ReadonlySet<string> = new Set([
-  "the",
-  "market",
-  "morning",
-  "evening",
-  "night",
-  "restaurant",
-  "ristorante",
-  "restaurante",
-  "restauracja",
-  "cafe",
-  "caffe",
-  "kawiarnia",
-  "visit",
-  "wizyta",
+const NAME_FILLERS: ReadonlySet<string> = new Set(["the", "market", "morning", "evening", "night", "visit", "wizyta"]);
+
+/**
+ * Venue-type words: dropped from the name like fillers, but remembered as the kind of venue, so
+ * "Ristorante Da Enzo" and "Caffe Da Enzo" stay two places (review PR #148 #1 c).
+ */
+const VENUE_KIND: Readonly<Record<string, "restaurant" | "cafe">> = {
+  restaurant: "restaurant",
+  ristorante: "restaurant",
+  restaurante: "restaurant",
+  restauracja: "restaurant",
+  cafe: "cafe",
+  caffe: "cafe",
+  kawiarnia: "cafe",
+};
+
+/**
+ * Generic geographic words. A name made only of these ("Old Town", "Central Park", "Muzeum Narodowe",
+ * "Stare Miasto") is not unique enough to count when it is contained in a longer name ("Old Town Hall",
+ * "Central Park Zoo"); only an exact match counts (review PR #148 #1 b).
+ */
+const GENERIC_WORDS: ReadonlySet<string> = new Set([
+  "old", "new", "town", "city", "main", "central", "grand", "royal", "national", "square", "park", "garden",
+  "gardens", "museum", "gallery", "hall", "palace", "castle", "cathedral", "church", "tower", "bridge", "beach",
+  "harbour", "harbor", "port", "street", "viewpoint", "lake", "river", "stare", "stary", "nowe", "nowy", "miasto",
+  "rynek", "glowny", "glowna", "plac", "ogrod", "muzeum", "narodowe", "narodowy", "galeria", "ratusz",
+  "palac", "zamek", "katedra", "kosciol", "wieza", "most", "plaza", "punkt", "widokowy", "piazza", "centro",
+  "storico", "museo", "duomo",
 ]);
 
 /** Letters that NFKD does not split into base letter + mark. */
 const FOLD: Readonly<Record<string, string>> = { ł: "l", ø: "o", đ: "d", ı: "i", ß: "ss", æ: "ae", œ: "oe" };
 
-/** Lower case, no diacritics, no punctuation, no filler words: "Campo de' Fiori Market" -> [campo, de, fiori]. */
-export function placeNameTokens(name: string): string[] {
-  return name
+function words(text: string): string[] {
+  return text
     .toLowerCase()
     .normalize("NFKD")
     .replace(/\p{M}/gu, "")
     .replace(/[łøđıßæœ]/g, (c) => FOLD[c] ?? c)
     .split(/[^\p{L}\p{N}]+/u)
-    .filter((t) => t.length > 0 && !NAME_FILLERS.has(t));
+    .filter((t) => t.length > 0);
+}
+
+/** Lower case, no diacritics, no punctuation, no filler or venue words: "Campo de' Fiori Market" -> [campo, de, fiori]. */
+export function placeNameTokens(name: string): string[] {
+  return words(name).filter((t) => !NAME_FILLERS.has(t) && VENUE_KIND[t] === undefined);
+}
+
+export interface PlaceKey {
+  /** Normalised locality: places in different towns are never the same place (review PR #148 #1 a). */
+  locality: string;
+  tokens: string[];
+  kind?: "restaurant" | "cafe" | undefined;
+}
+
+export function placeKey(item: Pick<PlanItem, "name" | "locality">): PlaceKey {
+  const kind = words(item.name)
+    .map((t) => VENUE_KIND[t])
+    .find((k) => k !== undefined);
+  return { locality: words(item.locality).join(" "), tokens: placeNameTokens(item.name), kind };
 }
 
 /**
- * Same place when the token lists are equal, or the shorter one (>= 2 tokens) appears as a contiguous
- * run inside the longer one. One-word names only match exactly ("Vatican" vs "Vatican Museums" is not a
- * repeat). Colloquial names ("Fontana Pretoria" / "Piazza della Vergogna") need knowledge of places and
- * are out of reach of this rule; the prompt covers them.
+ * Same place: same locality, no conflicting venue kind, and the token lists are equal, or the shorter one
+ * (>= 2 tokens, at least one of them not generic) appears as a contiguous run inside the longer one.
+ * One-word names only match exactly ("Vatican" vs "Vatican Museums" is not a repeat). Colloquial names
+ * ("Fontana Pretoria" / "Piazza della Vergogna") need knowledge of places and are out of reach of this
+ * rule; the prompt covers them. The count is an upper estimate: check a sample by hand before turning
+ * the warning into a (paid) retry.
  */
-export function isSamePlace(a: readonly string[], b: readonly string[]): boolean {
+export function isSamePlace(a: PlaceKey, b: PlaceKey): boolean {
+  if (a.locality !== b.locality) return false;
+  if (a.kind !== undefined && b.kind !== undefined && a.kind !== b.kind) return false;
+  return sameTokens(a.tokens, b.tokens);
+}
+
+export function sameTokens(a: readonly string[], b: readonly string[]): boolean {
   if (a.length === 0 || b.length === 0) return false;
   const [short, long] = a.length <= b.length ? [a, b] : [b, a];
   if (short.length === long.length) return short.every((t, i) => t === long[i]);
-  if (short.length < 2) return false;
+  if (short.length < 2 || short.every((t) => GENERIC_WORDS.has(t))) return false;
   for (let start = 0; start + short.length <= long.length; start++) {
     if (short.every((t, i) => t === long[start + i])) return true;
   }
@@ -236,11 +275,11 @@ export function isSamePlace(a: readonly string[], b: readonly string[]): boolean
  * at most one per day. Repeats within one day are not checked (QA saw none).
  */
 export function findRepeatedPlaces(days: readonly PlanDay[]): string[] {
-  const earlier: string[][] = [];
+  const earlier: PlaceKey[] = [];
   const codes: string[] = [];
   days.forEach((d, i) => {
-    const current = d.items.map((it) => placeNameTokens(it.name));
-    if (current.some((t) => earlier.some((e) => isSamePlace(e, t)))) codes.push(`dup_place@day${i + 1}`);
+    const current = d.items.map(placeKey);
+    if (current.some((k) => earlier.some((e) => isSamePlace(e, k)))) codes.push(`dup_place@day${i + 1}`);
     earlier.push(...current);
   });
   return codes;
