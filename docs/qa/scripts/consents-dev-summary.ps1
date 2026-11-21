@@ -1,4 +1,4 @@
-# QA (TAM-34): read-only summary of consent records and recordConsent logs in Firebase `dev`.
+﻿# QA (TAM-34): read-only summary of consent records and recordConsent logs in Firebase `dev`.
 #
 # Prints ONLY counts and non-identifying fields. Never prints document names/paths (they contain
 # the UID), consentId, e-mail or tokens. Requires `gcloud` signed in with read access to the project.
