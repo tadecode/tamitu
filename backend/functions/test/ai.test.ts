@@ -26,6 +26,11 @@ describe("parseAiConfig (fail-closed, ADR-0001 Aneks B pkt 2 / Aneks C)", () => 
     expect(parseAiConfig({ ...env, AI_MODEL_ID: undefined })).toBeUndefined();
     expect(parseAiConfig({ ...env, AI_MODEL_ID: "gpt-4" })).toBeUndefined();
     expect(parseAiConfig({ ...env, AI_MODEL_ID: "gemini-3.1-flash-lite/../x" })).toBeUndefined();
+    // review #136 #9: only the models approved in ADR-0001 Aneks C
+    expect(parseAiConfig({ ...env, AI_MODEL_ID: "gemini-3.5-flash-lite" })?.modelId).toBe("gemini-3.5-flash-lite");
+    for (const m of ["gemini-3.8-flash", "gemini-3.5-flash", "gemini-4-pro", "gemini-3.1-flash-lite-preview"]) {
+      expect(parseAiConfig({ ...env, AI_MODEL_ID: m })).toBeUndefined();
+    }
     expect(parseAiConfig({ ...env, GCLOUD_PROJECT: undefined })).toBeUndefined();
   });
 });

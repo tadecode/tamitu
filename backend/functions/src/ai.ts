@@ -60,7 +60,11 @@ export const ATTEMPT_TIMEOUT_MS = 45_000;
 export const ALLOWED_AI_LOCATIONS = ["europe-west4", "eu"] as const;
 export type AiLocation = (typeof ALLOWED_AI_LOCATIONS)[number];
 
-const MODEL_ID = /^gemini-[a-z0-9.-]{1,40}$/;
+/**
+ * Review PR #136 #9: only the models approved in ADR-0001 Aneks C (start + fallback). Another model is a
+ * deliberate code change with an ADR (cost, data residency), never a typo in .env.
+ */
+export const ALLOWED_MODEL_IDS = ["gemini-3.1-flash-lite", "gemini-3.5-flash-lite"] as const;
 const PROJECT_ID = /^[a-z][a-z0-9-]{4,28}[a-z0-9]$/;
 
 export interface AiConfig {
@@ -78,7 +82,7 @@ export function parseAiConfig(env: Record<string, string | undefined>): AiConfig
   const modelId = env["AI_MODEL_ID"];
   const location = env["AI_LOCATION"];
   const projectId = env["GCLOUD_PROJECT"];
-  if (!modelId || !MODEL_ID.test(modelId)) return undefined;
+  if (!modelId || !(ALLOWED_MODEL_IDS as readonly string[]).includes(modelId)) return undefined;
   if (!location || !(ALLOWED_AI_LOCATIONS as readonly string[]).includes(location)) return undefined;
   if (!projectId || !PROJECT_ID.test(projectId)) return undefined;
   return { modelId, location: location as AiLocation, projectId };

@@ -58,6 +58,8 @@ export interface Deps {
   releaseQuota: (uid: string, reservationDay: string, now: Date) => Promise<void>;
   /** Clock for attempt durations (tests inject a fake). */
   clock?: () => number;
+  /** Wait before a retry after 429/5xx/timeout (tests inject a no-op). */
+  sleep?: (ms: number) => Promise<void>;
 }
 
 export type CallableReq = CallerRequest & { data: unknown };
@@ -130,7 +132,7 @@ export async function generatePlanCore(
     });
   };
   try {
-    const { plan } = await generateValidPlan(request, model, { clock: deps.clock, onAttempt });
+    const { plan } = await generateValidPlan(request, model, { clock: deps.clock, sleep: deps.sleep, onAttempt });
     return {
       apiVersion: 1,
       requestId: request.requestId,
