@@ -1,6 +1,6 @@
 # Szacunek kosztów zmiennych – Tamitu (MVP)
 
-Stan: **2026-11-21 (TAM-4 / ARCH-01 – model wybrany: `gemini-3.1-flash-lite`, MINIMAL, `eu`; tokeny zmierzone)**, autor: architect. Poprzednie wersje: 2026-11-20 (SEC-09 – limit globalny 25/dobę, spend cap), 2026-11-18 (ARCH-01), 2026-11-15 (po G2; scenariusze A/B/C – historia w sekcji 10). **To szacunek, nie wycena.**
+Stan: **2026-11-21 (TAM-96 – sekcja 0.1, odporność na 429; wcześniej TAM-4 / ARCH-01 – model wybrany: `gemini-3.1-flash-lite`, MINIMAL, `eu`; tokeny zmierzone)**, autor: architect. Poprzednie wersje: 2026-11-20 (SEC-09 – limit globalny 25/dobę, spend cap), 2026-11-18 (ARCH-01), 2026-11-15 (po G2; scenariusze A/B/C – historia w sekcji 10). **To szacunek, nie wycena.**
 
 > **Status cen modeli (2026-11-18):** stawki tokenów odczytane bezpośrednio z oficjalnej strony cennika Google Cloud (źródło i data w sekcji 1.1) dla kandydatów z ADR-0001 Aneks B pkt 3. **Do weryfikacji w P3-10:** (1) kurs PLN/USD i VAT, (2) SKU w Cloud Billing (rzeczywista stawka w rozliczeniu, w tym mechanizm promocji 3.8 Flash – sekcja 1.1, uwaga c), (3) tokeny rzeczywiste (wejście, wyjście, **myślenie**) – pomiar w teście ARCH-01 (`docs/architecture/arch-01-gemini-test.md`). Do tego czasu liczby służą do porównania modeli i rzędu wielkości budżetu.
 
@@ -51,6 +51,26 @@ Wnioski:
 - **Zapasowy `gemini-3.5-flash-lite`:** ok. 1,6× drożej wg cennika (w teście 1,9×, bo dłuższe odpowiedzi);
   pułap typowy ≈ 20 PLN/mies. (kolumny w sekcjach 2–4).
 - Względem klasy Flash wybrany model jest ok. 5–6× tańszy. Zasada 10: decyzja **obniża** koszt; limity bez zmian.
+
+### 0.1 Odporność na przeciążenie Vertex (HTTP 429) – TAM-96, ADR-0016 (proponowany)
+
+**W skrócie:** serwer ponawia po 429 dłużej (2–4 s, potem 4–8 s) i może zrobić trzecie wywołanie, ale tylko po 429.
+Wywołanie z 429 nie zużywa tokenów, a **płatnych prób jest nadal najwyżej 2**, więc wszystkie pułapy z sekcji 0 i 4
+zostają bez zmian. Dodatkowy koszt to ok. **0 PLN/mies.** (kilka sekund pracy funkcji, w darmowym limicie).
+
+| Pozycja | Wpływ na koszt |
+|---|---|
+| Tokeny Vertex | bez zmian: najwyżej 2 próby płatne na generowanie; 429 bez tokenów (do potwierdzenia w Billing przy pierwszych 429 w dev) |
+| Cloud Functions | do ok. 15 s dłużej tylko w generowaniach z 429; ułamek grosza, w darmowym limicie |
+| Limit dzienny, zwrot slotu | bez zmian: 1 generowanie = 1 slot konta i 1 slot globalny |
+
+Alternatywy po stronie Vertex (**nie włączone**, ceny orientacyjne z 2026-11-21, do weryfikacji w cenniku; szczegóły w ADR-0016):
+- **Priority PayGo:** dopłata do każdego tokena. Przykładowo przy +50–100% normalne użycie rośnie z ok. 12 do 18–24 PLN/mies.,
+  a pułap nadużycia z ok. 82 do 123–164 PLN/mies., czyli powyżej spend cap prod 80 PLN. Wrócimy do tego, jeśli pomiar
+  pokaże próg z O-TAM96-2.
+- **Provisioned Throughput:** stała opłata, najkrótszy okres 1 tydzień, ok. 4 800 PLN tygodniowo za 1 GSU (≈ 20 000 PLN/mies.).
+  Odrzucone.
+- **Punkt `global`:** bez dopłaty, ale wykluczony (dane poza UE).
 
 ## 1. Założenia
 - Wejście do modelu (prompt systemowy + dane): ok. **1 000 tokenów** (do potwierdzenia pomiarem ARCH-01).
@@ -143,7 +163,7 @@ Koszty poza zakresem: konto Google Play (jednorazowa opłata), domena/strona pol
 2. Klasa modelu: Flash vs Flash-Lite – różnica ok. 3–6× (sekcja 2).
 3. Koniec promocji 3.8 Flash 2026-12-31 – podwojenie stawki od 2027-01-01.
 4. Liczba dni i tempo (liniowo wyjście).
-5. Ponowienia przy złym schemacie/języku – limit 2 prób, jakość promptu.
+5. Ponowienia przy złym schemacie/języku – limit 2 prób płatnych, jakość promptu (wywołania z 429 nie są płatne, sekcja 0.1).
 6. Limit na konto i globalny (parametry w `config/runtime`) – sekcja 4.
 7. Punkt `eu`/`europe-west4` vs `global`: +10% (świadomy koszt wymogu UE; `global` zakazany).
 
@@ -154,6 +174,7 @@ Budżety zatwierdzone przez właściciela (Q3, 2026-11-15; ustawia właściciel)
 Czwarte konto usług, sprawdzanie istnienia użytkownika (jedno wywołanie Admin API na żądanie), handler wyjątków i dodatkowy alert nie zmieniają kosztów w istotny sposób (pula bezpłatna). SQLCipher zwiększa rozmiar APK, nie koszt zmienny.
 
 ## 10. Historia
+- **2026-11-21 (TAM-96):** dodana sekcja 0.1 – odporność na 429 (ADR-0016, proponowany): koszt ok. 0 PLN, pułapy bez zmian; orientacyjny koszt Priority PayGo i Provisioned Throughput (nie włączone).
 - **2026-11-21 (TAM-4 / ARCH-01):** dodana sekcja 0 – wybrany model `gemini-3.1-flash-lite` (MINIMAL, `eu`), pomiar tokenów i czasu z testu, koszt testu (ok. 0,18 PLN), wpływ ponowień. Punkt `eu` i myślenie 0 – potwierdzone. Stawki, kurs i założenia sekcji 1 bez zmian (ostrożniejsze niż pomiar).
 - **2026-11-20 (SEC-09, ARCH-01):** koszt testu ARCH-01 przeliczony dla kolejności „najpierw Flash-Lite" (sekcja 6); limit globalny 50 → 25/dobę (O-ARCH01-1); pułapy w sekcji 4 przeliczone dla 25/dobę (wiersze dla 50/dobę zostawione jako historyczne); ADR-0014 zatwierdzony – spend cap prod 80 / dev 15 PLN ostateczne; `budgetGuard` tylko prod. Stawki i założenia bez zmian.
 - **2026-11-18 (ARCH-01):** scenariusze A/B/C zastąpione kandydatami z ADR-0001 Aneks B pkt 3; ceny z oficjalnej strony cennika (stawki „Non-global"); dodane: myślenie (3.8 Flash min. `LOW`), buforowanie wyłączone (B-1), koszt testu ARCH-01, wnioski o pułapach dla klasy Flash. Ostrzeżenie „ceny niezweryfikowane" zastąpione statusem z listą weryfikacji w P3-10.

@@ -1,6 +1,6 @@
 # Kontrakt API pośrednika (Cloud Functions callable)
 
-Stan: 2026-11-21, wersja 0.5 (zwrot próby i pole `slotReleased`, TAM-93/TAM-91 – pkt 2 „Slot limitu i zwrot próby”, pkt 7); wcześniej 0.4 (v0.2 zatwierdzona na G2 wraz z ADR-0002 i jego Aneksem A; v0.3 z ADR-0011 i v0.4 z ADR-0012, oba zatwierdzone przez właściciela 2026-11-16 – historia w pkt 7), autor: architect. ADR-0002, ADR-0011, ADR-0012. Schematy: `schemas/generate-plan.request.schema.json`, `schemas/generate-plan.response.schema.json`.
+Stan: 2026-11-21, wersja 0.6 (ponowienia po 429 i `retryAfterSec`, TAM-96, ADR-0016 – pkt 2 „Ponowienia po stronie serwera”, pkt 7); wcześniej 0.5 (zwrot próby i pole `slotReleased`, TAM-93/TAM-91), 0.4 (v0.2 zatwierdzona na G2 wraz z ADR-0002 i jego Aneksem A; v0.3 z ADR-0011 i v0.4 z ADR-0012, oba zatwierdzone przez właściciela 2026-11-16 – historia w pkt 7), autor: architect. ADR-0002, ADR-0011, ADR-0012. Schematy: `schemas/generate-plan.request.schema.json`, `schemas/generate-plan.response.schema.json`.
 Region: `europe-west4`. Wywołanie przez SDK `cloud_functions` (callable): token ID Firebase i token App Check dołączane automatycznie. Format: JSON, UTF-8, `Content-Type: application/json`.
 
 ## 1. Zasady wspólne
@@ -95,10 +95,19 @@ Gwarancje po walidacji serwerowej: liczba dni = `trip.days`; `dayNumber` kolejne
 | `unsupported_version` | `failed-precondition` | niezgodna `apiVersion` | `minVersion` |
 | `consent_required` | `failed-precondition` | brak aktualnej akceptacji polityki lub zgody AI (ADR-0012) | `consentType` ∈ {`privacy_policy`, `ai_processing`} |
 | `limit_exceeded` | `resource-exhausted` | limit konta wyczerpany | `limit`, `resetAt` |
-| `ai_unavailable` | `unavailable` | model niedostępny, limit globalny, `aiEnabled=false`, brak konfiguracji modelu, przekroczony czas | `slotReleased` (bool, zawsze od v0.5), `retryAfterSec` (opcjonalnie) |
-| `ai_invalid_response` | `internal` | odpowiedź niepoprawna po 2 próbach (blokada treści, np. `SAFETY`, kończy od razu, bez drugiej próby) | `slotReleased` (bool, zawsze od v0.5) |
+| `ai_unavailable` | `unavailable` | model niedostępny lub przeciążony (429 po ponowieniach), limit globalny, `aiEnabled=false`, brak konfiguracji modelu, przekroczony czas | `slotReleased` (bool, zawsze od v0.5), `retryAfterSec` (opcjonalnie; od v0.6 = 60, gdy ostatnie wywołanie modelu dostało 429) |
+| `ai_invalid_response` | `internal` | odpowiedź niepoprawna po 2 próbach płatnych (blokada treści, np. `SAFETY`, kończy od razu, bez drugiej próby) | `slotReleased` (bool, zawsze od v0.5) |
 | `test_data_only` | `permission-denied` | `ALLOW_REAL_DATA=false`, a konto/żądanie nie testowe; także fail-closed w prod przy `allowRealData=true` i `ENFORCE_APP_CHECK=false` (ADR-0002, Aneks A pkt 3) | – |
 | `internal` | `internal` | nieoczekiwany błąd | – |
+
+### Ponowienia po stronie serwera (v0.6, ADR-0016)
+Co to znaczy dla użytkownika: gdy AI jest chwilowo przeciążone, serwer sam próbuje jeszcze raz i czeka przy tym kilka sekund. Plan może więc przyjść później niż zwykle (najdłużej ok. 100 s), ale rzadziej kończy się błędem.
+
+- Na jedno generowanie przypada najwyżej **3 wywołania modelu**, w tym najwyżej **2 próby płatne**. Wywołanie zakończone HTTP 429 nie jest płatne, więc trzecie wywołanie jest możliwe tylko po 429.
+- Przed ponowieniem po błędzie ponawianym (408, 429, 5xx, czas, sieć) serwer czeka losowo 2–4 s, a przed trzecim wywołaniem 4–8 s. Po złej odpowiedzi modelu ponawia od razu, z listą błędów.
+- Budżet czasu generowania to 100 s. Kolejne wywołanie rusza tylko wtedy, gdy zostało ≥ 45 s. Timeout klienta (120 s) bez zmian.
+- Jedno generowanie to zawsze jeden slot konta i jeden slot globalny, niezależnie od liczby wywołań. Zasady zwrotu niżej bez zmian.
+- Gdy generowanie kończy się, bo ostatnie wywołanie dostało 429, `ai_unavailable` ma `retryAfterSec = 60`. Aplikacja może podpowiedzieć „spróbuj za minutę”, ale nie musi. Pole jest opcjonalne od v0.2, więc `apiVersion` zostaje 1.
 
 ### Slot limitu i zwrot próby
 Co to znaczy dla użytkownika: gdy plan nie powstanie z naszej winy (AI niedostępne albo zła odpowiedź), zwykle oddajemy próbę, ale **najwyżej 2 razy na dobę**. Trzecia i kolejna taka awaria w tej samej dobie zużywa już limit konta. Tak zdecydował właściciel 2026-11-21 (O-TAM18-3), bo każda nieudana próba i tak kosztuje wywołania modelu.
@@ -157,6 +166,7 @@ Wyzwalacz Pub/Sub z powiadomień budżetowych; brak publicznego punktu wejścia.
 - Brak automatycznych ponowień `generatePlan` w aplikacji (każde ponowienie zużywa slot limitu); ponowienie wyłącznie z decyzji użytkownika. `recordConsent` i `deleteAccount` są idempotentne i mogą być ponawiane automatycznie.
 
 ## 7. Historia zmian
+- **v0.6 (2026-11-21, architect, TAM-96, ADR-0016 – proponowany):** ponowienia po stronie serwera: najwyżej 3 wywołania modelu i najwyżej 2 próby płatne (wywołanie z 429 nie jest płatne), odczekanie 2–4 s i 4–8 s, budżet 100 s; `retryAfterSec = 60` przy porażce przez 429. Pola i kody bez zmian, zgodne wstecz, `apiVersion` 1. Implementacja: mobile-dev.
 - **v0.5 (2026-11-21, architect, TAM-93/TAM-91):** zwrot slotu opisany zgodnie z kodem P3-05 i decyzją właściciela O-TAM18-3: najwyżej 2 zwroty na konto na dobę, bez zwrotu po `internal`, `usage_global` bez zwrotu. Nowe pole `details.slotReleased` przy `ai_unavailable` i `ai_invalid_response` (zgodne wstecz, `apiVersion` bez zmian; implementacja – mobile-dev). Kody `quotaRelease` i `validationErrors` w logach. Reguła ostatniego dnia zatwierdzona (O-TAM4-1).
 - **v0.4.1 (2026-11-20, mobile-dev, TAM-58/59/60 – doprecyzowanie bez zmiany pól i kodów):** „po oczyszczeniu” dla pól tekstowych = NFC + odrzucenie `Cc`/`Cf`/`Zl`/`Zp` (SEC-21); lista dozwolonych wzorców kodu i klasy błędu w logach (SEC-19). Granice limitów z `config/runtime` (SEC-22) nie zmieniają kontraktu.
 - **v0.4 (2026-11-16, ADR-0012 zatwierdzony przez właściciela; S17, SEC-26):** `generatePlan` egzekwuje aktualną akceptację `privacy_policy` (`consent_required`, `consentType=privacy_policy`); porównanie wersji „≥ bieżąca" dla obu zgód; wzorzec i lista znanych wersji w `recordConsent`; wysyłka oczekujących zgód przed `generatePlan`. Implementacja – mobile-dev (P3-04/P3-05).

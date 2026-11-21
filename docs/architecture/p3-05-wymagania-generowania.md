@@ -1,6 +1,7 @@
 # P3-05: wymagania dla generowania planu przez AI (po ARCH-01)
 
 Stan: **2026-11-21**, autor: architect, zadanie: TAM-4 (ARCH-01) → dla TAM-18 (P3-05, mobile-dev/qa).
+Uzupełnienie 2026-11-21 (TAM-96): ponowienia po 429 i budżet czasu, sekcje 3, 5 i 6 według ADR-0016.
 Podstawa: ADR-0001 Aneks C (model), ADR-0002 (pośrednik), ADR-0006 (język), `docs/api/posrednik-api.md` (kontrakt),
 `docs/architecture/arch-01-gemini-test.md` sekcja 6 (wyniki testu), `docs/architecture/costs.md` sekcja 0 (koszt).
 
@@ -51,9 +52,13 @@ Po usunięciu samego wewnętrznego `maxItems = 7` żądanie przechodzi. Szkic
    nie „naprawił" go z powrotem do wersji dającej 400).
 3. Błąd 400 z Vertex (np. po zmianie schematu) – traktować jak błąd konfiguracji: log metadanych, `ai_unavailable`,
    **bez** ponowienia (ponowienie nic nie da i kosztuje slot limitu). Tak samo inne kody 4xx (403, 404, 417).
-   **Ponawiane** (jedna druga próba) są tylko: **408, 429, 5xx, przekroczenie czasu** (45 s na próbę) i **błąd sieci**,
-   zawsze z odczekaniem **1–2 s** z losowym rozrzutem (2 × 45 s + 2 s mieści się w 120 s funkcji). Treści błędu z Vertex
-   nie czytamy i nie logujemy. **Blokady treści nie są ponawiane**: `finishReason` `SAFETY`, `PROHIBITED_CONTENT`,
+   **Ponawiane** są tylko: **408, 429, 5xx, przekroczenie czasu** (45 s na próbę), **błąd sieci** i `bad_body`.
+   **Od TAM-96 (ADR-0016, status: proponowany):** odczekanie z narastaniem i losowym rozrzutem, **2–4 s** przed wywołaniem 2
+   i **4–8 s** przed wywołaniem 3. Najwyżej **3 wywołania i najwyżej 2 próby płatne** na generowanie, a wywołanie z 429
+   nie jest płatne, więc trzecie wywołanie jest możliwe tylko po 429. Generowanie ma **budżet 100 s** od pierwszego
+   wywołania, a kolejne wywołanie rusza tylko wtedy, gdy zostało ≥ 45 s. Lista błędów walidacji z ostatniej płatnej próby
+   przechodzi przez 429. Szczegóły i przykłady: ADR-0016 „Decyzja”. (Do czasu implementacji kod działa po staremu:
+   jedno ponowienie po 1–2 s.) Treści błędu z Vertex ani nagłówka `Retry-After` nie czytamy i nie logujemy. **Blokady treści nie są ponawiane**: `finishReason` `SAFETY`, `PROHIBITED_CONTENT`,
    `SPII`, `BLOCKLIST`, `RECITATION` i brak kandydata kończą od razu `ai_invalid_response`, bez drugiego płatnego
    wywołania. Druga próba po niepoprawnej odpowiedzi jest tylko dla `MAX_TOKENS`, `OTHER` i błędów walidacji (sekcja 5).
    (Stan zgodny z kodem po PR #138, 2026-11-21.)
@@ -104,13 +109,16 @@ Ponowienia (kontrakt bez zmian: **maks. 2 próby** na generowanie, potem `ai_inv
   powodzenia drugiej próby;
 - bez „naprawy" odpowiedzi w kodzie w MVP (np. dopisywania lub obcinania punktów) – prościej i bez ryzyka zmiany sensu planu.
 
-Czas: limit jednej próby wywołania Vertex ok. **45 s** (zmierzone maks. 14 s), limit funkcji musi pomieścić dwie próby
-z zapasem (≥ 120 s) – sprawdzić z obecną konfiguracją funkcji w P3-05.
+Czas: limit jednej próby wywołania Vertex ok. **45 s** (zmierzone maks. 14 s w ARCH-01, 40,7 s w oknie przeciążenia
+TAM-88), limit funkcji 120 s. Od TAM-96 generowanie ma budżet 100 s, a wywołania po 429 nie liczą się do 2 prób płatnych
+(sekcja 3 pkt 3, ADR-0016).
 
 ## 6. Logowanie i pomiary (bez danych osobowych)
 
 Logować tylko metadane: `AI_MODEL_ID`, `modelVersion`, lokalizacja, `promptVersion`, tokeny (wejście, wyjście,
-myślenie), czas, numer próby, kody błędów walidacji (np. `items_count@day5`), wynik końcowy. **Nie logować** promptu,
+myślenie), czas, numer próby, kody błędów walidacji (np. `items_count@day5`), wynik końcowy. Od TAM-96 także
+`waitMs` i `billable` przy próbie oraz `calls` i `stopReason` w wyniku (ADR-0016 pkt 9). Z nich liczymy odsetek
+porażek przez 429 (ADR-0016 „Pomiar i próg ponownej oceny”). **Nie logować** promptu,
 danych podróży ani odpowiedzi modelu (ADR-0001 „Dane osobowe"). Odsetek drugich prób to główny wskaźnik jakości promptu
 i kosztu (`costs.md` sekcja 0 – w teście 2 z 5 odpowiedzi nie spełniłyby reguł).
 
