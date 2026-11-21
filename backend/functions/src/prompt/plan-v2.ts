@@ -1,10 +1,12 @@
 // Production prompt for generatePlan (posrednik-api.md "Prompt", p3-05-wymagania-generowania.md sekcja 4).
 // Instructions in English (systemInstruction); plan language is a parameter (ADR-0006); user data only as
 // JSON values in a separate turn, marked as data. Any change to the text below = new PROMPT_VERSION.
+// plan-v2 (TAM-95) = plan-v1 + an explicit no-repeat rule (QA TAM-88 K4 c: the same place on two days under
+// a changed name). plan-v1 lives only in git history.
 import type { DayTarget } from "../plan-targets.js";
 import type { GeneratePlanRequest } from "../schemas.js";
 
-export const PROMPT_VERSION = "plan-v1";
+export const PROMPT_VERSION = "plan-v2";
 
 export const SYSTEM_INSTRUCTION = [
   "You are a travel day-planner. Produce a day-by-day sightseeing plan as JSON matching the response schema.",
@@ -26,7 +28,11 @@ export const SYSTEM_INSTRUCTION = [
   "",
   "Items: startTime is HH:MM (24h, local time at the destination) and strictly increasing within a day.",
   "Use real, well-known, publicly accessible places in or near trip.destination; keep the items of one day in",
-  "one area and in a sensible geographic order. Do not repeat the same place on two days.",
+  "one area and in a sensible geographic order.",
+  "No repeats: each place (sight, square, market, restaurant, cafe, viewpoint, beach) appears at most once in",
+  "the whole plan. Never plan the same place on two days, not even under another, longer or colloquial name",
+  "(for example \"X\" on one day and \"X Market\" or \"Restaurant X\" on another, or a square and its nickname).",
+  "The accommodation (trip.lodging) is never an item. Before answering, compare the item names of all days.",
   "Reflect every interest from preferences.interests at least once in the plan; respect budget, pace and partySize.",
   "name is the place name, locality is the town or city where it is, description says what to see or do and why.",
   "",

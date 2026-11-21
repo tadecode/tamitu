@@ -31,7 +31,7 @@ describe("generateValidPlan", () => {
     expect(r.attempts).toBe(1);
     expect(m.calls).toHaveLength(1);
     expect(logs).toEqual([
-      expect.objectContaining({ attempt: 1, outcome: "ok", aiModel: "gemini-3.1-flash-lite", aiLocation: "eu", promptVersion: "plan-v1", tokensIn: 900, tokensOut: 1500, tokensThought: 0 }),
+      expect.objectContaining({ attempt: 1, outcome: "ok", aiModel: "gemini-3.1-flash-lite", aiLocation: "eu", promptVersion: "plan-v2", tokensIn: 900, tokensOut: 1500, tokensThought: 0 }),
     ]);
   });
 
@@ -102,7 +102,7 @@ describe("generateValidPlan", () => {
     expect(logs2[0]?.modelError).toBe("unknown");
   });
 
-  it("sends the simplified schema and the plan-v1 system instruction", async () => {
+  it("sends the simplified schema and the plan-v2 system instruction", async () => {
     const m = scriptedModel([good]);
     await generateValidPlan(request, m);
     expect(m.calls[0]!.systemInstruction).toContain("dayTargets");

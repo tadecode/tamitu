@@ -11,7 +11,7 @@ describe("logging is centralised", () => {
     .filter((f) => f.endsWith(".ts") && f !== "logger.ts");
 
   it("covers subdirectories", () => {
-    expect(files).toContain("prompt/plan-v1.ts");
+    expect(files).toContain("prompt/plan-v2.ts");
   });
 
   it.each(files)("%s has no console.* or direct logger import", (f) => {

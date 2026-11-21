@@ -28,7 +28,7 @@ import { generateValidPlan, type AttemptLog } from "./generate.js";
 import { shouldDisableAi, type QuotaInfo, type ReleaseOutcome, type ReservationPlan } from "./limits.js";
 import { logEvent, uidHash } from "./logger.js";
 import type { PlanDay } from "./plan-validator.js";
-import { PROMPT_VERSION } from "./prompt/plan-v1.js";
+import { PROMPT_VERSION } from "./prompt/plan-v2.js";
 import {
   budgetNotificationSchema,
   parseDeleteAccount,

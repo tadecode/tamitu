@@ -71,7 +71,7 @@ describe("generatePlan - success", () => {
     const { deps, quota } = mkDeps();
     const r = await run(body(), deps);
     expect(Object.keys(r)).toEqual(["apiVersion", "requestId", "language", "promptVersion", "days", "quota"]);
-    expect(r).toMatchObject({ apiVersion: 1, requestId: "7f0c2a9e-6f0e-4c3a-9a43-0b6c4a1f5d11", language: "pl", promptVersion: "plan-v1" });
+    expect(r).toMatchObject({ apiVersion: 1, requestId: "7f0c2a9e-6f0e-4c3a-9a43-0b6c4a1f5d11", language: "pl", promptVersion: "plan-v2" });
     expect(r.days).toHaveLength(4);
     expect(r.days[0]!.items.every((i) => i.startTime >= "21:10")).toBe(true);
     expect(r.quota).toEqual({ limit: 5, remainingToday: 4, resetAt: "2026-11-21T23:00:00Z" });

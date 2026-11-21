@@ -351,7 +351,7 @@ describe("no content in logs (ADR-0002 Aneks A pkt 2)", () => {
       "outcome", "validationErrors", "modelError", "quotaRelease",
     ]);
     for (const f of fields) for (const k of Object.keys(f)) expect(allowed.has(k)).toBe(true);
-    expect(fields[0]).toMatchObject({ fn: "generatePlan.attempt", result: "ok", attempt: 1, aiModel: "gemini-3.1-flash-lite", promptVersion: "plan-v1" });
+    expect(fields[0]).toMatchObject({ fn: "generatePlan.attempt", result: "ok", attempt: 1, aiModel: "gemini-3.1-flash-lite", promptVersion: "plan-v2" });
     expect(fields[1]).toMatchObject({ fn: "generatePlan", result: "ok", attempts: 1, days: 4 });
     expect(fields[1]?.["uidHash"]).toBe(uidHash("owner", "p"));
     expect(everything()).not.toContain("owner\"");

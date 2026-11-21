@@ -4,7 +4,7 @@ import { ModelError, type ModelResult, type PlanModel } from "./ai.js";
 import { AppError, ERROR_CODE_PATTERN } from "./errors.js";
 import { computeDayTargets, type DayTarget } from "./plan-targets.js";
 import { retryHints, validatePlanOutput, type ValidPlan } from "./plan-validator.js";
-import { buildUserTurn, MODEL_RESPONSE_SCHEMA, PROMPT_VERSION, SYSTEM_INSTRUCTION } from "./prompt/plan-v1.js";
+import { buildUserTurn, MODEL_RESPONSE_SCHEMA, PROMPT_VERSION, SYSTEM_INSTRUCTION } from "./prompt/plan-v2.js";
 import type { GeneratePlanRequest } from "./schemas.js";
 
 /** Contract: max. 2 model calls per generation. */

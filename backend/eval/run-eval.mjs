@@ -1,5 +1,5 @@
 // P3-05 evaluation runner (ADR-0001 pkt 2: >= 20 cases x PL/EN, >= 95% valid within 2 attempts).
-// Uses the PRODUCTION code path (prompt plan-v1, responseSchema, validator, retry) from functions/lib.
+// Uses the PRODUCTION code path (prompt plan-v2, responseSchema, validator, retry) from functions/lib.
 //
 // Modes (default = --estimate):
 //   --estimate   no network: number of generations/calls and a cost estimate (costs.md prices)
