@@ -261,7 +261,10 @@ Próby 2026-11-20 odrzucił Vertex (HTTP 403 „eligible paid billing account" �
 próbnym, potem opóźnienie po aktywacji pełnego konta; koszt 0 PLN). Udany przebieg: **2026-11-21, ok. 01:40**.
 
 Data testu: **2026-11-21**  W1 `disableCache=True`: **tak** (sprawdzone 2026-11-20)  Koszt szacunkowy: **ok. 0,18 PLN**
-Koszt w Billing (D+1): **do uzupełnienia przez właściciela** (rozliczenie z opóźnieniem; O-TAM4-3)
+Koszt w Billing (Billing Reports, usługa Vertex AI, projekt dev, 1–20.11.2026; odczyt właściciela 2026-11-21):
+**0,19 zł zużycia, −0,19 zł oszczędności (kredyty) = 0,00 zł do zapłaty**. Szacunek z tokenów (0,18 PLN przy kursie
+4,0 PLN/USD) zgadza się z rozliczeniem z dokładnością do grosza (O-TAM4-3).
+Ocena K3/K4 (właściciel, 2026-11-21): **bez zastrzeżeń**.
 
 **Sonda punktów (4.2)**
 
@@ -278,7 +281,7 @@ w dev i w prod. `europe-west4` dla tych modeli nie działa.
 
 | Etap | Model | Punkt | Zgodne 5/5? (lista błędów) | Śr. czas [s] | Czas C3 [s] | Śr. tokeny wej. | Śr. tokeny wyj. | Śr. tokeny myśl. | Tokeny wyj.+myśl. C3 | Koszt szac. [PLN] | Kryterium 4.6 (K1–K4: wystarczy tak/nie, uwagi) |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| A | `gemini-3.1-flash-lite` | `eu` | **3/5** – C3: za mało punktów w dniach 5, 6, 9–14 (5 zamiast 6–7; dzień 13: 4, dzień 14: 3); C5: dzień 5 (ostatni) 3 zamiast 4–5 | 5,3 | 13,1 | 724 | 1 818 | 0 | 5 180 | 0,063 | K1 **nie** (tylko liczba punktów); K2 tak; K3, K4 – wstępny przegląd (C1, C5): miejsca realne i sensowne; właściciel przyjął model jako startowy (szczegółowej oceny K3/K4 nie zapisano – O-TAM4-3). **Wybrany.** |
+| A | `gemini-3.1-flash-lite` | `eu` | **3/5** – C3: za mało punktów w dniach 5, 6, 9–14 (5 zamiast 6–7; dzień 13: 4, dzień 14: 3); C5: dzień 5 (ostatni) 3 zamiast 4–5 | 5,3 | 13,1 | 724 | 1 818 | 0 | 5 180 | 0,063 | K1 **nie** (tylko liczba punktów); K2 tak; K3, K4 – wstępny przegląd (C1, C5): miejsca realne i sensowne; ocena właściciela K3/K4: bez zastrzeżeń. **Wybrany.** |
 | A | `gemini-3.5-flash-lite` | `eu` | **3/5** – C3: dzień 13 (5 zamiast 6–7), dzień 14 (ostatni) 2; C5: dzień 5 (ostatni) 3 zamiast 4–5 | 5,5 | 13,7 | 724 | 2 043 | 0 | 5 870 | 0,119 | K1 **nie** (jw.); K2 tak; wstępnie: więcej ogólnych punktów (kolacja, czas wolny). Zapasowy. |
 | B | `gemini-3.8-flash` (tylko gdy A: oba „nie") | – | nie uruchomiono | – | – | – | – | – | – | – | Pominięty decyzją właściciela 2026-11-21 |
 

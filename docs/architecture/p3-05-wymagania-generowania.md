@@ -65,13 +65,13 @@ Zakres tempa: `relaxed` 2–3, `moderate` 4–5, `intense` 6–7 (bez zmian, `po
 |---|---|---|
 | Dzień 1 | 0 – górna granica tempa | bez zmian: wszystkie `startTime` ≥ próg (przylot + 3 h przy locie, 0 przy aucie); próg > 22:00 → 0 punktów (N6, US-006). Próg (`earliestStart`) liczy **kod** |
 | Dni 2 … N−1 | pełny zakres tempa (np. `intense` 6–7) | tu model 3.1 najczęściej dawał o 1 punkt za mało w długich planach – stąd jawne liczby w danych i w prompcie |
-| **Ostatni dzień (N ≥ 2)** | **1 – górna granica tempa** (propozycja, O-TAM4-1) | dzień wyjazdu: godziny wylotu/powrotu nie znamy (poza MVP, US-006), więc dzień może być krótszy. Oba modele w teście same skracały ostatni dzień (2–3 punkty) |
+| **Ostatni dzień (N ≥ 2)** | **1 – górna granica tempa**, nigdy pusty (decyzja właściciela 2026-11-21, O-TAM4-1) | dzień wyjazdu: godziny wylotu/powrotu nie znamy (poza MVP, US-006), więc dzień może być krótszy. Oba modele w teście same skracały ostatni dzień (2–3 punkty) |
 | Podróż jednodniowa (N = 1) | jak dzień 1 | dzień 1 jest też ostatnim; obowiązuje próg dnia 1 |
 
 Dlaczego ostatni dzień 1 – górna granica, a nie pełny zakres: to symetria z dniem 1 (też „może mieć mniej"),
 zgodność z zachowaniem modeli (mniej ponowień, krótsze oczekiwanie) i realna sytuacja podróżnego (wymeldowanie,
-dojazd na lotnisko). Minimum 1, żeby ostatni dzień nie był pusty. **Do potwierdzenia przez właściciela (O-TAM4-1);**
-po potwierdzeniu architekt dopisuje regułę na stałe w `posrednik-api.md` (teraz jest tam oznaczona jako propozycja).
+dojazd na lotnisko). Minimum 1, żeby ostatni dzień nie był pusty. **Zatwierdzone przez właściciela 2026-11-21 (O-TAM4-1);**
+reguła jest w kontrakcie `posrednik-api.md` („Gwarancje po walidacji serwerowej").
 Kryterium US-005 („wolne tempo – mniej punktów dziennie niż szybkie") sprawdzać na dniach 2 … N−1.
 
 Wymagania dla promptu (P3-05, `backend/functions/src/prompt`, wersja w `promptVersion`):

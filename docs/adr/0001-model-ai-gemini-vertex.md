@@ -68,7 +68,7 @@ Zmiany nie zmieniają decyzji (model, region, abstrakcja); doprecyzowują warunk
 5. **Ceny:** patrz ramka „UWAGA" wyżej i `costs.md` – niezweryfikowane do czasu zadania weryfikacyjnego przed fazą 3.
 
 ## Aneks B (2026-11-18, po P3-03): zakres przetwarzania ML i cykl życia modeli
-- Status aneksu: **proponowany** – wymaga zatwierdzenia przez właściciela (bramka „architektura"); do tego czasu obowiązuje treść wyżej, a `ALLOW_REAL_DATA=false` i tak blokuje realne dane.
+- Status aneksu: **zatwierdzony (2026-11-21, właściciel)** – pkt 1–6 zatwierdzone razem z Aneksem C, treść bez zmian (O-TAM4-2); pkt 7 rozstrzygnięty wcześniej (2026-11-20). Poprzednio: proponowany (2026-11-18).
 - Autor (rola): architect. Źródło: pytanie O1 (`docs/open-questions.md`, sekcja „Konfiguracja środowisk (P3-03)"), runbook `.farm/runbooks/P3-03-firebase.md` („Weryfikacja regionu").
 - Aneks **koryguje opis faktów** w pkt 1 decyzji i w pozycji 3 listy SEC-15. Nie zmienia wyboru dostawcy, klasy modelu, regionu wywołania ani abstrakcji.
 
@@ -102,7 +102,7 @@ Zmiany nie zmieniają decyzji (model, region, abstrakcja); doprecyzowują warunk
 **Dane osobowe:** zakres D6 bez zmian; zmienia się opis miejsca przetwarzania (UE). Wymaga aktualizacji opisu w rejestrze i polityce (Security).
 
 ## Aneks C (2026-11-21, po ARCH-01): model startowy `gemini-3.1-flash-lite` na punkcie `eu`
-- Status aneksu: **zatwierdzony przez właściciela 2026-11-21** (decyzja w zadaniu TAM-4 / ARCH-01, przekazał orkiestrator).
+- Status aneksu: **zatwierdzony (2026-11-21, właściciel)** (decyzja w zadaniu TAM-4 / ARCH-01, przekazał orkiestrator).
 - Autor (rola): architect. Zadanie: TAM-4 (ARCH-01). Źródła: `docs/architecture/arch-01-gemini-test.md` sekcja 6 (wyniki), `docs/architecture/costs.md` sekcja 0 (koszt), `docs/architecture/p3-05-wymagania-generowania.md` (wymagania dla P3-05).
 - Aneks **uzupełnia** pkt 2–3 decyzji i Aneks B pkt 3–4 i 7. Nie zmienia dostawcy, abstrakcji (`PlanGenerator`), zakazu punktu `global` ani reguły końcowego wyboru (pełna ewaluacja, ≥ 95%).
 
@@ -118,7 +118,7 @@ i walidacja w P3-05.
 3. **Punkt końcowy:** multi-region **`eu`** (`https://aiplatform.eu.rep.googleapis.com`, lokalizacja `eu`) w **dev i prod**. Sonda: `europe-west4` – błąd 417 dla obu modeli Flash-Lite, `eu` – OK. To jest wynik testu z Aneksu B pkt 4 i przypadek „`eu`, gdy model nie działa na `europe-west4`" z Aneksu B pkt 2. Walidacja startu nadal przyjmuje tylko `europe-west4` lub `eu`. Region funkcji, Firestore i logów – bez zmian (`europe-west4`).
 4. **Pozostałe parametry bez zmian** (pkt 3): `responseMimeType: application/json` + `responseSchema`, temperatura 0,7, `maxOutputTokens` 10 000 (zmierzone maks. 5 870), bez narzędzi, groundingu i jawnego cache; buforowanie Vertex wyłączone (`disableCache=true`; w dev potwierdzone, w prod – warunek przed pierwszym wywołaniem w prod).
 5. **Ograniczenie `responseSchema` (fakt z testu):** Vertex zwraca **400**, gdy schemat ma jednocześnie `minItems`/`maxItems` dla `days` i `maxItems` dla punktów dnia. Schemat wysyłany do modelu jest więc **uproszczony**, a pełne reguły (liczba punktów wg tempa, dni, godziny, długości) sprawdza **walidator po stronie serwera** – zgodnie z pkt 3 i T4/T5. Szczegóły: `p3-05-wymagania-generowania.md` sekcja 3.
-6. **Braki K1 w teście (liczba punktów):** nie dyskwalifikują modelu startowego (decyzja właściciela; `arch-01-gemini-test.md` sekcja 7, wiersz 3). P3-05 przekazuje modelowi docelową liczbę punktów dla każdego dnia, a serwer odrzuca i ponawia (maks. 2 próby, bez zmian) odpowiedź, która jej nie spełnia. Reguła dla ostatniego dnia – propozycja w O-TAM4-1.
+6. **Braki K1 w teście (liczba punktów):** nie dyskwalifikują modelu startowego (decyzja właściciela; `arch-01-gemini-test.md` sekcja 7, wiersz 3). P3-05 przekazuje modelowi docelową liczbę punktów dla każdego dnia, a serwer odrzuca i ponawia (maks. 2 próby, bez zmian) odpowiedź, która jej nie spełnia. Ostatni dzień (przy co najmniej 2 dniach): od 1 do górnej granicy tempa, nigdy pusty; dni środkowe – pełny zakres tempa (decyzja właściciela 2026-11-21, O-TAM4-1).
 7. **Etap B pominięty:** `gemini-3.8-flash` i `gemini-3.5-flash` – nie testowane. Wracamy do nich tylko wtedy, gdy pełna ewaluacja z promptem P3-05 nie osiągnie ≥ 95% dla obu Flash-Lite (osobna decyzja właściciela; koszt ok. 3–6× wyższy).
 
 ### Konsekwencje
@@ -126,4 +126,4 @@ i walidacja w P3-05.
 **Negatywne / ryzyka:** (a) najkrótszy cykl życia z kandydatów – przed startem publicznym sprawdzić następcę (zadanie proponowane w `.farm/log`); (b) model słabiej trzyma liczbę punktów w długich planach – więcej ponowień, jeśli prompt nie pomoże (koszt nadal pomijalny, ale gorszy czas oczekiwania i ryzyko `ai_invalid_response`); (c) wybór oparty na 5 przypadkach – potwierdza go pełna ewaluacja P3.
 **Dane osobowe:** zakres D6 bez zmian. Miejsce przetwarzania: UE (multi-region `eu`), jak w Aneksie B pkt 1. Lista SEC-15 poz. 3 i 8 – do potwierdzenia przez Security dla `gemini-3.1-flash-lite` (SEC-15 / TAM-54 pozostaje otwarte; `ALLOW_REAL_DATA=false` do czasu zamknięcia).
 **Koszt (zasada 10):** aneks obniża koszt względem klasy Flash; nie zwiększa żadnego limitu. Limity bez zmian: 5/dobę na konto, 25/dobę globalnie, spend cap dev 15 PLN / prod 80 PLN.
-**Uwaga o Aneksie B:** pkt 1–6 Aneksu B mają status „proponowany". Aneks C opiera się na pkt 2 i 4 (punkt `eu`), które właściciel tą decyzją faktycznie stosuje; formalne zatwierdzenie Aneksu B – bramka „architektura" (pytanie dla orkiestratora w `.farm/log`).
+**Uwaga o Aneksie B:** Aneks C opiera się na pkt 2 i 4 Aneksu B (punkt `eu`). Aneks B (pkt 1–6) zatwierdzony przez właściciela 2026-11-21 razem z tym aneksem (O-TAM4-2).
