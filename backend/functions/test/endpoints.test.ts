@@ -9,12 +9,12 @@ vi.mock("firebase-functions/logger", () => ({
   log: (...a: unknown[]) => void logged.push(a),
 }));
 
-import { stubModel } from "../src/ai.js";
 import { SAFE_RUNTIME_DEFAULTS, type RuntimeConfig } from "../src/config.js";
 import type { ConsentDoc } from "../src/consents.js";
 import { budgetGuardCore, deleteAccountCore, generatePlanCore, recordConsentCore, type Deps } from "../src/endpoints.js";
 import { runGuarded } from "../src/handler.js";
 import { uidHash } from "../src/logger.js";
+import { echoValidModel, memoryQuota } from "./helpers/fakes.js";
 
 const CANARY = "CANARY-Zq81-do-not-log";
 const NOW = new Date("2026-11-15T10:00:00Z");
@@ -34,6 +34,7 @@ const planBody = (text = "Lizbona") => ({
 });
 
 function mkDeps(over: Partial<Deps> = {}, runtime: Partial<RuntimeConfig> = {}): Deps {
+  const quota = memoryQuota();
   return {
     verifier: {
       verifyIdToken: async () => ({ uid: "owner", auth_time: NOW.getTime() / 1000 - 60, firebase: { sign_in_provider: "google.com" } }),
@@ -53,7 +54,9 @@ function mkDeps(over: Partial<Deps> = {}, runtime: Partial<RuntimeConfig> = {}):
     }),
     writeConsent: async (_uid, _id, doc) => ({ receivedAt: doc.receivedAt }),
     now: () => NOW,
-    model: stubModel,
+    model: echoValidModel(),
+    reserveQuota: quota.reserveQuota,
+    releaseQuota: quota.releaseQuota,
     ...over,
   };
 }
@@ -82,8 +85,8 @@ beforeEach(() => {
 describe("generatePlan skeleton", () => {
   const run = (r: ReturnType<typeof req>, d: Deps) => runGuarded("generatePlan", (ctx) => generatePlanCore(r, d, ctx));
 
-  it("valid request reaches the stub and returns not_implemented", async () => {
-    expect(await code(run(req(planBody()), mkDeps()))).toBe("not_implemented");
+  it("valid request reaches the (fake) model and returns a plan", async () => {
+    expect(await code(run(req(planBody()), mkDeps()))).toBe("no-error");
   });
 
   it("rejects missing auth, revoked token (checkRevoked) and non-Google provider", async () => {
@@ -106,7 +109,7 @@ describe("generatePlan skeleton", () => {
   it("enforces App Check only when enabled", async () => {
     expect(await code(run(req(planBody(), { app: undefined }), mkDeps()))).toBe("app_check_failed");
     const off = mkDeps({ config: { environment: "dev", enforceAppCheck: false, allowRealData: false } });
-    expect(await code(run(req(planBody(), { app: undefined }), off))).toBe("not_implemented");
+    expect(await code(run(req(planBody(), { app: undefined }), off))).toBe("no-error");
   });
 
   it("validation happens before any runtime lookup", async () => {
@@ -143,7 +146,7 @@ describe("generatePlan consents (ADR-0012 pkt 3-4, 7)", () => {
     expect(await detailsOf(run(d))).toEqual({ code: "consent_required", consentType: "privacy_policy" });
   });
 
-  it("older AI consent -> ai_processing; newer records -> accepted (reaches the stub)", async () => {
+  it("older AI consent -> ai_processing; newer records -> accepted (reaches the model)", async () => {
     const old = mkDeps({}, { aiConsentVersionCurrent: "ai-consent-v2" });
     expect(await detailsOf(run(old))).toEqual({ code: "consent_required", consentType: "ai_processing" });
     const newer = mkDeps({
@@ -152,7 +155,7 @@ describe("generatePlan consents (ADR-0012 pkt 3-4, 7)", () => {
         ai: { granted: true, policyVersion: "ai-consent-v2" },
       }),
     });
-    expect(await code(run(newer))).toBe("not_implemented");
+    expect(await code(run(newer))).toBe("no-error");
   });
 
   it("bad config/runtime versions fail closed without reading consents", async () => {
@@ -313,12 +316,12 @@ describe("no content in logs (ADR-0002 Aneks A pkt 2)", () => {
   it("control string in valid, invalid and exception-causing requests never reaches the logs", async () => {
     const run = (data: unknown, deps = mkDeps()) =>
       runGuarded("generatePlan", (ctx) => generatePlanCore(req(data), deps, ctx));
-    await code(run(planBody(CANARY))); // valid -> stub
+    await code(run(planBody(CANARY))); // valid -> fake model
     await code(run({ ...planBody(), [CANARY]: CANARY })); // unknown key
     await code(run({ ...planBody(), planLanguage: CANARY })); // bad enum value
     await code(run({ ...planBody(CANARY), trip: { ...planBody().trip, days: CANARY } })); // wrong type
     const throwing = mkDeps({
-      model: { generate: async () => { throw new TypeError(`model failed for ${CANARY}`); } },
+      model: { modelId: "gemini-x", location: "eu", generate: async () => { throw new TypeError(`model failed for ${CANARY}`); } },
     });
     expect(await code(run(planBody(CANARY), throwing))).toBe("internal"); // thrown with canary in message
     const tokenFail = mkDeps({ verifier: { verifyIdToken: async () => { throw new Error(CANARY); } } });
@@ -328,7 +331,7 @@ describe("no content in logs (ADR-0002 Aneks A pkt 2)", () => {
   });
 
   it("client gets a bare internal error for unexpected exceptions", async () => {
-    const throwing = mkDeps({ model: { generate: async () => { throw new Error(CANARY); } } });
+    const throwing = mkDeps({ model: { modelId: "gemini-x", location: "eu", generate: async () => { throw new Error(CANARY); } } });
     try {
       await runGuarded("generatePlan", (ctx) => generatePlanCore(req(planBody()), throwing, ctx));
       expect.unreachable();
@@ -342,10 +345,15 @@ describe("no content in logs (ADR-0002 Aneks A pkt 2)", () => {
   it("logs only allow-listed keys, with error class and code", async () => {
     await code(runGuarded("generatePlan", (ctx) => generatePlanCore(req(planBody()), mkDeps({ pepper: "p" }), ctx)));
     const fields = logged.flatMap((a) => a.filter((x): x is Record<string, unknown> => typeof x === "object" && x !== null));
-    const allowed = new Set(["fn", "result", "uidHash", "durationMs", "attempts", "days", "requestBytes", "errorClass", "errorCode", "configError"]);
+    const allowed = new Set([
+      "fn", "result", "uidHash", "durationMs", "attempts", "days", "requestBytes", "errorClass", "errorCode", "configError",
+      "attempt", "aiModel", "aiLocation", "modelVersion", "promptVersion", "tokensIn", "tokensOut", "tokensThought",
+      "outcome", "validationErrors", "modelError", "quotaRelease",
+    ]);
     for (const f of fields) for (const k of Object.keys(f)) expect(allowed.has(k)).toBe(true);
-    expect(fields[0]).toMatchObject({ fn: "generatePlan", result: "error", errorClass: "AppError", errorCode: "not_implemented", days: 4 });
-    expect(fields[0]?.["uidHash"]).toBe(uidHash("owner", "p"));
+    expect(fields[0]).toMatchObject({ fn: "generatePlan.attempt", result: "ok", attempt: 1, aiModel: "gemini-3.1-flash-lite", promptVersion: "plan-v1" });
+    expect(fields[1]).toMatchObject({ fn: "generatePlan", result: "ok", attempts: 1, days: 4 });
+    expect(fields[1]?.["uidHash"]).toBe(uidHash("owner", "p"));
     expect(everything()).not.toContain("owner\"");
   });
 });

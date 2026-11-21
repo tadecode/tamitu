@@ -10,6 +10,10 @@ export interface HandlerContext {
   requestBytes?: number | undefined;
   /** Fixed code of a configuration error (e.g. "consent_versions_invalid"); never a value. */
   configError?: string | undefined;
+  /** generatePlan: number of model attempts made. */
+  attempts?: number | undefined;
+  /** Fixed code when releasing a quota slot failed after an error. */
+  quotaRelease?: string | undefined;
 }
 
 /**
@@ -42,5 +46,7 @@ function pick(ctx: HandlerContext) {
     ...(ctx.days !== undefined ? { days: ctx.days } : {}),
     ...(ctx.requestBytes !== undefined ? { requestBytes: ctx.requestBytes } : {}),
     ...(ctx.configError !== undefined ? { configError: ctx.configError } : {}),
+    ...(ctx.attempts !== undefined ? { attempts: ctx.attempts } : {}),
+    ...(ctx.quotaRelease !== undefined ? { quotaRelease: ctx.quotaRelease } : {}),
   };
 }
