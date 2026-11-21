@@ -10,9 +10,15 @@ export const MAX_DAYS = 14;
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 /** Same character classes as request validation (SEC-21): Cc, Cf, Zl, Zp. */
 const FORBIDDEN_CHARS = /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u;
-/** URLs, e-mail addresses, HTML-like tags, Markdown links/emphasis (T5). */
+/** URLs, e-mail addresses, any domain with a path, HTML-like tags, Markdown links/emphasis (T5). */
 const URL_OR_MARKUP =
-  /(?:https?:\/\/|ftp:\/\/|www\.|\b[a-z0-9.-]+\.(?:com|net|org|pl|eu|io|info)\b(?:\/|$)|[^\s@]+@[^\s@]+\.[a-z]{2,}|<\s*\/?\s*[a-z!?]|\]\(|\*\*|__|```)/i;
+  /(?:https?:\/\/|ftp:\/\/|www\.|\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,}\/|[^\s@]+@[^\s@]+\.[a-z]{2,}|<\s*\/?\s*[a-z!?]|\]\(|\*\*|__|```)/i;
+/**
+ * Bare domains with common generic and European TLDs (review PR #136 #6). Lower case only, so a
+ * missing space after a full stop ("square.It is") is not taken for a domain.
+ */
+const BARE_DOMAIN =
+  /\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|net|org|info|io|eu|pl|de|it|pt|es|fr|at|cz|uk|gr|hu|tr|nl|be|ch|hr|travel)\b/;
 
 const itemShape = z.object({
   startTime: z.string(),
@@ -46,7 +52,16 @@ export interface ValidationIssue {
   hint: string;
 }
 
-export type ValidationResult = { ok: true; plan: ValidPlan } | { ok: false; issues: ValidationIssue[] };
+/**
+ * `final`: retrying with the same input is pointless (safety filters, blocked prompt), so the
+ * generation ends at once with ai_invalid_response (review PR #136 #5).
+ */
+export type ValidationResult =
+  | { ok: true; plan: ValidPlan }
+  | { ok: false; issues: ValidationIssue[]; final?: true };
+
+/** finishReason values worth one retry: cut off by length, or an unspecified stop. */
+export const RETRYABLE_FINISH = new Set(["MAX_TOKENS", "OTHER"]);
 
 /** Hard cap on issues passed to the retry turn (~50-100 input tokens, sekcja 5). */
 export const MAX_RETRY_HINTS = 8;
@@ -67,7 +82,7 @@ function checkText(
   if (value.length === 0) issues.push(fail(`${field}_empty@day${day}`, `day ${day}: ${field} must not be empty`));
   else if ([...value].length > max) issues.push(fail(`${field}_len@day${day}`, `day ${day}: ${field} longer than ${max} characters`));
   if (FORBIDDEN_CHARS.test(value)) issues.push(fail(`${field}_chars@day${day}`, `day ${day}: ${field} has control or invisible characters`));
-  if (URL_OR_MARKUP.test(value)) issues.push(fail(`${field}_url_markup@day${day}`, `day ${day}: ${field} contains a URL, e-mail or markup`));
+  if (URL_OR_MARKUP.test(value) || BARE_DOMAIN.test(value)) issues.push(fail(`${field}_url_markup@day${day}`, `day ${day}: ${field} contains a URL, e-mail or markup`));
 }
 
 /**
@@ -83,7 +98,11 @@ export function validatePlanOutput(input: {
 }): ValidationResult {
   if (input.finishReason !== "STOP") {
     const reason = /^[A-Z_]{1,40}$/.test(input.finishReason ?? "") ? input.finishReason! : "UNKNOWN";
-    return { ok: false, issues: [fail(`finish_${reason}`, "the answer was cut off; keep descriptions shorter")] };
+    if (RETRYABLE_FINISH.has(reason)) {
+      return { ok: false, issues: [fail(`finish_${reason}`, "the answer was cut off; keep descriptions shorter")] };
+    }
+    // SAFETY, PROHIBITED_CONTENT, SPII, BLOCKLIST, RECITATION, no candidate (UNKNOWN): no retry.
+    return { ok: false, issues: [fail(`finish_${reason}`, "the answer was blocked")], final: true };
   }
   let parsed: unknown;
   try {
