@@ -30,7 +30,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Sprawdz etykiety przegladu i QA
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         env:
           # Konta uprawnione do nadawania etykiet bramki; zmienna Actions GATE_LABELERS (lista po przecinku).
           GATE_LABELERS: ${{ vars.GATE_LABELERS || 'tadecode-farm,tadecode' }}
