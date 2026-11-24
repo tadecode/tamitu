@@ -1,8 +1,8 @@
 # Ekran: EK-07 – stan „Asystent AI chwilowo przeciążony” (`ai_busy`)
 
-- Status: **szkic** – do uzgodnienia z architektem (pytanie UX-TAM98-1) i zatwierdzenia przez właściciela; potem `ux-ready` dla TAM-99
+- Status: **uzgodniony** – teksty PL/EN zaakceptowane przez właściciela i UX-TAM98-1 rozstrzygnięte przez właściciela (2026-11-24); po merge'u do oznaczenia `ux-ready` dla TAM-99
 - Historyjki: US-005, US-011
-- Autor: ux · Data: 2026-11-24 · Wersja: 0.1 · Zadanie: TAM-98 (P3-05-429-UX)
+- Autor: ux · Data: 2026-11-24 · Wersja: 0.2 · Zadanie: TAM-98 (P3-05-429-UX)
 - Makieta: [`mockups/ek-07-ai-busy.html`](../mockups/ek-07-ai-busy.html) (PL/EN, jasny/ciemny, tekst 100–200%, żywe odliczanie)
 - Źródła: ADR-0016 pkt 10–14, `docs/api/posrednik-api.md` v0.6 (pkt 2 tabela kodów, „Slot limitu i zwrot próby” reguła 7, pkt 6), `.farm/log/2026-11-21/1500-architect-TAM-96.md`, [EK-07](ek-07.md), [EK-05](ek-05.md), [EK-16](ek-16.md)
 
@@ -72,7 +72,7 @@ Brak nowych danych osobowych, nowych zdarzeń analitycznych i nowych wywołań p
 | **C. Ponawianie** | koniec odliczania (na pierwszym planie) lub „Spróbuj teraz” w stanie A/B/D | zwykły stan ładowania EK-07, pierwszy tekst pomocniczy „Próbujemy ponownie…”, potem rotacja jak EK-07; „Anuluj” z dialogiem jak EK-07 | `generationTitle`, `generationRetrying`, `generationMayTakeTime`, `generationStep2..3` |
 | **B. Ręcznie po nieudanym ponowieniu** | ponowienie (automat lub ręczne) znów skończyło się `ai_busy` | ikona, tytuł „Nasz asystent AI nadal jest przeciążony”, opis „Spróbuj ponownie za chwilę…” + zdanie o limicie, **bez odliczania i bez paska**, „Spróbuj teraz”, „Wróć do formularza”. Kolejne `ai_busy` po „Spróbuj teraz” → znów B (bez automatu) | `generationBusyStillTitle`, `generationBusyBodyManual`, `generationBusyQuota*`, `generationBusyTryNow`, `generationBusyBack` |
 | **D. Powrót z tła po terminie** | termin ponowienia minął, gdy aplikacja była w tle (automat się nie wykonał) | jak B, ale tytuł z A i opis „Gdy aplikacja była w tle, nie ponawialiśmy próby. Możesz spróbować teraz.” + zdanie o limicie | `generationBusyTitle`, `generationBusyBodyPaused`, `generationBusyQuota*`, `generationBusyTryNow`, `generationBusyBack` |
-| **E. Bez automatu (limit niezwrócony)** | pierwsze `ai_busy`, ale `slotReleased = false` (bezpiecznik 10/dobę) lub brak pola | jak B z tytułem z A: opis ręczny + „Ta próba została wliczona do dzisiejszego limitu.” (albo „mogła zostać…”); **bez odliczania i automatu** – propozycja UX-TAM98-1 | `generationBusyTitle`, `generationBusyBodyManual`, `generationBusyQuotaCounted` / `generationBusyQuotaUnknown` |
+| **E. Bez automatu (limit niezwrócony)** – decyzja właściciela UX-TAM98-1 | pierwsze `ai_busy`, ale `slotReleased = false` (bezpiecznik 10/dobę) lub brak pola | jak B z tytułem z A: opis ręczny + „Ta próba została wliczona do dzisiejszego limitu.” (albo „mogła zostać…”); **bez odliczania i automatu** – decyzja właściciela UX-TAM98-1 (2026-11-24) | `generationBusyTitle`, `generationBusyBodyManual`, `generationBusyQuotaCounted` / `generationBusyQuotaUnknown` |
 | Ładowanie | – | stan C | – |
 | Pusty | – | n/d | – |
 | Sukces | ponowienie udane | EK-08 jak zwykle | – |
@@ -85,6 +85,8 @@ Brak nowych danych osobowych, nowych zdarzeń analitycznych i nowych wywołań p
    zablokowany ekran = tło).
 3. Powrót **przed** terminem → odliczanie trwa dalej od pozostałego czasu, automat jak w A.
 4. Powrót **po** terminie → stan D (sam przycisk, bez nowego odliczania, automat uznany za wykorzystany).
+   Stan D dotyczy tylko sytuacji, w której automat był zaplanowany (stan A, `slotReleased = true`). W stanie E
+   (`slotReleased ≠ true`) nie ma odliczania ani terminu, więc po powrocie z tła ekran pokazuje ten sam stan E.
 5. Bez powiadomień systemowych, bez pracy w tle, bez wybudzania.
 6. Ponowienie trwające w chwili przejścia w tło → jak EK-07 (U6): trwa do 120 s, po powrocie wynik lub błąd.
 
@@ -92,10 +94,10 @@ Brak nowych danych osobowych, nowych zdarzeń analitycznych i nowych wywołań p
 | `slotReleased` | Zdanie | Automat |
 |---|---|---|
 | `true` | „Ta próba nie wlicza się do limitu.” | tak (stan A) |
-| `false` | „Ta próba została wliczona do dzisiejszego limitu.” | **nie** (stan E) – propozycja UX-TAM98-1 |
-| brak | „Ta próba mogła zostać wliczona do dzisiejszego limitu.” | **nie** (stan E) – propozycja UX-TAM98-1 |
+| `false` | „Ta próba została wliczona do dzisiejszego limitu.” | **nie** (stan E) – decyzja właściciela UX-TAM98-1 (2026-11-24) |
+| brak | „Ta próba mogła zostać wliczona do dzisiejszego limitu.” | **nie** (stan E) – decyzja właściciela UX-TAM98-1 (2026-11-24) |
 
-Uzasadnienie UX-TAM98-1: wyjątek od „bez automatycznych ponowień” stoi na tym, że `ai_busy` nie zużywa limitu
+Decyzja właściciela UX-TAM98-1 (2026-11-24): „TAK, bez automatu”. Przy `ai_busy` z `slotReleased = false` albo bez tego pola aplikacja pomija automatyczne ponowienie i od razu pokazuje sam przycisk „Spróbuj teraz” (stan E). Decyzja zastępuje potwierdzenie architekta. Uzasadnienie: wyjątek od „bez automatycznych ponowień” stoi na tym, że `ai_busy` nie zużywa limitu
 (ADR-0016 pkt 13). Gdy serwer tego nie potwierdza, automat mógłby zużyć limit bez decyzji użytkownika
 (`patterns.md` pkt 5). Przypadek rzadki (11. `ai_busy` w dobie). W stanach B i D zdanie o limicie dotyczy
 **ostatniej** odpowiedzi.
@@ -162,10 +164,10 @@ na AI z EK-06). Teksty nie ujawniają przyczyny technicznej ani kosztowej. Przeg
 (ewentualnie przy okazji przeglądu EK-16).
 
 ## Uzgodnienie z architektem
-Zgodne z ADR-0016 pkt 10–14 i `posrednik-api.md` v0.6. Do potwierdzenia przez architekta (przez orkiestratora):
-- **UX-TAM98-1:** brak automatu, gdy `slotReleased ≠ true` (stan E). Domyślnie tak, jak w tej specyfikacji.
+Zgodne z ADR-0016 pkt 10–14 i `posrednik-api.md` v0.6. Ustalenia (do wiadomości architekta):
+- **UX-TAM98-1 – rozstrzygnięte przez właściciela 2026-11-24 („TAK, bez automatu”)**: brak automatu, gdy `slotReleased ≠ true` (stan E). Decyzja zastępuje potwierdzenie architekta; doprecyzowanie ADR-0016 pkt 11 i `posrednik-api.md` pkt 6 – według uznania architekta przy najbliższej zmianie.
 - Pkt 11 („UX może to doprecyzować”): stan D i reguły tła powyżej.
 - Ponowienie z `ai_busy` przyjmowane tylko na ekranie EK-07; inne ekrany nie wywołują `generatePlan`.
 
 ## Pytania otwarte
-UX-TAM98-1 (w `.farm/log/2026-11-24/1700-ux-TAM-98.md`, sekcja „Dla orkiestratora”).
+Brak. UX-TAM98-1 odpowiedziane przez właściciela 2026-11-24 (`.farm/log/2026-11-24/1700-ux-TAM-98.md`).
