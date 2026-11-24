@@ -1,0 +1,356 @@
+// QA PR #159 (TAM-99): additional, independent checks of EK-07 "AI busy".
+// Run in a copy of the PR code as test/features/generation/qa_pr159_test.dart
+// (not part of the suite: the keys and AiBusyView exist only after the merge).
+// Expected texts are typed from docs/ux/screens/ek-07-ai-busy.md ("Teksty"), not copied from the code.
+import 'dart:async';
+
+import 'package:flutter/semantics.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:tamitu/core/errors/app_failure.dart';
+import 'package:tamitu/features/generation/application/ai_busy_controller.dart';
+import 'package:tamitu/features/generation/presentation/ai_busy_view.dart';
+import 'package:tamitu/l10n/app_localizations.dart';
+
+import '../../helpers.dart';
+
+class _Mono {
+  Duration t = Duration.zero;
+  Duration call() => t;
+}
+
+AppFailure _busy({bool? slotReleased = true, Object? retryAfterSec = 60}) =>
+    classifyCallableError(
+      code: 'unavailable',
+      details: {
+        'code': 'ai_busy',
+        'retryAfterSec': ?retryAfterSec,
+        'slotReleased': ?slotReleased,
+      },
+    );
+
+class _H {
+  _H(AppFailure f) {
+    c = AiBusyController(
+      failure: f,
+      retry: () {
+        final x = Completer<AppFailure?>();
+        pending.add(x);
+        return x.future;
+      },
+      onSuccess: () => ok++,
+      onFailure: failures.add,
+      clock: mono.call,
+    );
+  }
+  final mono = _Mono();
+  late final AiBusyController c;
+  final pending = <Completer<AppFailure?>>[];
+  final failures = <AppFailure>[];
+  int ok = 0;
+  int backs = 0;
+}
+
+Future<_H> _pump(WidgetTester t, AppFailure f, {String locale = 'pl'}) async {
+  final h = _H(f);
+  addTearDown(h.c.dispose);
+  await t.pumpWidget(
+    hostScreen(
+      TestEnv(),
+      Scaffold(
+        appBar: AppBar(title: const Text('Nowa podróż')),
+        body: AiBusyView(controller: h.c, onBack: () => h.backs++),
+      ),
+      locale: locale,
+    ),
+  );
+  await t.pump();
+  return h;
+}
+
+Future<void> _adv(WidgetTester t, _H h, int s) async {
+  for (var i = 0; i < s; i++) {
+    h.mono.t += const Duration(seconds: 1);
+    await t.pump(const Duration(seconds: 1));
+  }
+}
+
+void _toBackground(WidgetTester t) {
+  t.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+  t.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+  t.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+}
+
+void _toForeground(WidgetTester t) {
+  t.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+  t.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+  t.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+}
+
+List<String> _recordAnnouncements(WidgetTester t) {
+  final out = <String>[];
+  t.binding.defaultBinaryMessenger.setMockDecodedMessageHandler<Object?>(
+    SystemChannels.accessibility,
+    (m) async {
+      final d = (m as Map)['data'] as Map;
+      out.add(d['message'] as String);
+      return null;
+    },
+  );
+  addTearDown(
+    () => t.binding.defaultBinaryMessenger
+        .setMockDecodedMessageHandler<Object?>(SystemChannels.accessibility, null),
+  );
+  return out;
+}
+
+const _pl = {
+  'title': 'Nasz asystent AI jest chwilowo przeciążony',
+  'still': 'Nasz asystent AI nadal jest przeciążony',
+  'manual': 'Spróbuj ponownie za chwilę. Twoje dane w formularzu zostały zachowane.',
+  'paused': 'Gdy aplikacja była w tle, nie ponawialiśmy próby. Możesz spróbować teraz.',
+  'released': 'Ta próba nie wlicza się do limitu.',
+  'counted': 'Ta próba została wliczona do dzisiejszego limitu.',
+  'unknown': 'Ta próba mogła zostać wliczona do dzisiejszego limitu.',
+};
+
+void main() {
+  group('ICU plural (generated l10n)', () {
+    late AppLocalizations pl;
+    late AppLocalizations en;
+    setUpAll(() async {
+      pl = await AppLocalizations.delegate.load(const Locale('pl'));
+      en = await AppLocalizations.delegate.load(const Locale('en'));
+    });
+
+    test('PL countdown a11y: 1 / 2-4 / 5-21 / 22-24 / 12-14 / 25+', () {
+      const want = {
+        1: 'Ponowna próba za 1 sekundę',
+        2: 'Ponowna próba za 2 sekundy',
+        3: 'Ponowna próba za 3 sekundy',
+        4: 'Ponowna próba za 4 sekundy',
+        5: 'Ponowna próba za 5 sekund',
+        11: 'Ponowna próba za 11 sekund',
+        12: 'Ponowna próba za 12 sekund',
+        14: 'Ponowna próba za 14 sekund',
+        15: 'Ponowna próba za 15 sekund',
+        21: 'Ponowna próba za 21 sekund',
+        22: 'Ponowna próba za 22 sekundy',
+        24: 'Ponowna próba za 24 sekundy',
+        25: 'Ponowna próba za 25 sekund',
+        30: 'Ponowna próba za 30 sekund',
+        42: 'Ponowna próba za 42 sekundy',
+        45: 'Ponowna próba za 45 sekund',
+        59: 'Ponowna próba za 59 sekund',
+        60: 'Ponowna próba za 60 sekund',
+        102: 'Ponowna próba za 102 sekundy',
+        112: 'Ponowna próba za 112 sekund',
+        120: 'Ponowna próba za 120 sekund',
+      };
+      want.forEach((n, s) => expect(pl.generationBusyCountdownA11y(n), s, reason: '$n'));
+    });
+
+    test('EN countdown a11y: 1 / 2 / 5+', () {
+      expect(en.generationBusyCountdownA11y(1), 'Retrying in 1 second');
+      expect(en.generationBusyCountdownA11y(2), 'Retrying in 2 seconds');
+      expect(en.generationBusyCountdownA11y(4), 'Retrying in 4 seconds');
+      expect(en.generationBusyCountdownA11y(5), 'Retrying in 5 seconds');
+      expect(en.generationBusyCountdownA11y(45), 'Retrying in 45 seconds');
+    });
+
+    test('body with minutes: PL 1/2/5, EN 1/2/5', () {
+      expect(pl.generationBusyBodyAuto(1), 'Spróbujemy ponownie za minutę. Nie musisz nic robić.');
+      expect(pl.generationBusyBodyAuto(2), 'Spróbujemy ponownie za 2 minuty. Nie musisz nic robić.');
+      expect(pl.generationBusyBodyAuto(5), 'Spróbujemy ponownie za 5 minut. Nie musisz nic robić.');
+      expect(en.generationBusyBodyAuto(1), "We'll try again in a minute. You don't need to do anything.");
+      expect(en.generationBusyBodyAuto(2), "We'll try again in 2 minutes. You don't need to do anything.");
+      expect(en.generationBusyBodyAuto(5), "We'll try again in 5 minutes. You don't need to do anything.");
+    });
+  });
+
+  testWidgets('retryAfterSec 30 -> "minutę", 0:30; 61 -> "2 minuty"; 29 / 121 / "60" -> 60 s', (t) async {
+    await _pump(t, _busy(retryAfterSec: 30));
+    expect(find.textContaining('za minutę.'), findsOneWidget);
+    expect(find.text('Ponowna próba za 0:30'), findsOneWidget);
+    await _pump(t, _busy(retryAfterSec: 61));
+    expect(find.textContaining('za 2 minuty.'), findsOneWidget);
+    expect(find.text('Ponowna próba za 1:01'), findsOneWidget);
+    for (final v in [29, 121, '60', 60.5, null]) {
+      expect(_busy(retryAfterSec: v).retryAfterSec, 60, reason: '$v');
+    }
+  });
+
+  testWidgets('a11y: countdown is not a live region; bar hidden; title is a header', (t) async {
+    final sem = t.ensureSemantics();
+    await _pump(t, _busy());
+    final node = t.getSemantics(find.byKey(const Key('aiBusyCountdown')));
+    expect(node.label, 'Ponowna próba za 60 sekund');
+    expect(node.flagsCollection.isLiveRegion, isFalse);
+    expect(find.bySemanticsLabel(RegExp(r'^\d:\d\d$')), findsNothing);
+    expect(find.bySemanticsLabel(RegExp('1:00')), findsNothing);
+    final title = t.getSemantics(find.text(_pl['title']!));
+    expect(title.flagsCollection.isHeader, isTrue);
+    sem.dispose();
+  });
+
+  testWidgets('a11y: 90 s -> announcements 75, 60, 45, 30, 15 then "Próbujemy ponownie…"', (t) async {
+    final a = _recordAnnouncements(t);
+    final h = await _pump(t, _busy(retryAfterSec: 90));
+    await _adv(t, h, 89);
+    expect(a, [
+      'Ponowna próba za 75 sekund',
+      'Ponowna próba za 60 sekund',
+      'Ponowna próba za 45 sekund',
+      'Ponowna próba za 30 sekund',
+      'Ponowna próba za 15 sekund',
+    ]);
+    await _adv(t, h, 1);
+    expect(a.last, 'Próbujemy ponownie…');
+    expect(a, hasLength(6));
+  });
+
+  testWidgets('a11y EN 60 s: 45, 30, 15 and "Trying again…"', (t) async {
+    final a = _recordAnnouncements(t);
+    final h = await _pump(t, _busy(), locale: 'en');
+    await _adv(t, h, 60);
+    expect(a, [
+      'Retrying in 45 seconds',
+      'Retrying in 30 seconds',
+      'Retrying in 15 seconds',
+      'Trying again…',
+    ]);
+  });
+
+  testWidgets('a11y: no countdown announcements in B, D, E', (t) async {
+    final a = _recordAnnouncements(t);
+    final e = await _pump(t, _busy(slotReleased: false));
+    await _adv(t, e, 120);
+    expect(a, isEmpty);
+  });
+
+  testWidgets('observation: announcements while the app is in the background', (t) async {
+    final a = _recordAnnouncements(t);
+    final h = await _pump(t, _busy());
+    _toBackground(t);
+    await _adv(t, h, 59);
+    // Recorded, not asserted as a defect: printed for the report.
+    // ignore: avoid_print
+    print('QA background announcements: $a');
+    expect(h.pending, isEmpty);
+  });
+
+  testWidgets('E + background: after resume still E (no D, no countdown, no automat)', (t) async {
+    final h = await _pump(t, _busy(slotReleased: null));
+    _toBackground(t);
+    await _adv(t, h, 120);
+    _toForeground(t);
+    await t.pump();
+    expect(h.c.phase, AiBusyPhase.noAuto);
+    expect(find.text(_pl['title']!), findsOneWidget);
+    expect(find.text('${_pl['manual']} ${_pl['unknown']}'), findsOneWidget);
+    expect(find.byKey(const Key('aiBusyCountdown')), findsNothing);
+    expect(h.pending, isEmpty);
+  });
+
+  testWidgets('D -> "Spróbuj teraz" -> C -> ai_busy(false) -> B with "counted"', (t) async {
+    final h = await _pump(t, _busy());
+    _toBackground(t);
+    await _adv(t, h, 61);
+    _toForeground(t);
+    await t.pump();
+    expect(find.text('${_pl['paused']} ${_pl['released']}'), findsOneWidget);
+    await t.tap(find.byKey(const Key('aiBusyTryNow')));
+    await t.pump();
+    expect(find.text('Próbujemy ponownie…'), findsOneWidget);
+    expect(find.byKey(const Key('aiBusyTryNow')), findsNothing);
+    expect(find.byKey(const Key('aiBusyBack')), findsNothing);
+    h.pending.single.complete(_busy(slotReleased: false));
+    await t.pump();
+    expect(find.text(_pl['still']!), findsOneWidget);
+    expect(find.text('${_pl['manual']} ${_pl['counted']}'), findsOneWidget);
+    await _adv(t, h, 180);
+    expect(h.pending, hasLength(1));
+  });
+
+  testWidgets('B: repeated "Spróbuj teraz" -> ai_busy -> B again, never a countdown', (t) async {
+    final h = await _pump(t, _busy());
+    await _adv(t, h, 60);
+    h.pending.last.complete(_busy());
+    await t.pump();
+    for (var i = 0; i < 3; i++) {
+      await t.tap(find.byKey(const Key('aiBusyTryNow')));
+      await t.pump();
+      h.pending.last.complete(_busy());
+      await t.pump();
+      expect(h.c.phase, AiBusyPhase.manual);
+      expect(find.byKey(const Key('aiBusyCountdown')), findsNothing);
+    }
+    expect(h.pending, hasLength(4));
+  });
+
+  for (final s in ['B', 'D', 'E']) {
+    testWidgets('$s: "Wróć do formularza" and system back -> onBack, no dialog, no retry', (t) async {
+      final h = await _pump(t, _busy(slotReleased: s == 'E' ? false : true));
+      if (s == 'B') {
+        await t.tap(find.byKey(const Key('aiBusyTryNow')));
+        await t.pump();
+        h.pending.single.complete(_busy());
+        await t.pump();
+      } else if (s == 'D') {
+        _toBackground(t);
+        await _adv(t, h, 61);
+        _toForeground(t);
+        await t.pump();
+      }
+      final before = h.pending.length;
+      expect(await t.binding.handlePopRoute(), isTrue);
+      await t.pump();
+      expect(h.backs, 1);
+      expect(find.byType(Dialog), findsNothing);
+      await _adv(t, h, 130);
+      expect(h.pending.length, before);
+    });
+  }
+
+  testWidgets('C: system back does not call onBack (host shows the EK-07 dialog)', (t) async {
+    final h = await _pump(t, _busy());
+    await t.tap(find.byKey(const Key('aiBusyTryNow')));
+    await t.pump();
+    await t.binding.handlePopRoute();
+    await t.pump();
+    expect(h.backs, 0);
+    expect(h.pending, hasLength(1));
+  });
+
+  testWidgets('received in background (inactive only, e.g. shade) -> no automat at deadline', (t) async {
+    t.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    final h = await _pump(t, _busy());
+    await _adv(t, h, 60);
+    expect(h.pending, isEmpty);
+    expect(h.c.phase, AiBusyPhase.paused);
+    t.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+  });
+
+  testWidgets('received in background, user returns at 59 s -> automat fires once at 60 s', (t) async {
+    _toBackground(t);
+    final h = await _pump(t, _busy());
+    await _adv(t, h, 59);
+    _toForeground(t);
+    await t.pump();
+    expect(find.text('Ponowna próba za 0:01'), findsOneWidget);
+    await _adv(t, h, 1);
+    expect(h.pending, hasLength(1));
+    h.pending.single.complete(_busy());
+    await t.pump();
+    await _adv(t, h, 120);
+    expect(h.pending, hasLength(1));
+  });
+
+  testWidgets('countdown keeps time from the monotonic clock when ticks stall', (t) async {
+    final h = await _pump(t, _busy());
+    h.mono.t += const Duration(seconds: 30); // 30 s pass with no ticks
+    await t.pump(const Duration(seconds: 1));
+    expect(find.text('Ponowna próba za 0:30'), findsOneWidget);
+  });
+}
