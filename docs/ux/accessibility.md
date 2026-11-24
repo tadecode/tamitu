@@ -48,6 +48,7 @@ Wybór: ikona `tick-02` (chip, segment), wypełnione koło (radio), wskaźnik (z
 - Komunikaty CMP-13 o zmianie stanu (sieć) i snackbary ogłaszane jako regiony na żywo (uprzejmie); stan ekranu CMP-18 przenosi fokus na tytuł; dialog przenosi fokus na tytuł i jest modalny.
 - Przycisk nieaktywny czytany z powodem (EK-02, EK-03).
 - Postęp generowania: ogłoszenie zmian tekstu nie częściej niż co 10 s.
+- Odliczanie (EK-07 `ai_busy`, TAM-98): tekst odliczania nie jest regionem na żywo; etykieta w pełnych słowach („Ponowna próba za 42 sekundy”); ogłoszenie uprzejme co 15 s; pasek odliczania ukryty przed TalkBack; użytkownik nie musi działać w limicie czasu (WCAG 2.2.1).
 
 ## 5. Skalowanie tekstu
 - Wszystkie rozmiary w sp; aplikacja działa przy skali systemowej do **200%** bez utraty treści i funkcji.

@@ -1,7 +1,7 @@
 # Komponent: CMP-17 Wskaźnik postępu i szkielet
 
 - Status: szkic
-- Autor: ux · Data: 2026-11-16 · Wersja: 0.1
+- Autor: ux · Data: 2026-11-16 · Wersja: 0.2 (2026-11-24, TAM-98: wariant „Liniowy określony – odliczanie”)
 - Odpowiednik Material 3 / Flutter: Progress indicators / `LinearProgressIndicator`, `CircularProgressIndicator` (nieokreślone); szkielet – prostokąty `surfaceContainerHighest` w kształcie docelowej treści (bez dodatkowego pakietu)
 
 ## Cel
@@ -14,6 +14,7 @@ Nie służy do: fałszywego procentu postępu (czas generowania nieznany – mac
 |---|---|---|
 | Szkielet | EK-04 wczytanie listy (3 karty-szkielety), EK-08 wczytanie planu | tylko jeśli wczytanie > 300 ms (bez migotania) |
 | Liniowy nieokreślony | EK-07 generowanie (z tekstem), EK-15 usuwanie konta | na pełną szerokość treści, z tekstem nad nim |
+| Liniowy określony – odliczanie | EK-07 stan `ai_busy`: czas do automatycznego ponowienia (`screens/ek-07-ai-busy.md`) | `LinearProgressIndicator(value:)` = pozostały czas / całość; pasek się **opróżnia** co 1 s; pokazuje czas, nie postęp pracy, więc nie łamie zasady „bez fałszywego procentu”; zawsze z tekstem odliczania nad nim; szerokość tekstu CMP-18 (maks. 320 dp) |
 | Kołowy nieokreślony | w przycisku (CMP-02 ładowanie), EK-01 jeśli ustalanie sesji > 500 ms | 20 dp w przycisku, 48 dp samodzielnie |
 
 ## Stany

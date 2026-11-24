@@ -85,6 +85,14 @@ flowchart TD
   Z -->|jest| G["EK-07 Generowanie: wskaźnik nieokreślony + Anuluj"]
   G -->|sukces| P["Plan zapisany automatycznie → EK-08 z informacją o AI; pozostało X z 5 [U4]"]
   G -->|błąd / AI niedostępne / zła odpowiedź| E1["EK-05 + komunikat błędu (EK-16), dane zachowane, limit zwrócony"]
+  G -->|ai_busy: AI chwilowo przeciążone| BZ["EK-07 stan przeciążenia: odliczanie 60 s, Spróbuj teraz, Wróć do formularza (ek-07-ai-busy)"]
+  BZ -->|koniec odliczania na pierwszym planie albo Spróbuj teraz| G2["EK-07 ponawianie (jedno automatyczne)"]
+  BZ -->|Wróć / wstecz| B
+  G2 -->|ai_busy ponownie| BM["EK-07: sam przycisk Spróbuj teraz, bez odliczania"]
+  BM -->|Spróbuj teraz| G2
+  BM -->|Wróć / wstecz| B
+  G2 -->|sukces| P
+  G2 -->|inny błąd| E1
   G -->|limit wyczerpany| E2["EK-05 + komunikat limitu z godziną odnowienia"]
   G -->|Anuluj / wstecz| P4["P4"]
 ```
