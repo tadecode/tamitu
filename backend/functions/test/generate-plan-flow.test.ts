@@ -12,6 +12,7 @@ import { ModelError } from "../src/ai.js";
 import { SAFE_RUNTIME_DEFAULTS, type RuntimeConfig } from "../src/config.js";
 import { generatePlanCore, type Deps } from "../src/endpoints.js";
 import { runGuarded } from "../src/handler.js";
+import { resolvePrompt } from "../src/prompt/index.js";
 import { echoValidModel, memoryQuota, ok, scriptedModel } from "./helpers/fakes.js";
 
 const NOW = new Date("2026-11-21T10:00:00Z");
@@ -64,6 +65,15 @@ const fields = () => logged.map((a) => a[1] as Record<string, unknown>);
 
 beforeEach(() => {
   logged.length = 0;
+});
+
+describe("generatePlan - prompt version (TAM-95, review PR #148 #2)", () => {
+  it("deps.prompt = plan-v2 is returned and logged; without it the response says plan-v1", async () => {
+    const { deps } = mkDeps({ prompt: resolvePrompt("plan-v2") });
+    expect((await run(body(), deps)).promptVersion).toBe("plan-v2");
+    expect(fields().find((f) => f["fn"] === "generatePlan.attempt")).toMatchObject({ promptVersion: "plan-v2" });
+    expect((await run(body(), mkDeps({ prompt: resolvePrompt("plan-v9") }).deps)).promptVersion).toBe("plan-v1");
+  });
 });
 
 describe("generatePlan - success", () => {

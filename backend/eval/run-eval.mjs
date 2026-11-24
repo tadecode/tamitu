@@ -1,5 +1,5 @@
 // P3-05 evaluation runner (ADR-0001 pkt 2: >= 20 cases x PL/EN, >= 95% valid within 2 attempts).
-// Uses the PRODUCTION code path (prompt plan-v1, responseSchema, validator, retry) from functions/lib.
+// Uses the PRODUCTION code path (prompt from --prompt, default plan-v1 as in production; responseSchema, validator incl. dup_place warnings, retry) from functions/lib.
 //
 // Modes (default = --estimate):
 //   --estimate   no network: number of generations/calls and a cost estimate (costs.md prices)
@@ -9,7 +9,7 @@
 //                (owner: `gcloud auth print-access-token`, never stored in files), and stops at --stop-pln.
 //
 // Build first: npm --prefix backend/functions run build
-// Run:        node backend/eval/run-eval.mjs [--estimate|--dry-run|--paid --confirm-paid-run] [--stop-pln 2.5] [--only E03,E04] [--lang pl|en]
+// Run:        node backend/eval/run-eval.mjs [--estimate|--dry-run|--paid --confirm-paid-run] [--prompt plan-v1|plan-v2] [--stop-pln 2.5] [--only E03,E04] [--lang pl|en]
 // Outputs (paid/dry-run): %TEMP%\tamitu-eval-p305\<timestamp>\ (plans for the owner's manual K3/K4 review + results.csv).
 // Logs nothing to the cloud; prints only metadata (case id, attempts, issue codes, tokens, seconds, PLN).
 import { createRequire } from "node:module";
@@ -25,14 +25,15 @@ const { parseAiConfig, vertexModel } = lib("ai.js");
 const { generateValidPlan } = lib("generate.js");
 const { computeDayTargets } = lib("plan-targets.js");
 const { parseGeneratePlan } = lib("schemas.js");
+const { PROMPTS } = lib("prompt/index.js");
 
-import { attemptCostPln, canStart, costPln, GuardError, parseStopPln, priceFor, rawOption } from "./eval-guard.mjs";
+import { attemptCostPln, canStart, costPln, GuardError, parsePromptVersion, parseStopPln, priceFor, rawOption } from "./eval-guard.mjs";
 
 const DEV_PROJECT = "tamitu-dev-tadecode";
 
 const args = process.argv.slice(2);
 const flag = (n) => args.includes(n);
-let mode, stopPln, modelId, only, langs, location;
+let mode, stopPln, modelId, only, langs, location, promptVersion;
 try {
   // Fail-closed (review PR #136 #3): a malformed option stops the run in EVERY mode.
   mode = flag("--paid") ? "paid" : flag("--dry-run") ? "dry-run" : "estimate";
@@ -44,6 +45,7 @@ try {
   if (lang !== undefined && lang !== "pl" && lang !== "en") throw new GuardError("--lang must be pl or en");
   langs = lang ? [lang] : ["pl", "en"];
   location = rawOption(args, "--location") ?? "eu";
+  promptVersion = parsePromptVersion(rawOption(args, "--prompt"), Object.keys(PROMPTS));
 } catch (e) {
   if (!(e instanceof GuardError)) throw e;
   console.error(`Refusing: ${e.message}`);
@@ -92,7 +94,7 @@ cases.forEach((c) => langs.forEach((lang) => runs.push({ c, lang, request: build
 const est = runs.map((r) => estimateTokens(r.request));
 runs.forEach((r, i) => (r.estimate = est[i]));
 const oneAttempt = est.reduce((s, e) => s + costPln(modelId, e.input, e.output), 0);
-console.log(`Eval set ${set.version}: ${cases.length} cases x ${langs.length} languages = ${runs.length} generations (model ${modelId})`);
+console.log(`Eval set ${set.version}: ${cases.length} cases x ${langs.length} languages = ${runs.length} generations (model ${modelId}, prompt ${promptVersion})`);
 console.log(`Calls: min ${runs.length}, max ${runs.length * 2} (2 attempts each)`);
 console.log(`Estimated cost: ~${oneAttempt.toFixed(2)} PLN at 1 attempt each, ~${(oneAttempt * 1.4).toFixed(2)} PLN with 40% retries, worst case ${(oneAttempt * 2).toFixed(2)} PLN; ceiling ${stopPln} PLN (a generation starts only if its worst case still fits)`);
 if (mode === "estimate") process.exit(0);
@@ -131,7 +133,7 @@ if (mode === "paid") {
           title: `Day ${t.dayNumber}`,
           items: Array.from({ length: n }, (_, i) => {
             const m = start + i * step;
-            return { startTime: `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`, name: `Place ${i + 1}`, locality: "Testville", description: "Synthetic." };
+            return { startTime: `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`, name: `Place ${t.dayNumber}.${i + 1}`, locality: "Testville", description: "Synthetic." };
           }),
         };
       });
@@ -155,7 +157,7 @@ for (const r of runs) {
   let outcome = "ok";
   let plan;
   try {
-    plan = (await generateValidPlan(r.request, model, { onAttempt: (a) => attempts.push(a) })).plan;
+    plan = (await generateValidPlan(r.request, model, { prompt: PROMPTS[promptVersion], onAttempt: (a) => attempts.push(a) })).plan;
   } catch (e) {
     outcome = e?.appCode ?? "error";
   }
@@ -165,12 +167,14 @@ for (const r of runs) {
   const row = {
     case: r.c.id,
     lang: r.lang,
+    prompt: attempts[0]?.promptVersion ?? promptVersion,
     days: r.c.days,
     pace: r.c.pace,
     outcome,
     attempts: attempts.length,
     firstAttemptOk: attempts[0]?.outcome === "ok",
     issues: attempts.map((a) => a.validationErrors ?? a.modelError ?? "").filter(Boolean).join(" | "),
+    qualityWarnings: attempts.map((a) => a.qualityWarnings ?? "").filter(Boolean).join(" | "),
     tokensIn: attempts.reduce((s, a) => s + (a.tokensIn ?? 0), 0),
     tokensOut: attempts.reduce((s, a) => s + (a.tokensOut ?? 0), 0),
     tokensThought: attempts.reduce((s, a) => s + (a.tokensThought ?? 0), 0),
@@ -179,14 +183,16 @@ for (const r of runs) {
   };
   results.push(row);
   if (plan) writeFileSync(join(outDir, `${r.c.id}-${r.lang}.json`), JSON.stringify({ case: r.c, lang: r.lang, plan }, null, 2));
-  console.log(`${row.case} ${row.lang} ${row.outcome} attempts=${row.attempts} ${row.issues} ${row.seconds}s ${row.pln} PLN`);
+  console.log(`${row.case} ${row.lang} ${row.outcome} attempts=${row.attempts} ${row.issues} ${row.qualityWarnings} ${row.seconds}s ${row.pln} PLN`);
 }
 
 const okCount = results.filter((x) => x.outcome === "ok").length;
 const first = results.filter((x) => x.firstAttemptOk).length;
+const withRepeats = results.filter((x) => x.qualityWarnings).length;
 const csvHead = Object.keys(results[0] ?? { case: "" });
 writeFileSync(join(outDir, "results.csv"), [csvHead.join(","), ...results.map((x) => csvHead.map((k) => JSON.stringify(x[k] ?? "")).join(","))].join("\n"));
 console.log(`\nValid within 2 attempts: ${okCount}/${results.length} (${((100 * okCount) / Math.max(1, results.length)).toFixed(1)}%, threshold 95%)`);
 console.log(`Valid at first attempt: ${first}/${results.length} (retry rate ${(100 - (100 * first) / Math.max(1, results.length)).toFixed(1)}%)`);
+console.log(`Plans with a repeated place (dup_place, TAM-95; warning only, upper estimate, not counted as invalid): ${withRepeats}/${okCount} valid plans`);
 console.log(`Cost (from usage): ${spent.toFixed(3)} PLN. Output: ${outDir}`);
 console.log("Manual review K3/K4 (arch-01-gemini-test.md 4.6): the owner reads the plans in the output folder.");

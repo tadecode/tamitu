@@ -3,6 +3,9 @@ import { describe, expect, it } from "vitest";
 import { ModelError } from "../src/ai.js";
 import { generateValidPlan, retryBackoffMs, RETRY_BACKOFF_MS, type AttemptLog } from "../src/generate.js";
 import { computeDayTargets } from "../src/plan-targets.js";
+import { resolvePrompt } from "../src/prompt/index.js";
+import * as v1 from "../src/prompt/plan-v1.js";
+import * as v2 from "../src/prompt/plan-v2.js";
 import { parseGeneratePlan } from "../src/schemas.js";
 import { ok, scriptedModel, validOutput } from "./helpers/fakes.js";
 
@@ -102,7 +105,38 @@ describe("generateValidPlan", () => {
     expect(logs2[0]?.modelError).toBe("unknown");
   });
 
-  it("sends the simplified schema and the plan-v1 system instruction", async () => {
+  it("TAM-95: a repeated place is logged as a quality warning, without a second (paid) call", async () => {
+    const body = validOutput(targets);
+    body.days[1]!.items[0]!.name = "Campo de' Fiori";
+    body.days[3]!.items[0]!.name = "Campo de' Fiori Morning Market";
+    const m = scriptedModel([ok(body), good]);
+    const logs: AttemptLog[] = [];
+    const r = await generateValidPlan(request, m, { onAttempt: (l) => logs.push(l) });
+    expect(r.attempts).toBe(1);
+    expect(m.calls).toHaveLength(1);
+    expect(logs).toEqual([expect.objectContaining({ outcome: "ok", qualityWarnings: "dup_place@day4" })]);
+    expect(JSON.stringify(logs)).not.toContain("Fiori");
+  });
+
+  it("prompt option: plan-v2 is sent and logged only when selected (review PR #148 #2)", async () => {
+    const m = scriptedModel([good]);
+    const logs: AttemptLog[] = [];
+    const r = await generateValidPlan(request, m, { prompt: resolvePrompt("plan-v2"), onAttempt: (l) => logs.push(l) });
+    expect(m.calls[0]!.systemInstruction).toBe(v2.SYSTEM_INSTRUCTION);
+    expect(r.promptVersion).toBe("plan-v2");
+    expect(logs[0]?.promptVersion).toBe("plan-v2");
+    const d = scriptedModel([good]);
+    expect((await generateValidPlan(request, d)).promptVersion).toBe("plan-v1");
+    expect(d.calls[0]!.systemInstruction).toBe(v1.SYSTEM_INSTRUCTION);
+  });
+
+  it("a plan without repeats logs no qualityWarnings field", async () => {
+    const logs: AttemptLog[] = [];
+    await generateValidPlan(request, scriptedModel([good]), { onAttempt: (l) => logs.push(l) });
+    expect(logs[0]).not.toHaveProperty("qualityWarnings");
+  });
+
+  it("sends the simplified schema and the plan-v1 system instruction (default)", async () => {
     const m = scriptedModel([good]);
     await generateValidPlan(request, m);
     expect(m.calls[0]!.systemInstruction).toContain("dayTargets");

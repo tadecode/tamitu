@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { computeDayTargets } from "../src/plan-targets.js";
-import { buildUserTurn, MODEL_RESPONSE_SCHEMA, PROMPT_VERSION, SYSTEM_INSTRUCTION } from "../src/prompt/plan-v1.js";
+import { buildUserTurn, DEFAULT_PROMPT, MODEL_RESPONSE_SCHEMA, PROMPTS, resolvePrompt } from "../src/prompt/index.js";
+import * as v1 from "../src/prompt/plan-v1.js";
+import * as v2 from "../src/prompt/plan-v2.js";
 import { parseGeneratePlan } from "../src/schemas.js";
 
 const NOW = new Date("2026-11-21T10:00:00Z");
@@ -57,9 +59,11 @@ describe("responseSchema for the model (p3-05 sekcja 3 pkt 2)", () => {
   });
 });
 
-describe("prompt plan-v1", () => {
+describe.each([
+  [v1.PROMPT_VERSION, v1.SYSTEM_INSTRUCTION],
+  [v2.PROMPT_VERSION, v2.SYSTEM_INSTRUCTION],
+])("prompt %s – shared rules", (_version, SYSTEM_INSTRUCTION) => {
   it("system instruction is English, states the per-day rule, last day and long-plan rule, data-only clause", () => {
-    expect(PROMPT_VERSION).toBe("plan-v1");
     expect(SYSTEM_INSTRUCTION).toContain("of the dayTargets entry whose dayNumber is N");
     expect(SYSTEM_INSTRUCTION).toContain("earliestStart of the dayTargets entry with dayNumber 1");
     expect(SYSTEM_INSTRUCTION).toMatch(/last day .*departure day/i);
@@ -74,6 +78,37 @@ describe("prompt plan-v1", () => {
     // The data matches the wording: entry i carries dayNumber i + 1.
     computeDayTargets(request).forEach((t, i) => expect(t.dayNumber).toBe(i + 1));
   });
+});
+
+describe("prompt versions (TAM-95, review PR #148 #2)", () => {
+  it("plan-v1 is unchanged and stays the default", () => {
+    expect(v1.PROMPT_VERSION).toBe("plan-v1");
+    expect(DEFAULT_PROMPT).toEqual({ version: "plan-v1", systemInstruction: v1.SYSTEM_INSTRUCTION });
+    expect(v1.SYSTEM_INSTRUCTION).toContain("Do not repeat the same place on two days.");
+  });
+  it("plan-v2 = plan-v1 + the no-repeat rule (QA TAM-88 K4 c)", () => {
+    expect(v2.PROMPT_VERSION).toBe("plan-v2");
+    expect(v2.SYSTEM_INSTRUCTION).toContain("appears at most once in\nthe whole plan");
+    expect(v2.SYSTEM_INSTRUCTION).toContain("not even under another, longer or colloquial name");
+    expect(v2.SYSTEM_INSTRUCTION).toContain('"X Market"');
+    expect(v2.SYSTEM_INSTRUCTION).toContain("The accommodation (trip.lodging) is never an item");
+    // Every other line of plan-v1 is kept (only the no-repeat sentence was rewritten).
+    const v2Lines = new Set(v2.SYSTEM_INSTRUCTION.split("\n"));
+    const missing = v1.SYSTEM_INSTRUCTION.split("\n").filter((l) => !v2Lines.has(l));
+    expect(missing).toEqual(["one area and in a sensible geographic order. Do not repeat the same place on two days."]);
+  });
+  it("resolvePrompt: exact known value selects it; missing, empty, unknown or odd case -> plan-v1 (fail-closed)", () => {
+    expect(resolvePrompt("plan-v2").version).toBe("plan-v2");
+    expect(resolvePrompt(" plan-v2 ").version).toBe("plan-v2");
+    expect(resolvePrompt("plan-v1").version).toBe("plan-v1");
+    for (const raw of [undefined, "", "plan-v3", "PLAN-V2", "latest", "constructor", "__proto__", "toString"]) {
+      expect(resolvePrompt(raw)).toBe(DEFAULT_PROMPT);
+    }
+    expect(Object.keys(PROMPTS).sort()).toEqual(["plan-v1", "plan-v2"]);
+  });
+});
+
+describe("prompt plan-v1 / plan-v2 – user turn", () => {
   it("user turn is JSON data with dayTargets and without ids or testData", () => {
     const targets = computeDayTargets(request);
     const text = buildUserTurn(request, targets);

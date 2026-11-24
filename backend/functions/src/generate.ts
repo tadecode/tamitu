@@ -4,7 +4,7 @@ import { ModelError, type ModelResult, type PlanModel } from "./ai.js";
 import { AppError, ERROR_CODE_PATTERN } from "./errors.js";
 import { computeDayTargets, type DayTarget } from "./plan-targets.js";
 import { retryHints, validatePlanOutput, type ValidPlan } from "./plan-validator.js";
-import { buildUserTurn, MODEL_RESPONSE_SCHEMA, PROMPT_VERSION, SYSTEM_INSTRUCTION } from "./prompt/plan-v1.js";
+import { buildUserTurn, DEFAULT_PROMPT, MODEL_RESPONSE_SCHEMA, type PlanPrompt } from "./prompt/index.js";
 import type { GeneratePlanRequest } from "./schemas.js";
 
 /** Contract: max. 2 model calls per generation. */
@@ -34,6 +34,8 @@ export interface AttemptLog {
   outcome: string;
   /** Validation issue codes joined with ",", e.g. `items_count@day5,time_order@day2`. */
   validationErrors?: string | undefined;
+  /** Quality warnings of a valid plan joined with ",", e.g. `dup_place@day14` (TAM-95); log only, no retry. */
+  qualityWarnings?: string | undefined;
   /** ModelError code (HTTP status / timeout / network). */
   modelError?: string | undefined;
 }
@@ -42,6 +44,8 @@ export interface GenerationResult {
   plan: ValidPlan;
   attempts: number;
   targets: DayTarget[];
+  /** Version of the prompt actually used (returned to the app as promptVersion). */
+  promptVersion: string;
 }
 
 const safeToken = (v: string | undefined) => (v !== undefined && ERROR_CODE_PATTERN.test(v) ? v : undefined);
@@ -56,21 +60,28 @@ const safeToken = (v: string | undefined) => (v !== undefined && ERROR_CODE_PATT
 export async function generateValidPlan(
   request: GeneratePlanRequest,
   model: PlanModel,
-  opts: { clock?: () => number; onAttempt?: (log: AttemptLog) => void; sleep?: (ms: number) => Promise<void> } = {},
+  opts: {
+    clock?: () => number;
+    onAttempt?: (log: AttemptLog) => void;
+    sleep?: (ms: number) => Promise<void>;
+    /** Prompt version (AI_PROMPT_VERSION via prompt/index.ts resolvePrompt); default plan-v1. */
+    prompt?: PlanPrompt;
+  } = {},
 ): Promise<GenerationResult> {
   const clock = opts.clock ?? Date.now;
   const sleep = opts.sleep ?? defaultSleep;
+  const prompt = opts.prompt ?? DEFAULT_PROMPT;
   const targets = computeDayTargets(request);
   let hints: string[] | undefined;
   let lastFailure: "invalid" | "unavailable" = "unavailable";
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    const base = { attempt, aiModel: model.modelId, aiLocation: model.location, promptVersion: PROMPT_VERSION };
+    const base = { attempt, aiModel: model.modelId, aiLocation: model.location, promptVersion: prompt.version };
     const started = clock();
     let result: ModelResult;
     try {
       result = await model.generate({
-        systemInstruction: SYSTEM_INSTRUCTION,
+        systemInstruction: prompt.systemInstruction,
         userText: buildUserTurn(request, targets, hints),
         responseSchema: MODEL_RESPONSE_SCHEMA,
       });
@@ -103,8 +114,9 @@ export async function generateValidPlan(
       targets,
     });
     if (v.ok) {
-      opts.onAttempt?.({ ...base, ...usage, durationMs, outcome: "ok" });
-      return { plan: v.plan, attempts: attempt, targets };
+      const qualityWarnings = v.warnings.length > 0 ? v.warnings.join(",") : undefined;
+      opts.onAttempt?.({ ...base, ...usage, durationMs, outcome: "ok", ...(qualityWarnings ? { qualityWarnings } : {}) });
+      return { plan: v.plan, attempts: attempt, targets, promptVersion: prompt.version };
     }
     opts.onAttempt?.({
       ...base,

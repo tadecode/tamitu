@@ -28,6 +28,8 @@ export interface LogFields {
   outcome?: string;
   /** Validation issue codes built by the server (no content), e.g. `items_count@day5`. */
   validationErrors?: string;
+  /** Quality warning codes of a valid plan (no content), e.g. `dup_place@day14` (TAM-95). */
+  qualityWarnings?: string;
   /** ModelError code: HTTP status, `timeout`, `network`. */
   modelError?: string;
   /** Fixed code when releasing a quota slot failed. */
@@ -55,13 +57,16 @@ const ALLOWED: ReadonlyArray<keyof LogFields> = [
   "tokensThought",
   "outcome",
   "validationErrors",
+  "qualityWarnings",
   "modelError",
   "quotaRelease",
 ];
 
 const MAX_STRING = 64;
 /** validationErrors joins several server-built codes; longer cap, still content-free. */
-const MAX_STRING_BY_KEY: Partial<Record<keyof LogFields, number>> = { validationErrors: 200 };
+// qualityWarnings: worst case 13 x `dup_place@dayNN` = 199 characters for 14 days (test in plan-validator.test.ts);
+// raise this cap together with MAX_DAYS.
+const MAX_STRING_BY_KEY: Partial<Record<keyof LogFields, number>> = { validationErrors: 200, qualityWarnings: 200 };
 
 export function sanitizeFields(fields: Partial<LogFields>): Record<string, string | number> {
   const out: Record<string, string | number> = {};

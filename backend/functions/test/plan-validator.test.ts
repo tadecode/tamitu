@@ -1,7 +1,7 @@
 // Synthetic cases shaped like the ARCH-01 failures (p3-05 sekcja 7); no files from the ARCH-01 run.
 import { describe, expect, it } from "vitest";
 import type { DayTarget } from "../src/plan-targets.js";
-import { MAX_RETRY_HINTS, retryHints, validatePlanOutput } from "../src/plan-validator.js";
+import { isSamePlace, MAX_RETRY_HINTS, placeKey, placeNameTokens, retryHints, sameTokens, validatePlanOutput } from "../src/plan-validator.js";
 import { validOutput } from "./helpers/fakes.js";
 
 const intense4: DayTarget[] = [
@@ -153,5 +153,129 @@ describe("issue codes and hints carry no content", () => {
     const r = run(b);
     expect(r.ok).toBe(false);
     if (!r.ok) expect(retryHints(r.issues).length).toBeLessThanOrEqual(MAX_RETRY_HINTS);
+  });
+});
+
+// TAM-95: the same place on two days (QA TAM-88 K4 c). Synthetic plans; names shaped like the QA findings.
+describe("repeated places (TAM-95) – warning only, plan stays valid", () => {
+  const targets3: DayTarget[] = [
+    { dayNumber: 1, minItems: 2, maxItems: 2, earliestStart: "09:00" },
+    { dayNumber: 2, minItems: 2, maxItems: 2 },
+    { dayNumber: 3, minItems: 2, maxItems: 2 },
+  ];
+  const withNames = (names: [string, string][], lang: "pl" | "en" = "en") => {
+    const body = validOutput(targets3, lang);
+    names.forEach((pair, d) => pair.forEach((name, i) => (body.days[d]!.items[i]!.name = name)));
+    return run(body, targets3, lang);
+  };
+  const warnings = (r: ReturnType<typeof run>) => (r.ok ? r.warnings : ["NOT_OK"]);
+
+  it("no repeats -> no warnings", () => {
+    expect(warnings(withNames([["Colosseum", "Roman Forum"], ["Pantheon", "Trevi Fountain"], ["Villa Borghese", "Galleria Borghese"]]))).toEqual([]);
+  });
+  it('E03-en: "X" and "X Morning Market" on two days', () => {
+    expect(warnings(withNames([["Colosseum", "Campo de' Fiori"], ["Pantheon", "Trevi Fountain"], ["Vatican Museums", "Campo de' Fiori Morning Market"]]))).toEqual(["dup_place@day3"]);
+  });
+  it('E17-pl: "Restauracja X" and "Tarihi X Selim Usta" (filler word + longer name)', () => {
+    expect(
+      warnings(withNames([["Hagia Sophia", "Restauracja Sultanahmet Koftecisi"], ["Tarihi Sultanahmet Koftecisi Selim Usta", "Cysterna Bazyliki"], ["Wielki Bazar", "Galata"]], "pl")),
+    ).toEqual(["dup_place@day2"]);
+  });
+  it("case, diacritics, Polish ł and punctuation do not hide a repeat", () => {
+    expect(warnings(withNames([["Wawel", "Sukiennice"], ["Kościół Mariacki", "Muzeum Czartoryskich"], ["KOSCIOL MARIACKI", "Kładka Bernatka"]], "pl"))).toEqual(["dup_place@day3"]);
+    expect(warnings(withNames([["Wawel", "Kladka Bernatka"], ["Kładka  Bernatka!", "Sukiennice"], ["Kazimierz", "Podgorze"]], "pl"))).toEqual(["dup_place@day2"]);
+  });
+  it('E13-en: a colloquial name ("Fontana Pretoria" / "Piazza della Vergogna") is out of reach (documented limit)', () => {
+    expect(warnings(withNames([["Palermo Cathedral", "Fontana Pretoria"], ["Teatro Massimo", "Ballaro Market"], ["Monreale", "Piazza della Vergogna"]]))).toEqual([]);
+  });
+  it("borderline from QA is not a repeat: Pantheon and Piazza della Rotonda; one-word name inside a longer one", () => {
+    expect(warnings(withNames([["Pantheon", "Colosseum"], ["Piazza della Rotonda", "Trevi Fountain"], ["Vatican", "Vatican Museums"]]))).toEqual([]);
+  });
+  it("same name twice in one day is not reported (rule covers different days)", () => {
+    expect(warnings(withNames([["Colosseum", "Colosseum"], ["Pantheon", "Trevi Fountain"], ["Villa Borghese", "Spanish Steps"]]))).toEqual([]);
+  });
+  it("one code per later day; warnings never turn into retry issues", () => {
+    const r = withNames([["Colosseum", "Pantheon"], ["The Colosseum", "Pantheon"], ["Colosseum", "Trevi Fountain"]]);
+    expect(r.ok).toBe(true);
+    expect(warnings(r)).toEqual(["dup_place@day2", "dup_place@day3"]);
+  });
+  it("names that are only filler words are ignored", () => {
+    expect(warnings(withNames([["Restaurant", "Colosseum"], ["Restaurant", "Pantheon"], ["Night Market", "Night Market"]]))).toEqual([]);
+  });
+});
+
+describe("placeNameTokens / sameTokens", () => {
+  it("folds case, marks, punctuation and filler words", () => {
+    expect(placeNameTokens("Campo de' Fiori Morning Market")).toEqual(["campo", "de", "fiori"]);
+    expect(placeNameTokens("Restauracja Łazienki Królewskie")).toEqual(["lazienki", "krolewskie"]);
+    expect(placeNameTokens("Café Central")).toEqual(["central"]);
+  });
+  it("matches equal lists and contiguous runs of >= 2 tokens only", () => {
+    expect(sameTokens(["a", "b"], ["x", "a", "b", "y"])).toBe(true);
+    expect(sameTokens(["a", "b"], ["a", "x", "b"])).toBe(false);
+    expect(sameTokens(["a"], ["a", "b"])).toBe(false);
+    expect(sameTokens(["a"], ["a"])).toBe(true);
+    expect(sameTokens([], [])).toBe(false);
+  });
+});
+
+// Review PR #148 #1: false alarms of dup_place (synthetic, shaped like the reviewer's examples).
+describe("repeated places – no false alarms (review PR #148 #1)", () => {
+  const targets3: DayTarget[] = [
+    { dayNumber: 1, minItems: 2, maxItems: 2, earliestStart: "09:00" },
+    { dayNumber: 2, minItems: 2, maxItems: 2 },
+    { dayNumber: 3, minItems: 2, maxItems: 2 },
+  ];
+  type P = [name: string, locality: string];
+  const plan = (days: [P, P][], lang: "pl" | "en" = "en") => {
+    const body = validOutput(targets3, lang);
+    days.forEach((pair, d) =>
+      pair.forEach(([name, locality], i) => {
+        body.days[d]!.items[i]!.name = name;
+        body.days[d]!.items[i]!.locality = locality;
+      }),
+    );
+    const r = run(body, targets3, lang);
+    return r.ok ? r.warnings : ["NOT_OK"];
+  };
+
+  it("(a) the same name in two different towns is not a repeat", () => {
+    expect(plan([[["Stare Miasto", "Gdańsk"], ["Dwór Artusa", "Gdańsk"]], [["Zamek w Malborku", "Malbork"], ["Muzeum Zamkowe", "Malbork"]], [["Stare Miasto", "Toruń"], ["Main Square", "Toruń"]]], "pl")).toEqual([]);
+    expect(plan([[["Main Square", "Krakow"], ["Wawel", "Krakow"]], [["Main Square", "Wroclaw"], ["Ostrow Tumski", "Wroclaw"]], [["Old Town", "Gdansk"], ["Crane", "Gdansk"]]])).toEqual([]);
+  });
+  it("(a) locality is compared after normalisation: case and diacritics do not hide a repeat", () => {
+    expect(plan([[["Kosciol Mariacki", "Kraków"], ["Wawel", "Kraków"]], [["Kościół Mariacki", "KRAKOW"], ["Sukiennice", "Krakow"]], [["Kazimierz", "Krakow"], ["Podgorze", "Krakow"]]], "pl")).toEqual(["dup_place@day2"]);
+  });
+  it("(b) a generic two-word name inside a longer name is not a repeat", () => {
+    expect(plan([[["Old Town", "Riga"], ["Central Park", "Riga"]], [["Old Town Hall", "Riga"], ["Central Park Zoo", "Riga"]], [["Muzeum Narodowe", "Riga"], ["Muzeum Narodowe – Sukiennice", "Riga"]]])).toEqual([]);
+  });
+  it("(b) the exact generic name twice in one town still is a repeat", () => {
+    expect(plan([[["Old Town", "Riga"], ["Central Market", "Riga"]], [["The Old Town", "Riga"], ["Art Nouveau District", "Riga"]], [["Jurmala Beach", "Jurmala"], ["Dzintari", "Jurmala"]]])).toEqual(["dup_place@day2"]);
+  });
+  it("(c) a restaurant and a cafe with the same name stay two places; a restaurant named two ways is one", () => {
+    expect(plan([[["Ristorante Da Enzo", "Rome"], ["Colosseum", "Rome"]], [["Caffè Da Enzo", "Rome"], ["Pantheon", "Rome"]], [["Villa Borghese", "Rome"], ["Spanish Steps", "Rome"]]])).toEqual([]);
+    expect(plan([[["Ristorante Da Enzo", "Rome"], ["Colosseum", "Rome"]], [["Da Enzo al 29", "Rome"], ["Pantheon", "Rome"]], [["Villa Borghese", "Rome"], ["Spanish Steps", "Rome"]]])).toEqual(["dup_place@day2"]);
+  });
+  it("QA cases are still caught with a shared locality (E03-en, E17-pl)", () => {
+    expect(plan([[["Campo de' Fiori", "Rome"], ["Colosseum", "Rome"]], [["Pantheon", "Rome"], ["Trevi Fountain", "Rome"]], [["Campo de' Fiori Morning Market", "Rome"], ["Vatican Museums", "Vatican City"]]])).toEqual(["dup_place@day3"]);
+    expect(plan([[["Restauracja Sultanahmet Koftecisi", "Stambuł"], ["Hagia Sophia", "Stambuł"]], [["Tarihi Sultanahmet Koftecisi Selim Usta", "Stambuł"], ["Galata", "Stambuł"]], [["Wyspy Książęce", "Büyükada"], ["Pałac Dolmabahçe", "Stambuł"]]], "pl")).toEqual(["dup_place@day2"]);
+  });
+  it("placeKey keeps the venue kind and the normalised locality", () => {
+    expect(placeKey({ name: "Caffè Greco", locality: "Roma " })).toEqual({ locality: "roma", tokens: ["greco"], kind: "cafe" });
+    expect(isSamePlace(placeKey({ name: "Greco", locality: "Roma" }), placeKey({ name: "Greco", locality: "Milano" }))).toBe(false);
+  });
+});
+
+// Review PR #148 #4 a/b: the longest possible log value fits the 200-character cap of qualityWarnings.
+describe("qualityWarnings length (review PR #148 #4)", () => {
+  it("a 14-day plan with a repeat on every day 2-14 gives 13 codes within 200 characters", () => {
+    const t14: DayTarget[] = Array.from({ length: 14 }, (_, i) => ({ dayNumber: i + 1, minItems: 1, maxItems: 1, ...(i === 0 ? { earliestStart: "09:00" } : {}) }));
+    const body = validOutput(t14);
+    body.days.forEach((d) => (d.items[0]!.name = "Colosseum"));
+    const r = run(body, t14, "pl");
+    expect(r.ok).toBe(true);
+    const joined = r.ok ? r.warnings.join(",") : "";
+    expect(r.ok && r.warnings).toHaveLength(13);
+    expect(joined.length).toBeLessThanOrEqual(200);
   });
 });
