@@ -393,6 +393,47 @@ void main() {
     },
   );
 
+  testWidgets(
+    'review PR #159 #1: ai_busy received in the background -> no automat, D at the deadline',
+    (tester) async {
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      final h = await _pump(tester, _busy());
+      await _advance(tester, h, 60);
+      expect(h.controller.phase, AiBusyPhase.paused);
+      expect(h.controller.retries, 0);
+      expect(h.pending, isEmpty);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await _advance(tester, h, 60);
+      expect(h.pending, isEmpty);
+      expect(
+        find.text('${_texts['pl']!['paused']} ${_texts['pl']!['released']}'),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'ai_busy received in the background, back before the deadline -> countdown, automat fires',
+    (tester) async {
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      final h = await _pump(tester, _busy());
+      await _advance(tester, h, 20);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+      expect(find.text('Ponowna próba za 0:40'), findsOneWidget);
+      await _advance(tester, h, 40);
+      expect(h.pending, hasLength(1));
+    },
+  );
+
   testWidgets('polite announcements every 15 s: 45, 30, 15 (never 60 or 0)', (
     tester,
   ) async {

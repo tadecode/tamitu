@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart'
+    show AppLifecycleListener, AppLifecycleState, WidgetsBinding;
 
 import '../../../core/errors/app_failure.dart';
 
@@ -59,11 +61,20 @@ class AiBusyController extends ChangeNotifier {
     required this._onSuccess,
     required this._onFailure,
     MonotonicClock? clock,
-    this._foreground = true,
   }) : assert(failure.kind == FailureKind.aiBusy),
        _clock = clock ?? _stopwatchClock(),
        retryAfterSec = failure.retryAfterSec ?? defaultRetryAfterSec,
        _slotReleased = failure.slotReleased {
+    // Review PR #159 #1: the answer may arrive while the app is already in the background
+    // (generation takes up to 120 s). AppLifecycleListener reports only CHANGES, and no
+    // frame (so no view initState) is built in the background, so the controller itself
+    // starts from the current state and follows the lifecycle. In the background the
+    // countdown runs, the automat never fires (deadline there -> state D).
+    final current = WidgetsBinding.instance.lifecycleState;
+    _foreground = current == null || current == AppLifecycleState.resumed;
+    _lifecycle = AppLifecycleListener(
+      onStateChange: (s) => setForeground(s == AppLifecycleState.resumed),
+    );
     if (_slotReleased == true) {
       _phase = AiBusyPhase.countdown;
       _deadline = _clock() + Duration(seconds: retryAfterSec);
@@ -85,7 +96,8 @@ class AiBusyController extends ChangeNotifier {
 
   late AiBusyPhase _phase;
   bool? _slotReleased;
-  bool _foreground;
+  late bool _foreground;
+  late final AppLifecycleListener _lifecycle;
   bool _autoUsed = false;
   bool _disposed = false;
   Duration? _deadline;
@@ -135,7 +147,9 @@ class AiBusyController extends ChangeNotifier {
   /// "Back to the form" / system back: cancels the scheduled retry. The host navigates.
   void cancel() {
     _stopTimer();
-    if (_phase != AiBusyPhase.retrying) _phase = AiBusyPhase.done;
+    if (_phase == AiBusyPhase.retrying || _phase == AiBusyPhase.done) return;
+    _phase = AiBusyPhase.done;
+    if (!_disposed) notifyListeners();
   }
 
   /// App lifecycle: foreground only in `AppLifecycleState.resumed`.
@@ -196,6 +210,7 @@ class AiBusyController extends ChangeNotifier {
     } catch (_) {
       if (_disposed) return;
       _phase = AiBusyPhase.done;
+      notifyListeners();
       _onFailure(const AppFailure(FailureKind.generic));
       return;
     }
@@ -223,6 +238,7 @@ class AiBusyController extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    _lifecycle.dispose();
     _stopTimer();
     super.dispose();
   }

@@ -41,15 +41,11 @@ class AiBusyView extends StatefulWidget {
 }
 
 class _AiBusyViewState extends State<AiBusyView> {
-  late final AppLifecycleListener _lifecycle;
-
   @override
   void initState() {
     super.initState();
-    _lifecycle = AppLifecycleListener(
-      onStateChange: (s) =>
-          widget.controller.setForeground(s == AppLifecycleState.resumed),
-    );
+    // App lifecycle (foreground / background) is followed by the controller itself, which
+    // also runs while no frame is built in the background (review PR #159 #1).
     widget.controller.addListener(_onChange);
   }
 
@@ -77,7 +73,6 @@ class _AiBusyViewState extends State<AiBusyView> {
   @override
   void dispose() {
     widget.controller.removeListener(_onChange);
-    _lifecycle.dispose();
     super.dispose();
   }
 
@@ -98,7 +93,12 @@ class _AiBusyViewState extends State<AiBusyView> {
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop && busy) _back();
       },
-      child: busy ? _busy(context, l10n, c) : _retrying(context, l10n),
+      child: switch (c.phase) {
+        AiBusyPhase.retrying => _retrying(context, l10n),
+        // The host navigates away (EK-08 / EK-05); nothing left to show.
+        AiBusyPhase.done => const SizedBox.shrink(),
+        _ => _busy(context, l10n, c),
+      },
     );
   }
 
