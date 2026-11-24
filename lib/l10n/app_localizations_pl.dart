@@ -337,4 +337,324 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get generationRetrying => 'Próbujemy ponownie…';
+
+  @override
+  String get tripFormTitle => 'Nowa podróż';
+
+  @override
+  String get tripFormSectionWhere => 'Dokąd';
+
+  @override
+  String get tripFormSectionWhen => 'Kiedy i jak';
+
+  @override
+  String get tripFormSectionPrefs => 'Preferencje (opcjonalnie)';
+
+  @override
+  String get tripFormDestination => 'Cel podróży';
+
+  @override
+  String get tripFormDestinationHelper => 'Miasto lub region, np. Lizbona';
+
+  @override
+  String get tripFormLodging => 'Nazwa obiektu lub dzielnica';
+
+  @override
+  String get tripFormLodgingHelper => 'Nie wpisuj pełnego adresu prywatnego.';
+
+  @override
+  String get tripFormDays => 'Liczba dni';
+
+  @override
+  String get tripFormDaysError => 'Wybierz liczbę dni (1–14)';
+
+  @override
+  String get tripFormArrivalMode => 'Sposób dojazdu';
+
+  @override
+  String get tripFormArrivalFlight => 'Lot';
+
+  @override
+  String get tripFormArrivalCar => 'Auto';
+
+  @override
+  String get tripFormArrivalModeError => 'Wybierz sposób dojazdu';
+
+  @override
+  String get tripFormDateFlight => 'Data przylotu';
+
+  @override
+  String get tripFormDateCar => 'Data przyjazdu';
+
+  @override
+  String get tripFormTimeFlight => 'Godzina przylotu';
+
+  @override
+  String get tripFormTimeCar => 'Godzina przyjazdu';
+
+  @override
+  String get commonLocalTimeHelper => 'Czas lokalny w miejscu docelowym';
+
+  @override
+  String get tripFormAirport => 'Lotnisko';
+
+  @override
+  String get tripFormAirportHelper => 'Nazwa lub kod, np. LIS';
+
+  @override
+  String get tripFormFlightNumber => 'Numer lotu (opcjonalnie)';
+
+  @override
+  String get tripFormFlightNumberHelper =>
+      'Zostaje tylko na telefonie – nie wysyłamy go do AI.';
+
+  @override
+  String get tripFormInterests => 'Zainteresowania';
+
+  @override
+  String tripFormInterestsCounter(int count) {
+    return 'Wybrano $count z 5';
+  }
+
+  @override
+  String get tripFormInterestsEmptyHelper =>
+      'Nie wybierzesz nic – zaplanujemy ogólne zwiedzanie';
+
+  @override
+  String get interestMonumentsHistory => 'Zabytki i historia';
+
+  @override
+  String get interestArchitecture => 'Architektura';
+
+  @override
+  String get interestArtMuseums => 'Sztuka i muzea';
+
+  @override
+  String get interestNatureParks => 'Przyroda i parki';
+
+  @override
+  String get interestBeachesWater => 'Plaże i woda';
+
+  @override
+  String get interestLocalFood => 'Lokalne jedzenie';
+
+  @override
+  String get interestActiveSport => 'Aktywny wypoczynek';
+
+  @override
+  String get interestFamilyAttractions => 'Atrakcje dla rodzin';
+
+  @override
+  String get interestShopping => 'Zakupy';
+
+  @override
+  String get interestNightlife => 'Życie nocne';
+
+  @override
+  String get interestRelaxation => 'Relaks';
+
+  @override
+  String get tripFormBudget => 'Budżet';
+
+  @override
+  String get budgetLow => 'Niski';
+
+  @override
+  String get budgetMedium => 'Średni';
+
+  @override
+  String get budgetHigh => 'Wysoki';
+
+  @override
+  String get tripFormPace => 'Tempo';
+
+  @override
+  String get paceRelaxed => 'Spokojne';
+
+  @override
+  String get paceModerate => 'Umiarkowane';
+
+  @override
+  String get paceIntense => 'Intensywne';
+
+  @override
+  String get paceRelaxedHelper => '2–3 miejsca dziennie';
+
+  @override
+  String get paceModerateHelper => '4–5 miejsc dziennie';
+
+  @override
+  String get paceIntenseHelper => '6–7 miejsc dziennie';
+
+  @override
+  String get tripFormPartySize => 'Liczba osób';
+
+  @override
+  String get tripFormPlanLanguage => 'Język planu';
+
+  @override
+  String get languageNamePl => 'Polski';
+
+  @override
+  String get languageNameEn => 'English';
+
+  @override
+  String get tripFormGenerate => 'Generuj plan';
+
+  @override
+  String get tripFormOfflineNotice =>
+      'Brak połączenia z internetem. Plan można ułożyć tylko online – Twoje dane zostają w formularzu.';
+
+  @override
+  String get tripFormConsentWithdrawn =>
+      'Zgoda na przekazanie danych do AI jest wycofana, więc nie możemy ułożyć planu.';
+
+  @override
+  String get tripFormGiveConsent => 'Wyraź zgodę';
+
+  @override
+  String tripFormErrorsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count pola wymaga poprawy',
+      many: '$count pól wymaga poprawy',
+      few: '$count pola wymagają poprawy',
+      one: '1 pole wymaga poprawy',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get tripFormDecrease => 'Mniej';
+
+  @override
+  String get tripFormIncrease => 'Więcej';
+
+  @override
+  String get generationCancelledSnack =>
+      'Generowanie przerwane. Nic nie zapisano.';
+
+  @override
+  String get commonFieldRequiredError => 'To pole jest wymagane';
+
+  @override
+  String commonFieldTooLongError(int max) {
+    return 'Maksymalnie $max znaków';
+  }
+
+  @override
+  String get commonFieldCharsError =>
+      'Dozwolone są litery, cyfry, spacja i znaki , . - \' ( ) / &';
+
+  @override
+  String commonDateRangeError(String from, String to) {
+    return 'Data musi być między $from a $to';
+  }
+
+  @override
+  String commonDaysCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count dnia',
+      many: '$count dni',
+      few: '$count dni',
+      one: '1 dzień',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get generationTitle => 'Układamy plan…';
+
+  @override
+  String generationFor(String destination, String days) {
+    return '$destination · $days';
+  }
+
+  @override
+  String get generationMayTakeTime => 'To może potrwać do 2 minut.';
+
+  @override
+  String get generationStep1 => 'Sprawdzamy Twoje preferencje…';
+
+  @override
+  String get generationStep2 => 'Układamy kolejne dni…';
+
+  @override
+  String get generationStep3 => 'Jeszcze chwila…';
+
+  @override
+  String get generationCancel => 'Anuluj';
+
+  @override
+  String get generationCancelTitle => 'Przerwać tworzenie planu?';
+
+  @override
+  String get generationCancelBody =>
+      'Nic nie zostanie zapisane. Jeśli plan już się tworzy, ta próba może zostać wliczona do dzisiejszego limitu.';
+
+  @override
+  String get generationCancelConfirm => 'Przerwij';
+
+  @override
+  String get generationCancelContinue => 'Czekaj dalej';
+
+  @override
+  String get planAiNotice =>
+      'Plan stworzyła AI i może zawierać błędy. Sprawdź godziny otwarcia przed wyjściem.';
+
+  @override
+  String planLodging(String lodging) {
+    return 'Nocleg: $lodging';
+  }
+
+  @override
+  String planArrivalFlight(String date, String time, String airport) {
+    return 'Przylot $date, $time · $airport';
+  }
+
+  @override
+  String planArrivalCar(String date, String time) {
+    return 'Przyjazd $date, $time';
+  }
+
+  @override
+  String planFlightNumber(String number) {
+    return 'Lot $number';
+  }
+
+  @override
+  String planDayTab(int number) {
+    return 'Dzień $number';
+  }
+
+  @override
+  String planItemTime(String time) {
+    return 'ok. $time';
+  }
+
+  @override
+  String get planRoute => 'Trasa';
+
+  @override
+  String get planDayOnlyArrival => 'Dziś tylko dojazd do noclegu.';
+
+  @override
+  String get planDelete => 'Usuń plan';
+
+  @override
+  String planSavedSnack(int remaining, int limit) {
+    return 'Plan zapisany. Dziś możesz utworzyć jeszcze $remaining z $limit.';
+  }
+
+  @override
+  String get planLoadErrorTitle => 'Nie udało się otworzyć planu';
+
+  @override
+  String get planLoadErrorBody => 'Wróć do listy i spróbuj ponownie.';
+
+  @override
+  String get planBackToList => 'Wróć do listy';
 }

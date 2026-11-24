@@ -13,6 +13,7 @@ import 'package:tamitu/features/consent/application/consent_service.dart';
 import 'package:tamitu/features/consent/data/fake_consent_api.dart';
 import 'package:tamitu/features/consent/data/prefs_pending_policy_store.dart';
 import 'package:tamitu/features/consent/domain/consent_record.dart';
+import 'package:tamitu/features/plan_generation/data/fake_plan_api.dart';
 import 'package:tamitu/l10n/app_localizations.dart';
 
 import 'fakes/in_memory_consent_local_store.dart';
@@ -46,6 +47,11 @@ class TestEnv {
   final FakeConsentApi api;
   final InMemoryConsentLocalStore local;
   final MemoryPendingPolicyStore pending;
+  final plans = FakePlanApi();
+  final requestIds = idSequence();
+
+  /// Fake monotonic clock of the EK-07 "AI busy" countdown (advance with the timers).
+  Duration mono = Duration.zero;
   late final ConsentService consents;
   final opened = <Uri>[];
   final savedLanguages = <String?>[];
@@ -68,6 +74,9 @@ class TestEnv {
   List<Override> overrides({String? language}) => [
     authGatewayProvider.overrideWithValue(auth),
     consentServiceProvider.overrideWithValue(consents),
+    planApiProvider.overrideWithValue(plans),
+    requestIdProvider.overrideWithValue(requestIds),
+    aiBusyClockProvider.overrideWithValue(() => mono),
     urlOpenerProvider.overrideWithValue((uri) async {
       opened.add(uri);
       return true;

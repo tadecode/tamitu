@@ -601,6 +601,546 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Trying again…'**
   String get generationRetrying;
+
+  /// No description provided for @tripFormTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New trip'**
+  String get tripFormTitle;
+
+  /// No description provided for @tripFormSectionWhere.
+  ///
+  /// In en, this message translates to:
+  /// **'Where'**
+  String get tripFormSectionWhere;
+
+  /// No description provided for @tripFormSectionWhen.
+  ///
+  /// In en, this message translates to:
+  /// **'When and how'**
+  String get tripFormSectionWhen;
+
+  /// No description provided for @tripFormSectionPrefs.
+  ///
+  /// In en, this message translates to:
+  /// **'Preferences (optional)'**
+  String get tripFormSectionPrefs;
+
+  /// No description provided for @tripFormDestination.
+  ///
+  /// In en, this message translates to:
+  /// **'Destination'**
+  String get tripFormDestination;
+
+  /// No description provided for @tripFormDestinationHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'City or region, e.g. Lisbon'**
+  String get tripFormDestinationHelper;
+
+  /// No description provided for @tripFormLodging.
+  ///
+  /// In en, this message translates to:
+  /// **'Accommodation name or area'**
+  String get tripFormLodging;
+
+  /// No description provided for @tripFormLodgingHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t enter a full private address.'**
+  String get tripFormLodgingHelper;
+
+  /// No description provided for @tripFormDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Number of days'**
+  String get tripFormDays;
+
+  /// No description provided for @tripFormDaysError.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the number of days (1–14)'**
+  String get tripFormDaysError;
+
+  /// No description provided for @tripFormArrivalMode.
+  ///
+  /// In en, this message translates to:
+  /// **'How you get there'**
+  String get tripFormArrivalMode;
+
+  /// No description provided for @tripFormArrivalFlight.
+  ///
+  /// In en, this message translates to:
+  /// **'Flight'**
+  String get tripFormArrivalFlight;
+
+  /// No description provided for @tripFormArrivalCar.
+  ///
+  /// In en, this message translates to:
+  /// **'Car'**
+  String get tripFormArrivalCar;
+
+  /// No description provided for @tripFormArrivalModeError.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose how you get there'**
+  String get tripFormArrivalModeError;
+
+  /// No description provided for @tripFormDateFlight.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrival date'**
+  String get tripFormDateFlight;
+
+  /// No description provided for @tripFormDateCar.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrival date'**
+  String get tripFormDateCar;
+
+  /// No description provided for @tripFormTimeFlight.
+  ///
+  /// In en, this message translates to:
+  /// **'Landing time'**
+  String get tripFormTimeFlight;
+
+  /// No description provided for @tripFormTimeCar.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrival time'**
+  String get tripFormTimeCar;
+
+  /// No description provided for @commonLocalTimeHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Local time at your destination'**
+  String get commonLocalTimeHelper;
+
+  /// No description provided for @tripFormAirport.
+  ///
+  /// In en, this message translates to:
+  /// **'Airport'**
+  String get tripFormAirport;
+
+  /// No description provided for @tripFormAirportHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Name or code, e.g. LIS'**
+  String get tripFormAirportHelper;
+
+  /// No description provided for @tripFormFlightNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Flight number (optional)'**
+  String get tripFormFlightNumber;
+
+  /// No description provided for @tripFormFlightNumberHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Stays on your phone – we don\'t send it to AI.'**
+  String get tripFormFlightNumberHelper;
+
+  /// No description provided for @tripFormInterests.
+  ///
+  /// In en, this message translates to:
+  /// **'Interests'**
+  String get tripFormInterests;
+
+  /// No description provided for @tripFormInterestsCounter.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} of 5 selected'**
+  String tripFormInterestsCounter(int count);
+
+  /// No description provided for @tripFormInterestsEmptyHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Select none for general sightseeing'**
+  String get tripFormInterestsEmptyHelper;
+
+  /// No description provided for @interestMonumentsHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Monuments and history'**
+  String get interestMonumentsHistory;
+
+  /// No description provided for @interestArchitecture.
+  ///
+  /// In en, this message translates to:
+  /// **'Architecture'**
+  String get interestArchitecture;
+
+  /// No description provided for @interestArtMuseums.
+  ///
+  /// In en, this message translates to:
+  /// **'Art and museums'**
+  String get interestArtMuseums;
+
+  /// No description provided for @interestNatureParks.
+  ///
+  /// In en, this message translates to:
+  /// **'Nature and parks'**
+  String get interestNatureParks;
+
+  /// No description provided for @interestBeachesWater.
+  ///
+  /// In en, this message translates to:
+  /// **'Beaches and water'**
+  String get interestBeachesWater;
+
+  /// No description provided for @interestLocalFood.
+  ///
+  /// In en, this message translates to:
+  /// **'Local food'**
+  String get interestLocalFood;
+
+  /// No description provided for @interestActiveSport.
+  ///
+  /// In en, this message translates to:
+  /// **'Active and sport'**
+  String get interestActiveSport;
+
+  /// No description provided for @interestFamilyAttractions.
+  ///
+  /// In en, this message translates to:
+  /// **'Family attractions'**
+  String get interestFamilyAttractions;
+
+  /// No description provided for @interestShopping.
+  ///
+  /// In en, this message translates to:
+  /// **'Shopping'**
+  String get interestShopping;
+
+  /// No description provided for @interestNightlife.
+  ///
+  /// In en, this message translates to:
+  /// **'Nightlife'**
+  String get interestNightlife;
+
+  /// No description provided for @interestRelaxation.
+  ///
+  /// In en, this message translates to:
+  /// **'Relaxation'**
+  String get interestRelaxation;
+
+  /// No description provided for @tripFormBudget.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget'**
+  String get tripFormBudget;
+
+  /// No description provided for @budgetLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Low'**
+  String get budgetLow;
+
+  /// No description provided for @budgetMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium'**
+  String get budgetMedium;
+
+  /// No description provided for @budgetHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'High'**
+  String get budgetHigh;
+
+  /// No description provided for @tripFormPace.
+  ///
+  /// In en, this message translates to:
+  /// **'Pace'**
+  String get tripFormPace;
+
+  /// No description provided for @paceRelaxed.
+  ///
+  /// In en, this message translates to:
+  /// **'Relaxed'**
+  String get paceRelaxed;
+
+  /// No description provided for @paceModerate.
+  ///
+  /// In en, this message translates to:
+  /// **'Moderate'**
+  String get paceModerate;
+
+  /// No description provided for @paceIntense.
+  ///
+  /// In en, this message translates to:
+  /// **'Intense'**
+  String get paceIntense;
+
+  /// No description provided for @paceRelaxedHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'2–3 places a day'**
+  String get paceRelaxedHelper;
+
+  /// No description provided for @paceModerateHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'4–5 places a day'**
+  String get paceModerateHelper;
+
+  /// No description provided for @paceIntenseHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'6–7 places a day'**
+  String get paceIntenseHelper;
+
+  /// No description provided for @tripFormPartySize.
+  ///
+  /// In en, this message translates to:
+  /// **'Travellers'**
+  String get tripFormPartySize;
+
+  /// No description provided for @tripFormPlanLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan language'**
+  String get tripFormPlanLanguage;
+
+  /// No description provided for @languageNamePl.
+  ///
+  /// In en, this message translates to:
+  /// **'Polski'**
+  String get languageNamePl;
+
+  /// No description provided for @languageNameEn.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get languageNameEn;
+
+  /// No description provided for @tripFormGenerate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create plan'**
+  String get tripFormGenerate;
+
+  /// No description provided for @tripFormOfflineNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'No internet connection. Plans can only be created online – your details stay in the form.'**
+  String get tripFormOfflineNotice;
+
+  /// No description provided for @tripFormConsentWithdrawn.
+  ///
+  /// In en, this message translates to:
+  /// **'Your consent to share data with AI is withdrawn, so we can\'t create a plan.'**
+  String get tripFormConsentWithdrawn;
+
+  /// No description provided for @tripFormGiveConsent.
+  ///
+  /// In en, this message translates to:
+  /// **'Give consent'**
+  String get tripFormGiveConsent;
+
+  /// No description provided for @tripFormErrorsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 field needs fixing} other{{count} fields need fixing}}'**
+  String tripFormErrorsCount(int count);
+
+  /// No description provided for @tripFormDecrease.
+  ///
+  /// In en, this message translates to:
+  /// **'Fewer'**
+  String get tripFormDecrease;
+
+  /// No description provided for @tripFormIncrease.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get tripFormIncrease;
+
+  /// No description provided for @generationCancelledSnack.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan creation stopped. Nothing was saved.'**
+  String get generationCancelledSnack;
+
+  /// No description provided for @commonFieldRequiredError.
+  ///
+  /// In en, this message translates to:
+  /// **'This field is required'**
+  String get commonFieldRequiredError;
+
+  /// No description provided for @commonFieldTooLongError.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum {max} characters'**
+  String commonFieldTooLongError(int max);
+
+  /// No description provided for @commonFieldCharsError.
+  ///
+  /// In en, this message translates to:
+  /// **'Allowed: letters, digits, space and , . - \' ( ) / &'**
+  String get commonFieldCharsError;
+
+  /// No description provided for @commonDateRangeError.
+  ///
+  /// In en, this message translates to:
+  /// **'Date must be between {from} and {to}'**
+  String commonDateRangeError(String from, String to);
+
+  /// No description provided for @commonDaysCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 day} other{{count} days}}'**
+  String commonDaysCount(int count);
+
+  /// No description provided for @generationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Building your plan…'**
+  String get generationTitle;
+
+  /// No description provided for @generationFor.
+  ///
+  /// In en, this message translates to:
+  /// **'{destination} · {days}'**
+  String generationFor(String destination, String days);
+
+  /// No description provided for @generationMayTakeTime.
+  ///
+  /// In en, this message translates to:
+  /// **'This may take up to 2 minutes.'**
+  String get generationMayTakeTime;
+
+  /// No description provided for @generationStep1.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking your preferences…'**
+  String get generationStep1;
+
+  /// No description provided for @generationStep2.
+  ///
+  /// In en, this message translates to:
+  /// **'Arranging the days…'**
+  String get generationStep2;
+
+  /// No description provided for @generationStep3.
+  ///
+  /// In en, this message translates to:
+  /// **'Almost there…'**
+  String get generationStep3;
+
+  /// No description provided for @generationCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get generationCancel;
+
+  /// No description provided for @generationCancelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop creating the plan?'**
+  String get generationCancelTitle;
+
+  /// No description provided for @generationCancelBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing will be saved. If the plan is already being created, this attempt may count towards today\'s limit.'**
+  String get generationCancelBody;
+
+  /// No description provided for @generationCancelConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get generationCancelConfirm;
+
+  /// No description provided for @generationCancelContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep waiting'**
+  String get generationCancelContinue;
+
+  /// No description provided for @planAiNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'This plan was created by AI and may contain mistakes. Check opening hours before you go.'**
+  String get planAiNotice;
+
+  /// No description provided for @planLodging.
+  ///
+  /// In en, this message translates to:
+  /// **'Stay: {lodging}'**
+  String planLodging(String lodging);
+
+  /// No description provided for @planArrivalFlight.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrival {date}, {time} · {airport}'**
+  String planArrivalFlight(String date, String time, String airport);
+
+  /// No description provided for @planArrivalCar.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrival {date}, {time}'**
+  String planArrivalCar(String date, String time);
+
+  /// No description provided for @planFlightNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Flight {number}'**
+  String planFlightNumber(String number);
+
+  /// No description provided for @planDayTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Day {number}'**
+  String planDayTab(int number);
+
+  /// No description provided for @planItemTime.
+  ///
+  /// In en, this message translates to:
+  /// **'approx. {time}'**
+  String planItemTime(String time);
+
+  /// No description provided for @planRoute.
+  ///
+  /// In en, this message translates to:
+  /// **'Directions'**
+  String get planRoute;
+
+  /// No description provided for @planDayOnlyArrival.
+  ///
+  /// In en, this message translates to:
+  /// **'Today: just getting to your accommodation.'**
+  String get planDayOnlyArrival;
+
+  /// No description provided for @planDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete trip'**
+  String get planDelete;
+
+  /// No description provided for @planSavedSnack.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan saved. You can create {remaining} more of {limit} today.'**
+  String planSavedSnack(int remaining, int limit);
+
+  /// No description provided for @planLoadErrorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open this trip'**
+  String get planLoadErrorTitle;
+
+  /// No description provided for @planLoadErrorBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Go back to the list and try again.'**
+  String get planLoadErrorBody;
+
+  /// No description provided for @planBackToList.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to list'**
+  String get planBackToList;
 }
 
 class _AppLocalizationsDelegate
