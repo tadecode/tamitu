@@ -328,4 +328,320 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get generationRetrying => 'Trying again…';
+
+  @override
+  String get tripFormTitle => 'New trip';
+
+  @override
+  String get tripFormSectionWhere => 'Where';
+
+  @override
+  String get tripFormSectionWhen => 'When and how';
+
+  @override
+  String get tripFormSectionPrefs => 'Preferences (optional)';
+
+  @override
+  String get tripFormDestination => 'Destination';
+
+  @override
+  String get tripFormDestinationHelper => 'City or region, e.g. Lisbon';
+
+  @override
+  String get tripFormLodging => 'Accommodation name or area';
+
+  @override
+  String get tripFormLodgingHelper => 'Don\'t enter a full private address.';
+
+  @override
+  String get tripFormDays => 'Number of days';
+
+  @override
+  String get tripFormDaysError => 'Choose the number of days (1–14)';
+
+  @override
+  String get tripFormArrivalMode => 'How you get there';
+
+  @override
+  String get tripFormArrivalFlight => 'Flight';
+
+  @override
+  String get tripFormArrivalCar => 'Car';
+
+  @override
+  String get tripFormArrivalModeError => 'Choose how you get there';
+
+  @override
+  String get tripFormDateFlight => 'Arrival date';
+
+  @override
+  String get tripFormDateCar => 'Arrival date';
+
+  @override
+  String get tripFormTimeFlight => 'Landing time';
+
+  @override
+  String get tripFormTimeCar => 'Arrival time';
+
+  @override
+  String get commonLocalTimeHelper => 'Local time at your destination';
+
+  @override
+  String get tripFormAirport => 'Airport';
+
+  @override
+  String get tripFormAirportHelper => 'Name or code, e.g. LIS';
+
+  @override
+  String get tripFormFlightNumber => 'Flight number (optional)';
+
+  @override
+  String get tripFormFlightNumberHelper =>
+      'Stays on your phone – we don\'t send it to AI.';
+
+  @override
+  String get tripFormInterests => 'Interests';
+
+  @override
+  String tripFormInterestsCounter(int count) {
+    return '$count of 5 selected';
+  }
+
+  @override
+  String get tripFormInterestsEmptyHelper =>
+      'Select none for general sightseeing';
+
+  @override
+  String get interestMonumentsHistory => 'Monuments and history';
+
+  @override
+  String get interestArchitecture => 'Architecture';
+
+  @override
+  String get interestArtMuseums => 'Art and museums';
+
+  @override
+  String get interestNatureParks => 'Nature and parks';
+
+  @override
+  String get interestBeachesWater => 'Beaches and water';
+
+  @override
+  String get interestLocalFood => 'Local food';
+
+  @override
+  String get interestActiveSport => 'Active and sport';
+
+  @override
+  String get interestFamilyAttractions => 'Family attractions';
+
+  @override
+  String get interestShopping => 'Shopping';
+
+  @override
+  String get interestNightlife => 'Nightlife';
+
+  @override
+  String get interestRelaxation => 'Relaxation';
+
+  @override
+  String get tripFormBudget => 'Budget';
+
+  @override
+  String get budgetLow => 'Low';
+
+  @override
+  String get budgetMedium => 'Medium';
+
+  @override
+  String get budgetHigh => 'High';
+
+  @override
+  String get tripFormPace => 'Pace';
+
+  @override
+  String get paceRelaxed => 'Relaxed';
+
+  @override
+  String get paceModerate => 'Moderate';
+
+  @override
+  String get paceIntense => 'Intense';
+
+  @override
+  String get paceRelaxedHelper => '2–3 places a day';
+
+  @override
+  String get paceModerateHelper => '4–5 places a day';
+
+  @override
+  String get paceIntenseHelper => '6–7 places a day';
+
+  @override
+  String get tripFormPartySize => 'Travellers';
+
+  @override
+  String get tripFormPlanLanguage => 'Plan language';
+
+  @override
+  String get languageNamePl => 'Polski';
+
+  @override
+  String get languageNameEn => 'English';
+
+  @override
+  String get tripFormGenerate => 'Create plan';
+
+  @override
+  String get tripFormOfflineNotice =>
+      'No internet connection. Plans can only be created online – your details stay in the form.';
+
+  @override
+  String get tripFormConsentWithdrawn =>
+      'Your consent to share data with AI is withdrawn, so we can\'t create a plan.';
+
+  @override
+  String get tripFormGiveConsent => 'Give consent';
+
+  @override
+  String tripFormErrorsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count fields need fixing',
+      one: '1 field needs fixing',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get tripFormDecrease => 'Fewer';
+
+  @override
+  String get tripFormIncrease => 'More';
+
+  @override
+  String get generationCancelledSnack =>
+      'Plan creation stopped. Nothing was saved.';
+
+  @override
+  String get commonFieldRequiredError => 'This field is required';
+
+  @override
+  String commonFieldTooLongError(int max) {
+    return 'Maximum $max characters';
+  }
+
+  @override
+  String get commonFieldCharsError =>
+      'Allowed: letters, digits, space and , . - \' ( ) / &';
+
+  @override
+  String commonDateRangeError(String from, String to) {
+    return 'Date must be between $from and $to';
+  }
+
+  @override
+  String commonDaysCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days',
+      one: '1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get generationTitle => 'Building your plan…';
+
+  @override
+  String generationFor(String destination, String days) {
+    return '$destination · $days';
+  }
+
+  @override
+  String get generationMayTakeTime => 'This may take up to 2 minutes.';
+
+  @override
+  String get generationStep1 => 'Checking your preferences…';
+
+  @override
+  String get generationStep2 => 'Arranging the days…';
+
+  @override
+  String get generationStep3 => 'Almost there…';
+
+  @override
+  String get generationCancel => 'Cancel';
+
+  @override
+  String get generationCancelTitle => 'Stop creating the plan?';
+
+  @override
+  String get generationCancelBody =>
+      'Nothing will be saved. If the plan is already being created, this attempt may count towards today\'s limit.';
+
+  @override
+  String get generationCancelConfirm => 'Stop';
+
+  @override
+  String get generationCancelContinue => 'Keep waiting';
+
+  @override
+  String get planAiNotice =>
+      'This plan was created by AI and may contain mistakes. Check opening hours before you go.';
+
+  @override
+  String planLodging(String lodging) {
+    return 'Stay: $lodging';
+  }
+
+  @override
+  String planArrivalFlight(String date, String time, String airport) {
+    return 'Arrival $date, $time · $airport';
+  }
+
+  @override
+  String planArrivalCar(String date, String time) {
+    return 'Arrival $date, $time';
+  }
+
+  @override
+  String planFlightNumber(String number) {
+    return 'Flight $number';
+  }
+
+  @override
+  String planDayTab(int number) {
+    return 'Day $number';
+  }
+
+  @override
+  String planItemTime(String time) {
+    return 'approx. $time';
+  }
+
+  @override
+  String get planRoute => 'Directions';
+
+  @override
+  String get planDayOnlyArrival => 'Today: just getting to your accommodation.';
+
+  @override
+  String get planDelete => 'Delete trip';
+
+  @override
+  String planSavedSnack(int remaining, int limit) {
+    return 'Plan saved. You can create $remaining more of $limit today.';
+  }
+
+  @override
+  String get planLoadErrorTitle => 'Couldn\'t open this trip';
+
+  @override
+  String get planLoadErrorBody => 'Go back to the list and try again.';
+
+  @override
+  String get planBackToList => 'Back to list';
 }

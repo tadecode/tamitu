@@ -5,8 +5,10 @@ import 'package:material_ui/material_ui.dart';
 import '../features/consent/presentation/ai_consent_screen.dart';
 import '../features/consent/presentation/reconsent_screen.dart';
 import '../features/consent/presentation/welcome_screen.dart';
+import '../features/plan_generation/presentation/plan_screen.dart';
 import '../features/session/session_controller.dart';
 import '../features/session/session_gate_screen.dart';
+import '../features/trip_form/presentation/trip_form_screen.dart';
 import 'home_screen.dart';
 
 abstract final class Routes {
@@ -18,6 +20,13 @@ abstract final class Routes {
   /// EK-06; pushed by the plan flow (P3-05) with `extra: true` for the "updated" variant.
   /// Pops `true` when consent was saved.
   static const aiConsent = '/ai-consent';
+
+  /// EK-05 (pushed from the start screen). EK-07 is pushed on top of it by the form.
+  static const tripForm = '/home/trip';
+
+  /// EK-08; `extra` = `PlanViewData`. Child of home, so back returns to the start screen
+  /// and the form does not stay on the stack (EK-08 "Wejście i wyjście").
+  static const plan = '/home/plan';
 }
 
 /// Session gate redirects (EK-01). Pure, so it is unit-tested directly.
@@ -62,7 +71,27 @@ final routerProvider = Provider<GoRouter>((ref) {
           );
         },
       ),
-      GoRoute(path: Routes.home, builder: (_, _) => const HomeScreen()),
+      GoRoute(
+        path: Routes.home,
+        builder: (_, _) => const HomeScreen(),
+        routes: [
+          GoRoute(
+            path: 'trip',
+            builder: (context, _) {
+              final status = ref.read(sessionProvider);
+              if (status is! SessionReady) return const SessionGateScreen();
+              return TripFormScreen(uid: status.uid);
+            },
+          ),
+          GoRoute(
+            path: 'plan',
+            builder: (context, state) {
+              final extra = state.extra;
+              return PlanScreen(data: extra is PlanViewData ? extra : null);
+            },
+          ),
+        ],
+      ),
       GoRoute(
         path: Routes.aiConsent,
         builder: (context, state) {

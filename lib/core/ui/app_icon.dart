@@ -16,6 +16,12 @@ enum AppIcons {
   selected,
   appUpdate,
   aiInfo,
+  calendar,
+  clock,
+  more,
+  route,
+  add,
+  remove,
 }
 
 const _data = <AppIcons, List<List<dynamic>>>{
@@ -30,6 +36,12 @@ const _data = <AppIcons, List<List<dynamic>>>{
   AppIcons.selected: HugeIcons.strokeRoundedTick02,
   AppIcons.appUpdate: HugeIcons.strokeRoundedReload,
   AppIcons.aiInfo: HugeIcons.strokeRoundedSparkles,
+  AppIcons.calendar: HugeIcons.strokeRoundedCalendar03,
+  AppIcons.clock: HugeIcons.strokeRoundedClock01,
+  AppIcons.more: HugeIcons.strokeRoundedMoreVertical,
+  AppIcons.route: HugeIcons.strokeRoundedRoute01,
+  AppIcons.add: HugeIcons.strokeRoundedPlusSign,
+  AppIcons.remove: HugeIcons.strokeRoundedMinusSign,
 };
 
 /// Draws an icon from the app set. Colour is inherited from [IconTheme] (role colours),
