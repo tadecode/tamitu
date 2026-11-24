@@ -78,6 +78,18 @@ przez `.farm/test-lock.ps1`. Pozostałe role uruchamiają tylko testy bez urząd
 Prośby do Stewarda (`.farm/requests/`) trafiają do `main` małym PR-em przed uruchomieniem
 Stewarda: Steward pracuje we własnym worktree z `main` i nie widzi cudzych gałęzi.
 
+## Jeden PR na zadanie (właściciel, 2026-11-24)
+Autor zadania, recenzent i QA pracują **kolejno w tym samym worktree** (`tamitu-wt\<zadanie>`), na jednej
+gałęzi i jednym PR. Każdy to **nowa sesja** (czysty kontekst), uruchomiona z jawnym `cwd` tego folderu:
+1. autor (np. mobile-dev): kod, testy, push, PR (otwiera bot);
+2. po zielonym CI: `reviewer` – tylko czyta, raport jako komentarz w PR, `review:ok` / `review:changes`;
+3. poprawki: znowu autor w tym folderze (push zdejmuje werdykty), potem nowa sesja recenzenta;
+4. dla zmian z ekranami: `qa` po recenzji – weryfikuje, raport jako komentarz, `qa:ok` / `qa:changes`;
+5. właściciel merguje jeden PR. Sekcję „Dla orkiestratora” recenzenta i QA czytasz z komentarzy PR
+   (`gh pr view <nr> --comments`) i przenosisz do Jiry.
+Nigdy dwie sesje naraz w jednym folderze: recenzent i QA startują dopiero, gdy autor skończył turę.
+Osobnych PR-ów z raportami (`docs/reviews/`, `docs/qa/reports/`) już nie tworzymy; stare zostają jako archiwum.
+
 ## Operacje GitHub (tylko przez Stewarda)
 Nikt poza agentem GitHub Steward nie tworzy repozytoriów, nie zmienia CI, sekretów,
 ustawień ani nie merguje (hooki to blokują). Gdy rola zgłosi taką potrzebę, zapisz

@@ -21,11 +21,11 @@
    Zadania bez UI (backend, testy, CI) pomijają ten krok.
 2. mobile-dev: gałąź `feat/<id>`, kod + testy.
 3. Po otwarciu PR: CI (`farm-guards`, `conventions`, `secrets`, `flutter`) musi być zielone.
-4. reviewer: przegląd kodu z PR (bezpieczeństwo, wydajność, jakość) wg
-   `.farm/review/`; raport `docs/reviews/PR-<nr>.md` i komentarz w PR.
-   Ustalenia wagi „bloker" lub „wysoka" → wraca do kroku 2.
-5. qa: weryfikacja kryteriów, raport. Odrzucone → wraca do kroku 2
-   (maks. 2 razy, potem eskalacja).
+4. reviewer (nowa sesja w tym samym worktree co autor, tylko odczyt): przegląd kodu z PR (bezpieczeństwo,
+   wydajność, jakość) wg `.farm/review/`; raport jako komentarz w PR.
+   Ustalenia wagi „bloker" lub „wysoka" → wraca do kroku 2 (ten sam folder i PR).
+5. qa (nowa sesja w tym samym worktree, po recenzji): weryfikacja kryteriów, raport jako komentarz w PR.
+   Odrzucone → wraca do kroku 2 (maks. 2 razy, potem eskalacja). Jedno zadanie = jeden PR.
 6. security: przegląd, jeśli zadanie dotyka danych osobowych, sieci,
    uwierzytelniania, reklam lub płatności (pogłębia ustalenia recenzenta).
 7. orchestrator: po merge przenosi zgłoszenia ról (status zadań, nowe zadania, pytania – sekcja „Dla orkiestratora”
@@ -37,7 +37,7 @@
 
 ## Zasady
 - **Krok przeglądu (decyzja właściciela 2026-11-17):** każdy PR z kodem (Flutter, backend) przechodzi
-  zielone CI → przegląd `reviewer` (raport `docs/reviews/PR-<nr>.md` + komentarz w PR) → poprawki autora
+  zielone CI → przegląd `reviewer` (raport jako komentarz w PR; od 2026-11-24 bez osobnego PR-a z raportem) → poprawki autora
   przy werdykcie „zmiany wymagane” → zatwierdzenie i merge przez właściciela. Zadania z ekranami:
   dodatkowo `qa` weryfikuje kryteria akceptacji przed oznaczeniem `done`. PR-y z samą dokumentacją
   nie wymagają reviewer. Brak raportu reviewer = PR nie jest gotowy do merge.
@@ -48,8 +48,9 @@
   rola (`gh pr edit <nr> --add-label …`, konto bota) po komentarzu z raportem i sprawdzeniu, że head PR-a się nie zmienił;
   nowy push zdejmuje `*:ok` i wymaga ponownego przeglądu. Bramka jest proceduralna (to samo konto bota), więc nie zastępuje
   zatwierdzenia właściciela. Szczegóły: `.farm/requests/GH-008-review-qa-gate.md`, `FARM-007-reviewer-qa-tools.md`.
-- **Nowa sesja reviewer/qa na każdy PR** (także na ponowny przegląd po poprawkach): czysty kontekst, poprzednie raporty
-  z `docs/reviews/` i `docs/qa/`, nie z pamięci rozmowy.
+- **Nowa sesja reviewer/qa na każdy przegląd** (także ponowny po poprawkach): czysty kontekst, ten sam worktree co autor,
+  sesje kolejno (nigdy dwie naraz w jednym folderze); poprzednie raporty z komentarzy PR
+  (`gh pr view <nr> --comments`), starsze z `docs/reviews/` i `docs/qa/` (archiwum), nie z pamięci rozmowy.
 - Do następnej fazy tylko po zatwierdzeniu bramki przez człowieka
   (dotyczy G1, G2, G5).
 - **Wspólne pliki (decyzja właściciela 2026-11-17):** żeby PR-y nie kolidowały, dziennik to osobne pliki

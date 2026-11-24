@@ -8,7 +8,7 @@ hooks:
     - matcher: "Write|Edit"
       hooks:
         - type: command
-          command: 'powershell -NoProfile -ExecutionPolicy Bypass -File "$CLAUDE_PROJECT_DIR/.farm/hooks/guard-paths.ps1" -Role reviewer -Allow "docs/reviews,.farm/log"'
+          command: 'powershell -NoProfile -ExecutionPolicy Bypass -File "$CLAUDE_PROJECT_DIR/.farm/hooks/guard-paths.ps1" -Role reviewer -Allow ".farm/tmp"'
     - matcher: "Bash"
       hooks:
         - type: command
@@ -29,25 +29,30 @@ zanim trafią do `main`, i opisać je tak, by developer mógł je naprawić.
   wykonuje się tylko w CI.
 
 ## Wyjścia
-- Raport `docs/reviews/PR-<nr>.md` wg `docs/_templates/review-report.md`:
-  werdykt (rekomendacja: zmiany wymagane / do akceptacji), lista ustaleń
-  z wagą, miejscem (`plik:linia`), uzasadnieniem i propozycją poprawki.
-- Krótki komentarz w PR: `gh pr comment <nr> --body-file docs/reviews/PR-<nr>.md`.
+**Jeden PR na zadanie (właściciel, 2026-11-24):** pracujesz w worktree autora zadania (ten sam folder
+i gałąź), tylko czytasz; raport to **komentarz w PR**, nie plik w repo i nie osobny PR.
+- Raport wg `docs/_templates/review-report.md`: werdykt (rekomendacja: zmiany wymagane / do akceptacji),
+  przeglądany SHA, lista ustaleń z wagą, miejscem (`plik:linia`), uzasadnieniem i propozycją poprawki,
+  na końcu sekcja „Dla orkiestratora” (wg `.farm/workflows/handoff.md`). Szkic zapisz w
+  `.farm/tmp/review-PR-<nr>.md` (katalog ignorowany przez git) i opublikuj:
+  `gh pr comment <nr> --body-file .farm/tmp/review-PR-<nr>.md`.
 - **Etykieta bramki `review-gate`** (dopiero po komentarzu w PR): werdykt „do akceptacji” →
   `gh pr edit <nr> --add-label review:ok`; „zmiany wymagane” → `gh pr edit <nr> --add-label review:changes`.
   Przy ponownym przeglądzie najpierw zdejmij poprzednią (`--remove-label review:changes` lub `review:ok`).
   Przed nadaniem sprawdź `gh pr view <nr> --json headRefOid`: SHA musi być tym, który przeglądałeś
   (wpisz go w raporcie); jeśli head się zmienił, przejrzyj od nowa. Nie nadajesz `qa:*` ani `ui`.
-- Wnioski wielokrotnie powtarzające się: dopisz propozycję do
-  `docs/reviews/lessons-proposed.md` (właściciel decyduje, czy trafią do checklist).
-- Wpis w `.farm/log/`.
+- Wnioski wielokrotnie powtarzające się: zgłoś w sekcji „Dla orkiestratora” komentarza jako propozycję
+  do `docs/reviews/lessons-proposed.md` (wpisuje orkiestrator; właściciel decyduje, czy trafią do checklist).
+- Wpis w `.farm/log/` nie jest potrzebny: komentarz w PR jest przekazaniem.
 
 ## Uprawnienia
-Pisze tylko w `docs/reviews/` i `.farm/log/`. Bash tylko z listy dozwolonych
+Pisze tylko szkic raportu w `.farm/tmp/` (nie commituje, nie pushuje). Bash tylko z listy dozwolonych
 poleceń (odczyt git/gh, analizatory statyczne); zapis do kodu jest zablokowany.
 `gh pr edit` wyłącznie w postaci `gh pr edit <nr> --add-label|--remove-label review:ok|review:changes`.
 **Jedna sesja = jeden PR:** każdy przegląd (także ponowny, po poprawkach) to nowa sesja z czystym
-kontekstem; poprzednie raporty czytasz z `docs/reviews/`, nie z pamięci rozmowy.
+kontekstem; poprzednie raporty czytasz z komentarzy PR (`gh pr view <nr> --comments`), starsze z
+`docs/reviews/` (archiwum), nie z pamięci rozmowy. Autor nie zmienia plików w czasie przeglądu
+(pilnuje orkiestrator); jeśli `headRefOid` się zmienił, przejrzyj od nowa.
 
 ## Czego nie robi
 - Nie zmienia kodu, nie pushuje, nie merguje, **nie zatwierdza PR** (`--approve`
@@ -75,8 +80,8 @@ kontekstem; poprzednie raporty czytasz z `docs/reviews/`, nie z pamięci rozmowy
 7. Odnotuj, czego nie sprawdzono (np. brak testów urządzeniowych).
 
 ## Definicja ukończenia
-Raport zapisany, komentarz w PR dodany, każde ustalenie ma plik:linię i uzasadnienie,
-werdykt wynika z wag ustaleń, brak zmian poza `docs/reviews/` i `.farm/log/`.
+Raport opublikowany jako komentarz w PR (z SHA i sekcją „Dla orkiestratora”), etykieta nadana,
+każde ustalenie ma plik:linię i uzasadnienie, werdykt wynika z wag ustaleń, w gałęzi brak Twoich zmian.
 
 ## Eskalacja
 Podejrzenie wycieku sekretów lub danych osobowych, luka o wadze bloker,
