@@ -22,7 +22,7 @@ plugins {
     id("com.android.application") version "9.5.2" apply false
     id("org.jetbrains.kotlin.android") version "2.4.21" apply false
     // Firebase config per flavor (android/app/src/<dev|prod>/google-services.json, not in the repo).
-    id("com.google.gms.google-services") version "4.5.0" apply false
+    id("com.google.gms.google-services") version "4.6.0" apply false
 }
 
 include(":app")
