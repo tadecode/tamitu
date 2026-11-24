@@ -2,7 +2,9 @@
 import { describe, expect, it } from "vitest";
 import {
   globalExpireAt,
+  MAX_BUSY_RELEASES_PER_DAY,
   MAX_RELEASES_PER_DAY,
+  planBusyReleaseOutcome,
   planRelease,
   planReleaseOutcome,
   planReservation,
@@ -47,7 +49,7 @@ describe("planReservation / planRelease (pkt 3.2)", () => {
       allowed: true,
       reservation: { day: "2026-11-21", quota: { limit: 5, remainingToday: 4, resetAt: "2026-11-21T23:00:00Z" } },
       writes: {
-        usage: { day: "2026-11-21", count: 1, released: 0, updatedAt: now, expireAt: usageExpireAt(now) },
+        usage: { day: "2026-11-21", count: 1, released: 0, busyReleased: 0, updatedAt: now, expireAt: usageExpireAt(now) },
         global: { count: 1, expireAt: globalExpireAt(now) },
       },
     });
@@ -80,6 +82,7 @@ describe("planReservation / planRelease (pkt 3.2)", () => {
       day: "2026-11-21",
       count: 1,
       released: 1,
+      busyReleased: 0,
       updatedAt: later,
       expireAt: usageExpireAt(later),
     });
@@ -102,11 +105,45 @@ describe("planReservation / planRelease (pkt 3.2)", () => {
   });
 });
 
+describe("planBusyReleaseOutcome (ADR-0016 pkt 8, posrednik-api.md pkt 2 rule 7)", () => {
+  const later = new Date("2026-11-21T10:01:00Z");
+  it("returns the account AND the global slot without touching released", () => {
+    expect(planBusyReleaseOutcome({ day: "2026-11-21", count: 2, released: 2, busyReleased: 3 }, 7, "2026-11-21", later)).toEqual({
+      outcome: "busy_released",
+      write: { day: "2026-11-21", count: 1, released: 2, busyReleased: 4, updatedAt: later, expireAt: usageExpireAt(later) },
+      global: { count: 6, expireAt: globalExpireAt(later) },
+    });
+  });
+  it(`fuse: at most ${MAX_BUSY_RELEASES_PER_DAY} per account and day, then both slots stay used`, () => {
+    expect(MAX_BUSY_RELEASES_PER_DAY).toBe(10);
+    const ninth = planBusyReleaseOutcome({ day: "2026-11-21", count: 1, busyReleased: 9 }, 1, "2026-11-21", later);
+    expect(ninth.outcome === "busy_released" && ninth.write.busyReleased).toBe(10);
+    expect(planBusyReleaseOutcome({ day: "2026-11-21", count: 1, busyReleased: 10 }, 1, "2026-11-21", later)).toEqual({ outcome: "busy_capped" });
+  });
+  it("rule 5: after midnight nothing is written (stale_day); a missing global counter never goes below 0", () => {
+    expect(planBusyReleaseOutcome({ day: "2026-11-22", count: 1 }, 1, "2026-11-21", later)).toEqual({ outcome: "stale_day" });
+    expect(planBusyReleaseOutcome(undefined, 1, "2026-11-21", later)).toEqual({ outcome: "stale_day" });
+    expect(planBusyReleaseOutcome({ day: "2026-11-21", count: 0 }, 1, "2026-11-21", later)).toEqual({ outcome: "stale_day" });
+    const r = planBusyReleaseOutcome({ day: "2026-11-21", count: 1 }, undefined, "2026-11-21", later);
+    expect(r.outcome === "busy_released" && r.global.count).toBe(0);
+  });
+  it("busyReleased of yesterday counts as 0; reservation and ordinary release keep today's value", () => {
+    const now = new Date("2026-11-21T10:00:00Z");
+    const fresh = planReservation({ usage: { day: "2026-11-20", count: 1, busyReleased: 10 }, globalCount: 0, userLimit: 5, globalLimit: 25, now });
+    expect(fresh.allowed && fresh.writes.usage.busyReleased).toBe(0);
+    const today = planReservation({ usage: { day: "2026-11-21", count: 1, busyReleased: 4 }, globalCount: 0, userLimit: 5, globalLimit: 25, now });
+    expect(today.allowed && today.writes.usage.busyReleased).toBe(4);
+    expect(planRelease({ day: "2026-11-21", count: 2, busyReleased: 4 }, "2026-11-21", later)?.busyReleased).toBe(4);
+  });
+});
+
 describe("usageFromDoc (stored usage/{uid})", () => {
   it("maps a valid document and treats malformed ones as missing", () => {
-    expect(usageFromDoc({ day: "2026-11-21", count: 2, released: 1, expireAt: {} })).toEqual({ day: "2026-11-21", count: 2, released: 1 });
-    expect(usageFromDoc({ day: "2026-11-21", count: 2 })).toEqual({ day: "2026-11-21", count: 2, released: 0 });
+    expect(usageFromDoc({ day: "2026-11-21", count: 2, released: 1, expireAt: {} })).toEqual({ day: "2026-11-21", count: 2, released: 1, busyReleased: 0 });
+    expect(usageFromDoc({ day: "2026-11-21", count: 2 })).toEqual({ day: "2026-11-21", count: 2, released: 0, busyReleased: 0 });
     expect(usageFromDoc({ day: "2026-11-21", count: 2, released: "x" })?.released).toBe(0);
+    expect(usageFromDoc({ day: "2026-11-21", count: 2, busyReleased: 3 })?.busyReleased).toBe(3);
+    expect(usageFromDoc({ day: "2026-11-21", count: 2, busyReleased: "x" })?.busyReleased).toBe(0);
     expect(usageFromDoc({ day: 1, count: 2 })).toBeUndefined();
     expect(usageFromDoc({ day: "2026-11-21", count: 1.5 })).toBeUndefined();
     expect(usageFromDoc(undefined)).toBeUndefined();

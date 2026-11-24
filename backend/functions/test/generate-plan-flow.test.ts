@@ -50,6 +50,7 @@ function mkDeps(over: Partial<Deps> = {}, runtime: Partial<RuntimeConfig> = {}) 
     model: echoValidModel(),
     reserveQuota: quota.reserveQuota,
     releaseQuota: quota.releaseQuota,
+    releaseBusyQuota: quota.releaseBusyQuota,
     ...over,
   };
   return { deps, quota };
@@ -199,6 +200,91 @@ describe("generatePlan - slot release (contract pkt 2)", () => {
     quota.usage.set("owner", { day: "2026-11-21", count: 1, expireAt: NOW });
     expect((await err(run(body(), deps)))?.["code"]).toBe("limit_exceeded");
     expect(releaseQuota).not.toHaveBeenCalled();
+  });
+});
+
+describe("generatePlan - ai_busy (ADR-0016 pkt 6-8, posrednik-api.md pkt 2 rule 7)", () => {
+  const e429 = () => new ModelError("retryable", "429");
+  const noSleep = async () => {};
+  const busyModel = (n: number) => scriptedModel(Array.from({ length: n }, e429));
+
+  it("429 x 3 -> ai_busy, retryAfterSec=60, slotReleased=true; account AND global slot back, released untouched", async () => {
+    const { deps, quota } = mkDeps({ model: busyModel(3), sleep: noSleep });
+    expect(await err(run(body(), deps))).toEqual({ code: "ai_busy", retryAfterSec: 60, slotReleased: true });
+    expect(quota.usage.get("owner")).toMatchObject({ count: 0, released: 0, busyReleased: 1 });
+    expect(quota.global.get("2026-11-21")).toBe(0);
+    const final = fields().find((f) => f["fn"] === "generatePlan");
+    expect(final).toMatchObject({ result: "error", errorCode: "ai_busy", calls: 3, stopReason: "busy", quotaRelease: "busy_released" });
+    const attempts = fields().filter((f) => f["fn"] === "generatePlan.attempt");
+    expect(attempts.map((a) => [a["billable"], typeof a["waitMs"]])).toEqual([[false, "number"], [false, "number"], [false, "number"]]);
+    // ai_busy is an expected refusal: WARNING, not ERROR (no stack trace in Error Reporting)
+    expect(logged.find((a) => (a[1] as Record<string, unknown>)["fn"] === "generatePlan")?.[0]).toBe("fn_error");
+  });
+
+  it("ai_busy does not use the 2 ordinary releases: after 2 releases an ai_busy still returns the slot", async () => {
+    const bad = ok({ language: "pl", days: [] });
+    const { deps, quota } = mkDeps({ model: scriptedModel([bad, bad, bad, bad, e429(), e429(), e429()]), sleep: noSleep });
+    expect((await err(run(body(), deps)))?.["slotReleased"]).toBe(true);
+    expect((await err(run(body(), deps)))?.["slotReleased"]).toBe(true);
+    expect(await err(run(body(), deps))).toEqual({ code: "ai_busy", retryAfterSec: 60, slotReleased: true });
+    expect(quota.usage.get("owner")).toMatchObject({ count: 0, released: 2, busyReleased: 1 });
+    // two ordinary failures keep their global slots (rule 4); the ai_busy one is returned
+    expect(quota.global.get("2026-11-21")).toBe(2);
+  });
+
+  it("fuse: the 11th ai_busy of the day -> slotReleased=false, quotaRelease busy_capped, both slots stay used", async () => {
+    const { deps, quota } = mkDeps({ model: busyModel(33), sleep: noSleep }, { perUserDailyLimit: 5 });
+    const results: unknown[] = [];
+    for (let i = 0; i < 11; i++) {
+      logged.length = 0;
+      results.push(await err(run(body(), deps)));
+    }
+    expect(results.slice(0, 10).every((r) => (r as { slotReleased: boolean }).slotReleased)).toBe(true);
+    expect(results[10]).toEqual({ code: "ai_busy", retryAfterSec: 60, slotReleased: false });
+    expect(fields().find((f) => f["fn"] === "generatePlan")?.["quotaRelease"]).toBe("busy_capped");
+    expect(quota.usage.get("owner")).toMatchObject({ count: 1, released: 0, busyReleased: 10 });
+    expect(quota.global.get("2026-11-21")).toBe(1);
+  });
+
+  it("rule 5: ai_busy released after midnight -> slotReleased=false, release_stale_day", async () => {
+    const { deps } = mkDeps({ model: busyModel(3), sleep: noSleep, releaseBusyQuota: async () => "stale_day" });
+    expect(await err(run(body(), deps))).toEqual({ code: "ai_busy", retryAfterSec: 60, slotReleased: false });
+    expect(JSON.stringify(logged)).toContain('"quotaRelease":"release_stale_day"');
+  });
+
+  it("rule 6: a failing ai_busy release keeps the code, slotReleased=false, release_failed", async () => {
+    const { deps } = mkDeps({
+      model: busyModel(3),
+      sleep: noSleep,
+      releaseBusyQuota: async () => {
+        throw new Error(CANARY);
+      },
+    });
+    expect(await err(run(body(), deps))).toEqual({ code: "ai_busy", retryAfterSec: 60, slotReleased: false });
+    expect(JSON.stringify(logged)).toContain('"quotaRelease":"release_failed"');
+    expect(JSON.stringify(logged)).not.toContain(CANARY);
+  });
+
+  it("timeout -> 429 -> 429 -> ai_unavailable with the ordinary release (global stays), no retryAfterSec", async () => {
+    const releaseBusyQuota = vi.fn();
+    const { deps, quota } = mkDeps({
+      model: scriptedModel([new ModelError("retryable", "timeout"), e429(), e429()]),
+      sleep: noSleep,
+      releaseBusyQuota,
+    });
+    expect(await err(run(body(), deps))).toEqual({ code: "ai_unavailable", slotReleased: true });
+    expect(releaseBusyQuota).not.toHaveBeenCalled();
+    expect(quota.usage.get("owner")).toMatchObject({ count: 0, released: 1, busyReleased: 0 });
+    expect(quota.global.get("2026-11-21")).toBe(1);
+    expect(fields().find((f) => f["fn"] === "generatePlan")).toMatchObject({ calls: 3, stopReason: "max_calls", quotaRelease: "released" });
+  });
+
+  it("429 -> ok: plan returned, one slot used, final log calls=2 stopReason=ok", async () => {
+    const echo = echoValidModel();
+    const { deps, quota } = mkDeps({ model: scriptedModel([e429(), (c) => echo.generate(c)]), sleep: noSleep });
+    expect((await run(body(), deps)).days).toHaveLength(4);
+    expect(quota.usage.get("owner")).toMatchObject({ count: 1 });
+    expect(fields().find((f) => f["fn"] === "generatePlan")).toMatchObject({ result: "ok", calls: 2, stopReason: "ok", attempts: 2 });
   });
 });
 

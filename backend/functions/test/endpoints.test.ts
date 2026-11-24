@@ -57,6 +57,7 @@ function mkDeps(over: Partial<Deps> = {}, runtime: Partial<RuntimeConfig> = {}):
     model: echoValidModel(),
     reserveQuota: quota.reserveQuota,
     releaseQuota: quota.releaseQuota,
+    releaseBusyQuota: quota.releaseBusyQuota,
     ...over,
   };
 }
@@ -348,7 +349,7 @@ describe("no content in logs (ADR-0002 Aneks A pkt 2)", () => {
     const allowed = new Set([
       "fn", "result", "uidHash", "durationMs", "attempts", "days", "requestBytes", "errorClass", "errorCode", "configError",
       "attempt", "aiModel", "aiLocation", "modelVersion", "promptVersion", "tokensIn", "tokensOut", "tokensThought",
-      "outcome", "validationErrors", "qualityWarnings", "modelError", "quotaRelease",
+      "outcome", "validationErrors", "qualityWarnings", "modelError", "quotaRelease", "waitMs", "billable", "calls", "stopReason",
     ]);
     for (const f of fields) for (const k of Object.keys(f)) expect(allowed.has(k)).toBe(true);
     expect(fields[0]).toMatchObject({ fn: "generatePlan.attempt", result: "ok", attempt: 1, aiModel: "gemini-3.1-flash-lite", promptVersion: "plan-v1" });

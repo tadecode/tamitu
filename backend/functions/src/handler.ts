@@ -12,8 +12,11 @@ export interface HandlerContext {
   configError?: string | undefined;
   /** generatePlan: number of model attempts made. */
   attempts?: number | undefined;
-  /** Fixed code when releasing a quota slot failed after an error. */
+  /** Fixed code of the quota slot release after an error. */
   quotaRelease?: string | undefined;
+  /** generatePlan: model calls (1-3) and why the generation loop ended (ADR-0016 pkt 15). */
+  calls?: number | undefined;
+  stopReason?: string | undefined;
 }
 
 /**
@@ -48,5 +51,7 @@ function pick(ctx: HandlerContext) {
     ...(ctx.configError !== undefined ? { configError: ctx.configError } : {}),
     ...(ctx.attempts !== undefined ? { attempts: ctx.attempts } : {}),
     ...(ctx.quotaRelease !== undefined ? { quotaRelease: ctx.quotaRelease } : {}),
+    ...(ctx.calls !== undefined ? { calls: ctx.calls } : {}),
+    ...(ctx.stopReason !== undefined ? { stopReason: ctx.stopReason } : {}),
   };
 }

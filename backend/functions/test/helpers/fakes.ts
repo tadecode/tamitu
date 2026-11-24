@@ -2,9 +2,11 @@
 // using the same pure functions as the Firestore transactions in index.ts.
 import type { ModelCall, ModelResult, PlanModel } from "../../src/ai.js";
 import {
+  planBusyReleaseOutcome,
   planReleaseOutcome,
   planReservation,
   warsawDay,
+  type BusyReleaseOutcome,
   type ReleaseOutcome,
   type ReservationPlan,
   type UsageDoc,
@@ -91,7 +93,7 @@ export function memoryQuota() {
       const real = planReservation({ usage: usage.get(uid), globalCount: global.get(warsawDay(now)), ...limits, now });
       if (real.allowed) {
         const w = real.writes.usage;
-        usage.set(uid, { day: w.day, count: w.count, released: w.released, expireAt: w.expireAt });
+        usage.set(uid, { day: w.day, count: w.count, released: w.released, busyReleased: w.busyReleased, expireAt: w.expireAt });
         global.set(real.reservation.day, real.writes.global.count);
       }
       return real;
@@ -100,7 +102,16 @@ export function memoryQuota() {
       const r = planReleaseOutcome(usage.get(uid), day, now);
       if (r.outcome === "released") {
         const w = r.write;
-        usage.set(uid, { day: w.day, count: w.count, released: w.released, expireAt: w.expireAt });
+        usage.set(uid, { day: w.day, count: w.count, released: w.released, busyReleased: w.busyReleased, expireAt: w.expireAt });
+      }
+      return r.outcome;
+    },
+    releaseBusyQuota: async (uid: string, day: string, now: Date): Promise<BusyReleaseOutcome> => {
+      const r = planBusyReleaseOutcome(usage.get(uid), global.get(day), day, now);
+      if (r.outcome === "busy_released") {
+        const w = r.write;
+        usage.set(uid, { day: w.day, count: w.count, released: w.released, busyReleased: w.busyReleased, expireAt: w.expireAt });
+        if (global.has(day)) global.set(day, r.global.count);
       }
       return r.outcome;
     },
