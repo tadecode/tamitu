@@ -106,5 +106,21 @@
   "errorUpdateAction": "Update app",
   "errorUnavailableForAccountBody": "Creating plans is temporarily unavailable. Please try later.",
   "errorSessionExpired": "Your session has expired. Sign in again – your trips are on this device.",
-  "errorInvalidFormBody": "Check the details in the form and try again."
+  "errorInvalidFormBody": "Check the details in the form and try again.",
+  "generationBusyTitle": "Our AI assistant is busy right now",
+  "generationBusyStillTitle": "Our AI assistant is still busy",
+  "generationBusyBodyAuto": "We'll try again in {minutes, plural, one{a minute} other{{minutes} minutes}}. You don't need to do anything.",
+  "@generationBusyBodyAuto": {"placeholders":{"minutes":{"type":"int"}}},
+  "generationBusyBodyManual": "Please try again in a moment. Your trip details are kept in the form.",
+  "generationBusyBodyPaused": "We didn't retry while the app was in the background. You can try now.",
+  "generationBusyQuotaReleased": "This attempt doesn't count towards your limit.",
+  "generationBusyQuotaCounted": "This attempt counted towards today's limit.",
+  "generationBusyQuotaUnknown": "This attempt may have counted towards today's limit.",
+  "generationBusyCountdown": "Retrying in {time}",
+  "@generationBusyCountdown": {"placeholders":{"time":{"type":"String"}}},
+  "generationBusyCountdownA11y": "Retrying in {seconds, plural, one{1 second} other{{seconds} seconds}}",
+  "@generationBusyCountdownA11y": {"placeholders":{"seconds":{"type":"int"}}},
+  "generationBusyTryNow": "Try now",
+  "generationBusyBack": "Back to the form",
+  "generationRetrying": "Trying again…"
 }

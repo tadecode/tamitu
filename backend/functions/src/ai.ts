@@ -25,7 +25,7 @@ export interface ModelResult {
 /**
  * Provider failure classes (p3-05 sekcja 3 pkt 3):
  * - `config`: 400/401/403/404 etc. - configuration error, never retried (retry costs a slot, fixes nothing);
- * - `retryable`: 429, 5xx, timeout, network - may be retried once.
+ * - `retryable`: 408, 429, 5xx, timeout, network - retried with backoff (generate.ts, ADR-0016; 429 is not billable).
  */
 export class ModelError extends Error {
   constructor(

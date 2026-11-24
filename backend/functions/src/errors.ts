@@ -9,6 +9,7 @@ export type AppCode =
   | "consent_required"
   | "limit_exceeded"
   | "ai_unavailable"
+  | "ai_busy"
   | "ai_invalid_response"
   | "test_data_only"
   | "reauth_required"
@@ -23,6 +24,8 @@ const HTTPS_CODE: Record<AppCode, FunctionsErrorCode> = {
   consent_required: "failed-precondition",
   limit_exceeded: "resource-exhausted",
   ai_unavailable: "unavailable",
+  // ADR-0016 pkt 6: every model call was rejected with HTTP 429 (0 billable attempts).
+  ai_busy: "unavailable",
   ai_invalid_response: "internal",
   test_data_only: "permission-denied",
   reauth_required: "failed-precondition",

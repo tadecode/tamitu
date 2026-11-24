@@ -38,6 +38,8 @@ export interface UsageDoc {
   count: number;
   /** Slots returned to this account on `day` (review PR #136 #2); missing = 0. */
   released?: number | undefined;
+  /** ai_busy releases of this account on `day` (ADR-0016 pkt 8); missing = 0. */
+  busyReleased?: number | undefined;
 }
 
 /**
@@ -51,6 +53,19 @@ export const MAX_RELEASES_PER_DAY = 2;
 /** Releases already made today; a document from an earlier day counts as 0. */
 export function effectiveReleased(usage: UsageDoc | undefined, today: string): number {
   const r = usage && usage.day === today ? usage.released ?? 0 : 0;
+  return Number.isInteger(r) && r > 0 ? r : 0;
+}
+
+/**
+ * ADR-0016 pkt 8: abuse fuse for ai_busy. At most this many ai_busy releases (account AND global slot) per
+ * account and day; they do not count towards MAX_RELEASES_PER_DAY. From the 11th ai_busy of the day both
+ * slots stay used (`slotReleased=false`).
+ */
+export const MAX_BUSY_RELEASES_PER_DAY = 10;
+
+/** ai_busy releases already made today; a document from an earlier day counts as 0. */
+export function effectiveBusyReleased(usage: UsageDoc | undefined, today: string): number {
+  const r = usage && usage.day === today ? usage.busyReleased ?? 0 : 0;
   return Number.isInteger(r) && r > 0 ? r : 0;
 }
 
@@ -120,6 +135,7 @@ export interface UsageWrite {
   day: string;
   count: number;
   released: number;
+  busyReleased: number;
   updatedAt: Date;
   expireAt: Date;
 }
@@ -157,6 +173,7 @@ export function planReservation(input: {
         day,
         count: userCount + 1,
         released: effectiveReleased(input.usage, day),
+        busyReleased: effectiveBusyReleased(input.usage, day),
         updatedAt: input.now,
         expireAt: usageExpireAt(input.now),
       },
@@ -187,7 +204,50 @@ export function planReleaseOutcome(usage: UsageDoc | undefined, reservationDay: 
   if (released >= MAX_RELEASES_PER_DAY) return { outcome: "capped" };
   return {
     outcome: "released",
-    write: { day: usage.day, count: usage.count - 1, released: released + 1, updatedAt: now, expireAt: usageExpireAt(now) },
+    write: {
+      day: usage.day,
+      count: usage.count - 1,
+      released: released + 1,
+      busyReleased: effectiveBusyReleased(usage, reservationDay),
+      updatedAt: now,
+      expireAt: usageExpireAt(now),
+    },
+  };
+}
+
+/** Result of an ai_busy release (ADR-0016 pkt 8); `stale_day` as in planReleaseOutcome (rule 5). */
+export type BusyReleaseOutcome = "busy_released" | "busy_capped" | "stale_day";
+
+export type BusyReleasePlan =
+  | { outcome: "busy_released"; write: UsageWrite; global: { count: number; expireAt: Date } }
+  | { outcome: "busy_capped" | "stale_day" };
+
+/**
+ * Pure part of the ai_busy release (posrednik-api.md pkt 2 rule 7): no model call was billed, so the
+ * account slot AND the global slot of the reservation day go back, without touching `released` (the
+ * 2-per-day limit of rule 2). Fuse: MAX_BUSY_RELEASES_PER_DAY per account and day, then both slots stay
+ * used. Rule 5 unchanged: after midnight (stored day != reservation day) nothing is written.
+ */
+export function planBusyReleaseOutcome(
+  usage: UsageDoc | undefined,
+  globalCount: number | undefined,
+  reservationDay: string,
+  now: Date,
+): BusyReleasePlan {
+  if (!usage || usage.day !== reservationDay || usage.count <= 0) return { outcome: "stale_day" };
+  const busy = effectiveBusyReleased(usage, reservationDay);
+  if (busy >= MAX_BUSY_RELEASES_PER_DAY) return { outcome: "busy_capped" };
+  return {
+    outcome: "busy_released",
+    write: {
+      day: usage.day,
+      count: usage.count - 1,
+      released: effectiveReleased(usage, reservationDay),
+      busyReleased: busy + 1,
+      updatedAt: now,
+      expireAt: usageExpireAt(now),
+    },
+    global: { count: Math.max(0, (globalCount ?? 0) - 1), expireAt: globalExpireAt(now) },
   };
 }
 
@@ -202,8 +262,9 @@ export function planRelease(usage: UsageDoc | undefined, reservationDay: string,
  * a malformed `released` counts as 0 releases. Pure so the mapping is unit-tested (review PR #136 #10).
  */
 export function usageFromDoc(data: unknown): UsageDoc | undefined {
-  const d = data as { day?: unknown; count?: unknown; released?: unknown } | null | undefined;
+  const d = data as { day?: unknown; count?: unknown; released?: unknown; busyReleased?: unknown } | null | undefined;
   if (typeof d?.day !== "string" || !Number.isInteger(d.count)) return undefined;
   const released = Number.isInteger(d.released) ? (d.released as number) : 0;
-  return { day: d.day, count: d.count as number, released };
+  const busyReleased = Number.isInteger(d.busyReleased) ? (d.busyReleased as number) : 0;
+  return { day: d.day, count: d.count as number, released, busyReleased };
 }

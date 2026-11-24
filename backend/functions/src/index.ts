@@ -24,10 +24,12 @@ import {
 import { budgetGuardCore, deleteAccountCore, generatePlanCore, recordConsentCore, type Deps } from "./endpoints.js";
 import { runGuarded } from "./handler.js";
 import {
+  planBusyReleaseOutcome,
   planReleaseOutcome,
   planReservation,
   usageFromDoc,
   warsawDay,
+  type BusyReleaseOutcome,
   type ReleaseOutcome,
   type ReservationPlan,
 } from "./limits.js";
@@ -133,6 +135,27 @@ async function releaseQuota(uid: string, reservationDay: string, now: Date): Pro
 }
 
 /**
+ * ADR-0016 pkt 8 (posrednik-api.md pkt 2 rule 7): after ai_busy ONE transaction returns the account slot
+ * and the global slot of the reservation day, without touching `released`; fuse busyReleased <= 10/day.
+ */
+async function releaseBusyQuota(uid: string, reservationDay: string, now: Date): Promise<BusyReleaseOutcome> {
+  const db = getFirestore();
+  const usageRef = db.doc(`usage/${uid}`);
+  const globalRef = db.doc(`usage_global/${reservationDay}`);
+  return db.runTransaction(async (tx) => {
+    const [u, g] = await Promise.all([tx.get(usageRef), tx.get(globalRef)]);
+    const gc = g.get("count");
+    const r = planBusyReleaseOutcome(usageFromDoc(u.data()), Number.isInteger(gc) ? (gc as number) : 0, reservationDay, now);
+    if (r.outcome === "busy_released") {
+      const w = r.write;
+      tx.set(usageRef, { ...w, updatedAt: Timestamp.fromDate(w.updatedAt), expireAt: Timestamp.fromDate(w.expireAt) });
+      if (g.exists) tx.set(globalRef, { count: r.global.count, expireAt: Timestamp.fromDate(r.global.expireAt) });
+    }
+    return r.outcome;
+  });
+}
+
+/**
  * Vertex model from AI_MODEL_ID / AI_LOCATION (.env.<project>); undefined when missing or not allowed
  * (fail-closed: generatePlan answers ai_unavailable before reserving a slot). Token: the function's
  * own service account (fn-ai-plan) via Application Default Credentials - no keys.
@@ -162,6 +185,7 @@ function deps(): Deps {
     prompt,
     reserveQuota,
     releaseQuota,
+    releaseBusyQuota,
   };
 }
 

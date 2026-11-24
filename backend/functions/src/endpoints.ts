@@ -24,8 +24,14 @@ import {
 } from "./consents.js";
 import { AppError } from "./errors.js";
 import type { HandlerContext } from "./handler.js";
-import { generateValidPlan, type AttemptLog } from "./generate.js";
-import { shouldDisableAi, type QuotaInfo, type ReleaseOutcome, type ReservationPlan } from "./limits.js";
+import { generateValidPlan, type AttemptLog, type GenerationSummary } from "./generate.js";
+import {
+  shouldDisableAi,
+  type BusyReleaseOutcome,
+  type QuotaInfo,
+  type ReleaseOutcome,
+  type ReservationPlan,
+} from "./limits.js";
 import { logEvent, uidHash } from "./logger.js";
 import type { PlanDay } from "./plan-validator.js";
 import type { PlanPrompt } from "./prompt/index.js";
@@ -58,10 +64,17 @@ export interface Deps {
   reserveQuota: (uid: string, limits: { userLimit: number; globalLimit: number }, now: Date) => Promise<ReservationPlan>;
   /** Slot release after a system error (separate transaction; limits.planReleaseOutcome). */
   releaseQuota: (uid: string, reservationDay: string, now: Date) => Promise<ReleaseOutcome>;
-  /** Clock for attempt durations (tests inject a fake). */
+  /**
+   * Slot release after ai_busy (ADR-0016 pkt 8): usage/{uid} and usage_global/{day} in one transaction,
+   * without touching `released`; limits.planBusyReleaseOutcome.
+   */
+  releaseBusyQuota: (uid: string, reservationDay: string, now: Date) => Promise<BusyReleaseOutcome>;
+  /** Clock for attempt durations and the 100 s generation budget (tests inject a fake). */
   clock?: () => number;
   /** Wait before a retry after 429/5xx/timeout (tests inject a no-op). */
   sleep?: (ms: number) => Promise<void>;
+  /** Jitter of the retry wait (tests inject a fixed value). */
+  random?: () => number;
 }
 
 export type CallableReq = CallerRequest & { data: unknown };
@@ -88,6 +101,13 @@ const RELEASE_ON: ReadonlySet<string> = new Set(["ai_unavailable", "ai_invalid_r
 const RELEASE_LOG: Record<ReleaseOutcome, string> = {
   released: "released",
   capped: "release_capped",
+  stale_day: "release_stale_day",
+};
+
+/** ADR-0016 pkt 8: `busy_released` / `busy_capped`; after midnight the same code as rule 5. */
+const BUSY_RELEASE_LOG: Record<BusyReleaseOutcome, string> = {
+  busy_released: "busy_released",
+  busy_capped: "busy_capped",
   stale_day: "release_stale_day",
 };
 
@@ -146,11 +166,17 @@ export async function generatePlanCore(
       ...a,
     });
   };
+  const onFinish = (s: GenerationSummary) => {
+    ctx.calls = s.calls;
+    ctx.stopReason = s.stopReason;
+  };
   try {
     const { plan, promptVersion } = await generateValidPlan(request, model, {
       clock: deps.clock,
       sleep: deps.sleep,
+      random: deps.random,
       onAttempt,
+      onFinish,
       ...(deps.prompt ? { prompt: deps.prompt } : {}),
     });
     return {
@@ -162,6 +188,17 @@ export async function generatePlanCore(
       quota: reservation.reservation.quota,
     };
   } catch (e) {
+    if (e instanceof AppError && e.appCode === "ai_busy") {
+      let slotReleased = false;
+      try {
+        const outcome = await deps.releaseBusyQuota(caller.uid, reservation.reservation.day, deps.now());
+        ctx.quotaRelease = BUSY_RELEASE_LOG[outcome];
+        slotReleased = outcome === "busy_released";
+      } catch {
+        ctx.quotaRelease = "release_failed"; // rule 6: the code for the app stays ai_busy
+      }
+      throw new AppError("ai_busy", { ...e.details, slotReleased });
+    }
     if (e instanceof AppError && RELEASE_ON.has(e.appCode)) {
       let slotReleased = false;
       try {

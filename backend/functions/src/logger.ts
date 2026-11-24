@@ -32,8 +32,17 @@ export interface LogFields {
   qualityWarnings?: string;
   /** ModelError code: HTTP status, `timeout`, `network`. */
   modelError?: string;
-  /** Fixed code when releasing a quota slot failed. */
+  /** Fixed code of the slot release after an error (`released`, `busy_released`, ...). */
   quotaRelease?: string;
+  // ADR-0016 pkt 15: retry metadata, numbers and fixed codes only.
+  /** Wait before this model call in ms. */
+  waitMs?: number;
+  /** false only for a call rejected with HTTP 429. */
+  billable?: boolean;
+  /** Model calls in this generation (1-3). */
+  calls?: number;
+  /** `ok`, `invalid`, `config`, `busy`, `max_billable`, `max_calls`, `time_budget`. */
+  stopReason?: string;
 }
 
 const ALLOWED: ReadonlyArray<keyof LogFields> = [
@@ -60,6 +69,10 @@ const ALLOWED: ReadonlyArray<keyof LogFields> = [
   "qualityWarnings",
   "modelError",
   "quotaRelease",
+  "waitMs",
+  "billable",
+  "calls",
+  "stopReason",
 ];
 
 const MAX_STRING = 64;
@@ -68,12 +81,13 @@ const MAX_STRING = 64;
 // raise this cap together with MAX_DAYS.
 const MAX_STRING_BY_KEY: Partial<Record<keyof LogFields, number>> = { validationErrors: 200, qualityWarnings: 200 };
 
-export function sanitizeFields(fields: Partial<LogFields>): Record<string, string | number> {
-  const out: Record<string, string | number> = {};
+export function sanitizeFields(fields: Partial<LogFields>): Record<string, string | number | boolean> {
+  const out: Record<string, string | number | boolean> = {};
   const src = fields as Record<string, unknown>;
   for (const key of ALLOWED) {
     const v = src[key];
     if (typeof v === "number" && Number.isFinite(v)) out[key] = v;
+    else if (typeof v === "boolean") out[key] = v;
     else if (typeof v === "string") out[key] = v.slice(0, MAX_STRING_BY_KEY[key] ?? MAX_STRING);
   }
   return out;
