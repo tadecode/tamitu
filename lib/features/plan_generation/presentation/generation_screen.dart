@@ -94,6 +94,7 @@ class _GenerationScreenState extends ConsumerState<GenerationScreen> {
             retry: _retry,
             onSuccess: () => _openPlan(_retryPlan!),
             onFailure: (failure) => unawaited(_handleFailure(failure)),
+            clock: ref.read(aiBusyClockProvider),
           )..addListener(_onBusyChange);
         });
       } else {
@@ -136,7 +137,12 @@ class _GenerationScreenState extends ConsumerState<GenerationScreen> {
   void _pop(GenerationResult result) {
     if (_finished || !mounted) return;
     _finished = true;
-    Navigator.of(context).pop(result);
+    // Review PR #164 #1: a result may arrive while the cancel dialog (CMP-15) is open.
+    // Close everything above this route first, so the result pops EK-07, not the dialog.
+    final navigator = Navigator.of(context);
+    final route = ModalRoute.of(context);
+    if (route != null) navigator.popUntil((r) => r == route);
+    navigator.pop(result);
   }
 
   Future<void> _handleFailure(AppFailure f) async {
@@ -159,9 +165,9 @@ class _GenerationScreenState extends ConsumerState<GenerationScreen> {
         } else if (type == ConsentType.aiProcessing) {
           _pop(const GenerationNeedsAiConsent());
         } else {
-          // Policy (ADR-0012): re-evaluate the session; without a local acceptance of
-          // the app's version the router opens EK-03.
-          _pop(const GenerationFailed(AppFailure(FailureKind.generic)));
+          // Policy (ADR-0012, EK-16): straight to EK-03 without a message – the session
+          // is re-evaluated and the router opens EK-03 (no local acceptance).
+          _pop(const GenerationBack());
           await ref.read(sessionProvider.notifier).refresh();
         }
       default:

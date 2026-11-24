@@ -4,6 +4,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../features/auth/domain/auth_gateway.dart';
 import '../features/consent/application/consent_service.dart';
+import '../features/generation/application/ai_busy_controller.dart'
+    show MonotonicClock;
 import '../features/plan_generation/domain/plan_api.dart';
 
 /// Ports wired in `bootstrap.dart` (Firebase or fakes) and overridden in tests.
@@ -25,6 +27,10 @@ final planApiProvider = Provider<PlanApi>(
 final requestIdProvider = Provider<String Function()>(
   (ref) => throw UnimplementedError('requestIdProvider must be overridden'),
 );
+
+/// Monotonic clock of the EK-07 "AI busy" countdown; null = the real one (tests inject
+/// a fake one next to the fake async timers).
+final aiBusyClockProvider = Provider<MonotonicClock?>((ref) => null);
 
 /// Stores the UI language chosen in the app (`shared_preferences.uiLanguage`).
 abstract interface class UiLanguageStore {

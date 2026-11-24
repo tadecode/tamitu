@@ -1,13 +1,17 @@
 import 'dart:async';
 
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:tamitu/core/config/app_constants.dart';
 import 'package:tamitu/core/errors/app_failure.dart';
+import 'package:tamitu/core/ui/update_app_view.dart';
 import 'package:tamitu/features/auth/domain/auth_gateway.dart';
 import 'package:tamitu/features/consent/domain/consent_record.dart';
 import 'package:tamitu/features/consent/presentation/ai_consent_screen.dart';
+import 'package:tamitu/features/consent/presentation/welcome_screen.dart';
 import 'package:tamitu/features/generation/presentation/ai_busy_view.dart';
+import 'package:tamitu/features/plan_generation/domain/generated_plan.dart';
 import 'package:tamitu/features/plan_generation/domain/trip_input.dart';
 import 'package:tamitu/features/plan_generation/presentation/generation_screen.dart';
 import 'package:tamitu/features/plan_generation/presentation/plan_screen.dart';
@@ -309,5 +313,233 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Nie udało się otworzyć planu'), findsOneWidget);
     expect(find.byKey(const Key('planBackToList')), findsOneWidget);
+  });
+
+  // ------------------------------------------------ review PR #164
+
+  testWidgets(
+    '#1 an error while the cancel dialog is open closes the dialog and '
+    'returns to the form with the message',
+    (tester) async {
+      final env = await _ready();
+      env.plans.gate = Completer<void>();
+      env.plans.failures.add(
+        const AppFailure(FailureKind.aiUnavailable, slotReleased: true),
+      );
+      await _openForm(tester, env);
+      await _fillCarTrip(tester);
+      await _tapGenerate(tester);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.tap(find.byKey(const Key('generationCancel')));
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.byKey(const Key('generationCancelConfirm')), findsOneWidget);
+      env.plans.gate!.complete();
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.byKey(const Key('generationCancelConfirm')), findsNothing);
+      expect(find.byType(GenerationScreen), findsNothing);
+      expect(find.byType(TripFormScreen), findsOneWidget);
+      expect(find.byKey(const Key('tripFormFailure')), findsOneWidget);
+    },
+  );
+
+  Future<void> submitWith(
+    WidgetTester tester,
+    TestEnv env,
+    AppFailure f,
+  ) async {
+    env.plans.failures.add(f);
+    await _openForm(tester, env);
+    await _fillCarTrip(tester);
+    await _tapGenerate(tester);
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('limit_exceeded: EK-05 with the limit message', (tester) async {
+    final env = await _ready();
+    await submitWith(
+      tester,
+      env,
+      AppFailure(
+        FailureKind.limitExceeded,
+        limit: 5,
+        resetAt: DateTime.utc(2026, 11, 24, 23),
+      ),
+    );
+    expect(find.text('Dzisiejszy limit planów wykorzystany'), findsOneWidget);
+    expect(find.textContaining('Kolejne od jutra'), findsOneWidget);
+  });
+
+  testWidgets('timeout: EK-05 with the timeout message', (tester) async {
+    final env = await _ready();
+    await submitWith(tester, env, const AppFailure(FailureKind.timeout));
+    expect(find.textContaining('trwało zbyt długo'), findsOneWidget);
+  });
+
+  testWidgets('invalid_argument with a known field marks that field', (
+    tester,
+  ) async {
+    final env = await _ready();
+    await submitWith(
+      tester,
+      env,
+      const AppFailure(FailureKind.invalidArgument, field: 'trip.destination'),
+    );
+    expect(
+      find.text('Sprawdź dane w formularzu i spróbuj ponownie.'),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('tripFormFailure')), findsNothing);
+  });
+
+  testWidgets('invalid_argument without a field: CMP-13 notice', (
+    tester,
+  ) async {
+    final env = await _ready();
+    await submitWith(
+      tester,
+      env,
+      const AppFailure(FailureKind.invalidArgument),
+    );
+    expect(find.byKey(const Key('tripFormFailure')), findsOneWidget);
+  });
+
+  testWidgets('unauthenticated: session expires, EK-02 opens', (tester) async {
+    final env = await _ready();
+    await submitWith(
+      tester,
+      env,
+      const AppFailure(FailureKind.unauthenticated),
+    );
+    expect(find.byType(TripFormScreen), findsNothing);
+    expect(find.byType(GenerationScreen), findsNothing);
+    expect(find.byType(WelcomeScreen), findsOneWidget);
+  });
+
+  testWidgets('consent_required ai_processing with a synced record in the app '
+      'version: "Update the app" (CMP-18)', (tester) async {
+    final env = await _ready();
+    await submitWith(
+      tester,
+      env,
+      const AppFailure(
+        FailureKind.consentRequired,
+        consentType: ConsentType.aiProcessing,
+      ),
+    );
+    expect(find.byType(UpdateAppView), findsOneWidget);
+  });
+
+  testWidgets('consent_required ai_processing without a synced record: EK-06 '
+      '"updated"', (tester) async {
+    final env = await _ready(aiConsent: null);
+    await env.local.upsert(
+      'u1',
+      ConsentRecord(
+        id: 'ai-unsynced',
+        type: ConsentType.aiProcessing,
+        granted: true,
+        policyVersion: AppConstants.aiConsentVersion,
+        lang: 'pl',
+        clientAt: DateTime.utc(2026, 11, 20),
+      ),
+    );
+    // The pending record cannot be sent: neither by the background sync at session
+    // start nor before generatePlan (offline twice).
+    env.api.failures.addAll(const [
+      AppFailure(FailureKind.offline),
+      AppFailure(FailureKind.offline),
+    ]);
+    await submitWith(
+      tester,
+      env,
+      const AppFailure(
+        FailureKind.consentRequired,
+        consentType: ConsentType.aiProcessing,
+      ),
+    );
+    expect(find.byType(AiConsentScreen), findsOneWidget);
+    expect(find.byKey(const Key('aiConsentUpdated')), findsOneWidget);
+  });
+
+  testWidgets('ai_busy with slotReleased: one automatic retry after the '
+      'countdown opens EK-08', (tester) async {
+    final env = await _ready();
+    await submitWith(
+      tester,
+      env,
+      const AppFailure(
+        FailureKind.aiBusy,
+        retryAfterSec: 60,
+        slotReleased: true,
+      ),
+    );
+    expect(find.byKey(const Key('aiBusyCountdown')), findsOneWidget);
+    for (var i = 0; i < 61; i++) {
+      env.mono += const Duration(seconds: 1);
+      await tester.pump(const Duration(seconds: 1));
+    }
+    await tester.pumpAndSettle();
+    expect(find.byType(PlanScreen), findsOneWidget);
+    expect(env.plans.requestIds, hasLength(2));
+    expect(env.plans.requestIds.toSet(), hasLength(2));
+  });
+
+  testWidgets('#2 plan content carries the plan language in semantics', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    final env = await _ready();
+    const input = TripInput(
+      destination: 'Lisbon',
+      lodging: 'Baixa',
+      days: 1,
+      arrivalMode: ArrivalMode.car,
+      arrivalDate: LocalDate(2027, 3, 2),
+      arrivalTime: LocalTime(9, 0),
+      planLanguage: 'en',
+    );
+    final plan = GeneratedPlan(
+      requestId: 'r',
+      language: 'en',
+      days: const [
+        PlanDay(
+          dayNumber: 1,
+          title: 'Old town',
+          items: [
+            PlanItem(
+              startTime: '10:00',
+              name: 'Castle',
+              locality: 'Lisbon',
+              description: 'Views.',
+            ),
+          ],
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      hostScreen(
+        env,
+        PlanScreen(
+          data: PlanViewData(input: input, plan: plan),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final locales = <Locale>[];
+    void visit(SemanticsNode node) {
+      for (final a in node.getSemanticsData().attributedLabel.attributes) {
+        if (a is LocaleStringAttribute) locales.add(a.locale);
+      }
+      node.visitChildren((c) {
+        visit(c);
+        return true;
+      });
+    }
+
+    visit(tester.getSemantics(find.byType(PlanScreen)));
+    expect(locales, contains(const Locale('en')));
+    handle.dispose();
   });
 }

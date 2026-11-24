@@ -140,7 +140,7 @@ class PlanScreen extends StatelessWidget {
     return [
       Semantics(
         header: true,
-        child: Text(
+        child: PlanText(
           day.title,
           locale: planLocale,
           style: theme.textTheme.titleMedium,
@@ -258,8 +258,13 @@ class _PlanItemTile extends StatelessWidget {
             ),
           ),
           const SizedBox(height: Space.s1),
-          Text(item.name, locale: locale, style: theme.textTheme.titleMedium),
-          Text(
+          PlanText(
+            item.name,
+            key: const Key('planItemName'),
+            locale: locale,
+            style: theme.textTheme.titleMedium,
+          ),
+          PlanText(
             item.locality,
             locale: locale,
             style: theme.textTheme.bodySmall?.copyWith(
@@ -267,7 +272,7 @@ class _PlanItemTile extends StatelessWidget {
             ),
           ),
           const SizedBox(height: Space.s1),
-          Text(
+          PlanText(
             item.description,
             locale: locale,
             style: theme.textTheme.bodyMedium,
@@ -277,4 +282,22 @@ class _PlanItemTile extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Plan content in the plan language. `TextSpan.locale` (not only `Text.locale`) adds a
+/// locale attribute to the semantics label, so TalkBack reads it with the right voice
+/// when the UI language differs (EK-08 "Dostępność", review PR #164 #2).
+class PlanText extends StatelessWidget {
+  const PlanText(this.text, {super.key, required this.locale, this.style});
+
+  final String text;
+  final Locale locale;
+  final TextStyle? style;
+
+  @override
+  Widget build(BuildContext context) => Text.rich(
+    TextSpan(text: text, locale: locale),
+    locale: locale,
+    style: style,
+  );
 }

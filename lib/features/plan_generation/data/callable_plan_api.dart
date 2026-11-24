@@ -41,7 +41,7 @@ class CallablePlanApi implements PlanApi {
               testData: testData,
             ),
           );
-      return GeneratedPlan.fromJson(result.data);
+      return parsePlanResponse(result.data, requestId: requestId);
     } on FirebaseFunctionsException catch (e) {
       throw classifyCallableError(code: e.code, details: e.details);
     } on AppFailure {

@@ -49,6 +49,9 @@ class TestEnv {
   final MemoryPendingPolicyStore pending;
   final plans = FakePlanApi();
   final requestIds = idSequence();
+
+  /// Fake monotonic clock of the EK-07 "AI busy" countdown (advance with the timers).
+  Duration mono = Duration.zero;
   late final ConsentService consents;
   final opened = <Uri>[];
   final savedLanguages = <String?>[];
@@ -73,6 +76,7 @@ class TestEnv {
     consentServiceProvider.overrideWithValue(consents),
     planApiProvider.overrideWithValue(plans),
     requestIdProvider.overrideWithValue(requestIds),
+    aiBusyClockProvider.overrideWithValue(() => mono),
     urlOpenerProvider.overrideWithValue((uri) async {
       opened.add(uri);
       return true;

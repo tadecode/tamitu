@@ -123,3 +123,13 @@ String _str(Object? v) =>
     v is String ? v : throw const FormatException('string');
 
 int _int(Object? v) => v is int ? v : throw const FormatException('int');
+
+/// Parses a `generatePlan` answer and rejects one for another attempt (review PR #164
+/// #6: answers are matched by `requestId`, posrednik-api.md "Slot limitu").
+GeneratedPlan parsePlanResponse(Object? json, {required String requestId}) {
+  final plan = GeneratedPlan.fromJson(json);
+  if (plan.requestId != requestId) {
+    throw const FormatException('requestId');
+  }
+  return plan;
+}

@@ -140,6 +140,21 @@ void main() {
     });
   });
 
+  test('an answer for another requestId is rejected (review PR #164 #6)', () {
+    final json = {
+      'requestId': 'other',
+      'language': 'pl',
+      'days': [
+        {'dayNumber': 1, 'title': 'A', 'items': []},
+      ],
+    };
+    expect(
+      () => parsePlanResponse(json, requestId: 'mine'),
+      throwsFormatException,
+    );
+    expect(parsePlanResponse(json, requestId: 'other').requestId, 'other');
+  });
+
   test('testData: always in dev, in prod only on request', () {
     expect(testDataFor(flavor: 'dev', requested: false), isTrue);
     expect(testDataFor(flavor: 'prod', requested: false), isFalse);

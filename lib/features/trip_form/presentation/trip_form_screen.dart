@@ -58,13 +58,9 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
   final _airport = TextEditingController();
   final _flightNumber = TextEditingController();
   final _focus = {
-    for (final f in [
-      TripField.destination,
-      TripField.lodging,
-      TripField.airport,
-      TripField.flightNumber,
-    ])
-      f: FocusNode(),
+    // Every field can take focus: after "Create plan" it goes to the first invalid one
+    // (EK-05 "Dostępność", review PR #164 #4).
+    for (final f in TripField.values) f: FocusNode(),
   };
   final _keys = {for (final f in TripField.values) f: GlobalKey()};
 
@@ -219,7 +215,11 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
     final invalid = _invalidFields(l10n);
     if (invalid.isNotEmpty) {
       _focusField(invalid.first);
-      _announce(l10n.tripFormErrorsCount(invalid.length));
+      // Count + first error (focus alone does not reach TalkBack on every field).
+      _announce(
+        '${l10n.tripFormErrorsCount(invalid.length)} '
+        '${_error(l10n, invalid.first, force: true)}',
+      );
       return;
     }
     setState(() => _busy = true);
@@ -252,10 +252,12 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
 
   /// EK-07 on top of the form. Success navigates to EK-08 from EK-07 itself.
   Future<void> _runGeneration() async {
+    // Built once: the route builder may run again later (review PR #164 #5).
+    final input = _input();
     final result = await Navigator.of(context).push<GenerationResult>(
       MaterialPageRoute(
         fullscreenDialog: true,
-        builder: (_) => GenerationScreen(uid: widget.uid, input: _input()),
+        builder: (_) => GenerationScreen(uid: widget.uid, input: input),
       ),
     );
     if (!mounted || result == null) return;
@@ -421,6 +423,7 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
                 KeyedSubtree(
                   key: _keys[TripField.days],
                   child: NumberStepper(
+                    focusNode: _focus[TripField.days],
                     key: const Key('tripFormDays'),
                     label: l10n.tripFormDays,
                     value: _days,
@@ -668,22 +671,25 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
       children: [
         Text(l10n.tripFormArrivalMode, style: theme.textTheme.bodyMedium),
         const SizedBox(height: Space.s2),
-        SegmentedButton<ArrivalMode>(
-          key: const Key('tripFormArrivalMode'),
-          segments: [
-            ButtonSegment(
-              value: ArrivalMode.flight,
-              label: Text(l10n.tripFormArrivalFlight),
-            ),
-            ButtonSegment(
-              value: ArrivalMode.car,
-              label: Text(l10n.tripFormArrivalCar),
-            ),
-          ],
-          // No default (EK-05).
-          emptySelectionAllowed: true,
-          selected: {?_mode},
-          onSelectionChanged: (s) => _setMode(s.isEmpty ? _mode : s.first),
+        Focus(
+          focusNode: _focus[TripField.arrivalMode],
+          child: SegmentedButton<ArrivalMode>(
+            key: const Key('tripFormArrivalMode'),
+            segments: [
+              ButtonSegment(
+                value: ArrivalMode.flight,
+                label: Text(l10n.tripFormArrivalFlight),
+              ),
+              ButtonSegment(
+                value: ArrivalMode.car,
+                label: Text(l10n.tripFormArrivalCar),
+              ),
+            ],
+            // No default (EK-05).
+            emptySelectionAllowed: true,
+            selected: {?_mode},
+            onSelectionChanged: (s) => _setMode(s.isEmpty ? _mode : s.first),
+          ),
         ),
         if (error != null) _fieldError(context, error),
       ],
@@ -755,6 +761,7 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
     final error = _error(l10n, field);
     return InkWell(
       key: _keys[field],
+      focusNode: _focus[field],
       onTap: onTap,
       borderRadius: BorderRadius.circular(Radii.xs),
       child: InputDecorator(
@@ -929,6 +936,7 @@ class NumberStepper extends StatelessWidget {
     required this.max,
     required this.onChanged,
     this.error,
+    this.focusNode,
   });
 
   final String label;
@@ -937,6 +945,9 @@ class NumberStepper extends StatelessWidget {
   final int max;
   final ValueChanged<int> onChanged;
   final String? error;
+
+  /// Focus of the "+" button (focus after a validation error).
+  final FocusNode? focusNode;
 
   @override
   Widget build(BuildContext context) {
@@ -974,6 +985,7 @@ class NumberStepper extends StatelessWidget {
               ),
               IconButton(
                 key: const Key('stepperIncrease'),
+                focusNode: focusNode,
                 tooltip: l10n.tripFormIncrease,
                 onPressed: v == null
                     ? () => onChanged(min)
