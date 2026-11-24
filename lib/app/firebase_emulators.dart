@@ -6,6 +6,8 @@ import '../features/auth/data/emulator_auth_gateway.dart';
 import '../features/auth/domain/auth_gateway.dart';
 import '../features/consent/data/callable_consent_api.dart';
 import '../features/consent/domain/consent_ports.dart';
+import '../features/plan_generation/data/callable_plan_api.dart';
+import '../features/plan_generation/domain/plan_api.dart';
 
 /// Local Firebase emulators instead of the cloud (QA13): `--dart-define=
 /// TAMITU_USE_FIREBASE_EMULATORS=true`, only in a debug `dev` build (environment.dart).
@@ -92,7 +94,7 @@ const emulatorAppName = 'tamitu-emulators';
 /// Connects Auth and Functions of a dedicated Firebase app to the local emulators.
 /// App Check is deliberately not activated (the Functions emulator runs with
 /// `ENFORCE_APP_CHECK=false`; activating it would call the real App Check service).
-Future<(AuthGateway, ConsentApi)> connectFirebaseEmulators(
+Future<(AuthGateway, ConsentApi, PlanApi)> connectFirebaseEmulators(
   FirebaseEmulatorConfig config,
 ) async {
   config.validate();
@@ -110,5 +112,7 @@ Future<(AuthGateway, ConsentApi)> connectFirebaseEmulators(
   return (
     EmulatorAuthGateway(auth, testSub: config.testSub),
     CallableConsentApi(functions),
+    // Emulator builds are debug `dev` only: always test data.
+    CallablePlanApi(functions, testData: true),
   );
 }

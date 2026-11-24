@@ -18,6 +18,9 @@ import '../features/consent/data/fake_consent_api.dart';
 import '../features/consent/data/prefs_pending_policy_store.dart';
 import '../features/consent/data/sqlite_consent_local_store.dart';
 import '../features/consent/domain/consent_ports.dart';
+import '../features/plan_generation/data/callable_plan_api.dart';
+import '../features/plan_generation/data/fake_plan_api.dart';
+import '../features/plan_generation/domain/plan_api.dart';
 import 'environment.dart';
 import 'firebase_emulators.dart';
 import 'providers.dart';
@@ -31,6 +34,9 @@ const fakeBackend = bool.fromEnvironment('TAMITU_FAKE_BACKEND');
 const _serverClientId = String.fromEnvironment(
   'TAMITU_GOOGLE_SERVER_CLIENT_ID',
 );
+
+/// `testData` in `prod` internal builds (ADR-0011 pkt 6); `dev` always sends true.
+const _testDataRequested = bool.fromEnvironment('TAMITU_TEST_DATA');
 
 /// App Check debug token for `dev` (registered in the Firebase console; passed at build
 /// time from a local/CI secret, never committed – SEC-16).
@@ -54,16 +60,23 @@ Future<List<Override>> bootstrapOverrides() async {
   final prefs = SharedPreferencesAsync();
   final AuthGateway auth;
   final ConsentApi api;
+  final PlanApi plans;
   if (fakeBackend) {
     auth = FakeAuthGateway();
     api = FakeConsentApi();
+    plans = FakePlanApi(delay: const Duration(seconds: 3));
   } else if (useFirebaseEmulators) {
     // QA13: local Auth/Functions emulators, demo project, no App Check (debug dev only).
-    final (emulatorAuth, emulatorApi) = await connectFirebaseEmulators(
+    final (
+      emulatorAuth,
+      emulatorApi,
+      emulatorPlans,
+    ) = await connectFirebaseEmulators(
       FirebaseEmulatorConfig.fromEnvironment(),
     );
     auth = emulatorAuth;
     api = emulatorApi;
+    plans = emulatorPlans;
   } else {
     // Firebase options come from google-services.json per flavor (P3-03); without it
     // initialisation fails and the app cannot sign in (by design: no keys in the repo).
@@ -80,8 +93,13 @@ Future<List<Override>> bootstrapOverrides() async {
     auth = FirebaseAuthGateway(
       serverClientId: _serverClientId.isEmpty ? null : _serverClientId,
     );
-    api = CallableConsentApi(
-      FirebaseFunctions.instanceFor(region: CallableConsentApi.region),
+    final functions = FirebaseFunctions.instanceFor(
+      region: CallableConsentApi.region,
+    );
+    api = CallableConsentApi(functions);
+    plans = CallablePlanApi(
+      functions,
+      testData: testDataFor(flavor: appFlavor, requested: _testDataRequested),
     );
   }
   const uuid = Uuid();
@@ -106,6 +124,8 @@ Future<List<Override>> bootstrapOverrides() async {
   return [
     authGatewayProvider.overrideWithValue(auth),
     consentServiceProvider.overrideWithValue(consents),
+    planApiProvider.overrideWithValue(plans),
+    requestIdProvider.overrideWithValue(uuid.v4),
     uiLanguageStoreProvider.overrideWithValue(_PrefsUiLanguageStore(prefs)),
     initialUiLanguageProvider.overrideWithValue(language),
   ];

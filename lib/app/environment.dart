@@ -62,3 +62,9 @@ void assertFirebaseEmulatorsAllowed({
     );
   }
 }
+
+/// `testData` of `generatePlan` (posrednik-api.md pkt 2, ADR-0011 pkt 6): always true in
+/// `dev`; in `prod` only for internal builds with `--dart-define=TAMITU_TEST_DATA=true`
+/// (until SEC-15 is closed).
+bool testDataFor({required String? flavor, required bool requested}) =>
+    flavor == 'dev' || requested;
