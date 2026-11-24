@@ -9,6 +9,15 @@ class FailureMessage {
   final String body;
 }
 
+/// ai_busy quota sentence (ek-07-ai-busy.md "Zdanie o limicie"): a give-back is promised
+/// only with `slotReleased = true` (posrednik-api.md pkt 6).
+String busyQuotaSentence(AppLocalizations l10n, bool? slotReleased) =>
+    switch (slotReleased) {
+      true => l10n.generationBusyQuotaReleased,
+      false => l10n.generationBusyQuotaCounted,
+      null => l10n.generationBusyQuotaUnknown,
+    };
+
 /// EK-16 catalogue for generic surfaces (CMP-13 / CMP-18). Screens with their own
 /// texts (EK-02, EK-03, EK-06) map offline/generic themselves.
 ///
@@ -52,6 +61,15 @@ FailureMessage failureMessage(
           false => l10n.errorAiUnavailableCountedBody,
           null => l10n.errorAiUnavailableMaybeBody,
         },
+      );
+    // EK-07 shows ai_busy as its own state (AiBusyView); this is the fallback for
+    // generic surfaces: the manual variant (no countdown), quota sentence by slotReleased.
+    case FailureKind.aiBusy:
+      return FailureMessage(
+        title: l10n.generationBusyTitle,
+        body:
+            '${l10n.generationBusyBodyManual} '
+            '${busyQuotaSentence(l10n, f.slotReleased)}',
       );
     case FailureKind.aiInvalidResponse:
       return FailureMessage(

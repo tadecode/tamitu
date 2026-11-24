@@ -266,4 +266,66 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errorInvalidFormBody =>
       'Check the details in the form and try again.';
+
+  @override
+  String get generationBusyTitle => 'Our AI assistant is busy right now';
+
+  @override
+  String get generationBusyStillTitle => 'Our AI assistant is still busy';
+
+  @override
+  String generationBusyBodyAuto(int minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      minutes,
+      locale: localeName,
+      other: '$minutes minutes',
+      one: 'a minute',
+    );
+    return 'We\'ll try again in $_temp0. You don\'t need to do anything.';
+  }
+
+  @override
+  String get generationBusyBodyManual =>
+      'Please try again in a moment. Your trip details are kept in the form.';
+
+  @override
+  String get generationBusyBodyPaused =>
+      'We didn\'t retry while the app was in the background. You can try now.';
+
+  @override
+  String get generationBusyQuotaReleased =>
+      'This attempt doesn\'t count towards your limit.';
+
+  @override
+  String get generationBusyQuotaCounted =>
+      'This attempt counted towards today\'s limit.';
+
+  @override
+  String get generationBusyQuotaUnknown =>
+      'This attempt may have counted towards today\'s limit.';
+
+  @override
+  String generationBusyCountdown(String time) {
+    return 'Retrying in $time';
+  }
+
+  @override
+  String generationBusyCountdownA11y(int seconds) {
+    String _temp0 = intl.Intl.pluralLogic(
+      seconds,
+      locale: localeName,
+      other: '$seconds seconds',
+      one: '1 second',
+    );
+    return 'Retrying in $_temp0';
+  }
+
+  @override
+  String get generationBusyTryNow => 'Try now';
+
+  @override
+  String get generationBusyBack => 'Back to the form';
+
+  @override
+  String get generationRetrying => 'Trying again…';
 }

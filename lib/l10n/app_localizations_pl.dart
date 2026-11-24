@@ -269,4 +269,72 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get errorInvalidFormBody =>
       'Sprawdź dane w formularzu i spróbuj ponownie.';
+
+  @override
+  String get generationBusyTitle =>
+      'Nasz asystent AI jest chwilowo przeciążony';
+
+  @override
+  String get generationBusyStillTitle =>
+      'Nasz asystent AI nadal jest przeciążony';
+
+  @override
+  String generationBusyBodyAuto(int minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      minutes,
+      locale: localeName,
+      other: '$minutes minuty',
+      many: '$minutes minut',
+      few: '$minutes minuty',
+      one: 'minutę',
+    );
+    return 'Spróbujemy ponownie za $_temp0. Nie musisz nic robić.';
+  }
+
+  @override
+  String get generationBusyBodyManual =>
+      'Spróbuj ponownie za chwilę. Twoje dane w formularzu zostały zachowane.';
+
+  @override
+  String get generationBusyBodyPaused =>
+      'Gdy aplikacja była w tle, nie ponawialiśmy próby. Możesz spróbować teraz.';
+
+  @override
+  String get generationBusyQuotaReleased =>
+      'Ta próba nie wlicza się do limitu.';
+
+  @override
+  String get generationBusyQuotaCounted =>
+      'Ta próba została wliczona do dzisiejszego limitu.';
+
+  @override
+  String get generationBusyQuotaUnknown =>
+      'Ta próba mogła zostać wliczona do dzisiejszego limitu.';
+
+  @override
+  String generationBusyCountdown(String time) {
+    return 'Ponowna próba za $time';
+  }
+
+  @override
+  String generationBusyCountdownA11y(int seconds) {
+    String _temp0 = intl.Intl.pluralLogic(
+      seconds,
+      locale: localeName,
+      other: '$seconds sekundy',
+      many: '$seconds sekund',
+      few: '$seconds sekundy',
+      one: '1 sekundę',
+    );
+    return 'Ponowna próba za $_temp0';
+  }
+
+  @override
+  String get generationBusyTryNow => 'Spróbuj teraz';
+
+  @override
+  String get generationBusyBack => 'Wróć do formularza';
+
+  @override
+  String get generationRetrying => 'Próbujemy ponownie…';
 }

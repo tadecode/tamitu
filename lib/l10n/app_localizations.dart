@@ -523,6 +523,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Check the details in the form and try again.'**
   String get errorInvalidFormBody;
+
+  /// No description provided for @generationBusyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Our AI assistant is busy right now'**
+  String get generationBusyTitle;
+
+  /// No description provided for @generationBusyStillTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Our AI assistant is still busy'**
+  String get generationBusyStillTitle;
+
+  /// No description provided for @generationBusyBodyAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'ll try again in {minutes, plural, one{a minute} other{{minutes} minutes}}. You don\'t need to do anything.'**
+  String generationBusyBodyAuto(int minutes);
+
+  /// No description provided for @generationBusyBodyManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Please try again in a moment. Your trip details are kept in the form.'**
+  String get generationBusyBodyManual;
+
+  /// No description provided for @generationBusyBodyPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'We didn\'t retry while the app was in the background. You can try now.'**
+  String get generationBusyBodyPaused;
+
+  /// No description provided for @generationBusyQuotaReleased.
+  ///
+  /// In en, this message translates to:
+  /// **'This attempt doesn\'t count towards your limit.'**
+  String get generationBusyQuotaReleased;
+
+  /// No description provided for @generationBusyQuotaCounted.
+  ///
+  /// In en, this message translates to:
+  /// **'This attempt counted towards today\'s limit.'**
+  String get generationBusyQuotaCounted;
+
+  /// No description provided for @generationBusyQuotaUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'This attempt may have counted towards today\'s limit.'**
+  String get generationBusyQuotaUnknown;
+
+  /// No description provided for @generationBusyCountdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Retrying in {time}'**
+  String generationBusyCountdown(String time);
+
+  /// No description provided for @generationBusyCountdownA11y.
+  ///
+  /// In en, this message translates to:
+  /// **'Retrying in {seconds, plural, one{1 second} other{{seconds} seconds}}'**
+  String generationBusyCountdownA11y(int seconds);
+
+  /// No description provided for @generationBusyTryNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Try now'**
+  String get generationBusyTryNow;
+
+  /// No description provided for @generationBusyBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to the form'**
+  String get generationBusyBack;
+
+  /// No description provided for @generationRetrying.
+  ///
+  /// In en, this message translates to:
+  /// **'Trying again…'**
+  String get generationRetrying;
 }
 
 class _AppLocalizationsDelegate

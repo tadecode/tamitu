@@ -22,4 +22,7 @@ abstract final class LayoutLimits {
   static const contentMaxWidth = 560.0;
   static const stateTextMaxWidth = 320.0;
   static const minTouchTarget = 48.0;
+
+  /// Bottom action button on medium/expanded windows (EK-07, ek-07-ai-busy.md).
+  static const bottomButtonMaxWidth = 360.0;
 }

@@ -29,6 +29,11 @@ enum FailureKind {
   /// `limit_exceeded` with [AppFailure.limit] and [AppFailure.resetAt].
   limitExceeded,
   aiUnavailable,
+
+  /// `ai_busy` (contract v0.6, ADR-0016): every model call was rejected as overloaded.
+  /// Carries [AppFailure.retryAfterSec] and [AppFailure.slotReleased]; EK-07 state
+  /// "AI busy" (countdown and one automatic retry).
+  aiBusy,
   aiInvalidResponse,
   testDataOnly,
   reauthRequired,
@@ -65,6 +70,7 @@ class AppFailure implements Exception {
     this.limit,
     this.resetAt,
     this.slotReleased,
+    this.retryAfterSec,
   });
 
   final FailureKind kind;
@@ -77,6 +83,10 @@ class AppFailure implements Exception {
   /// true = the attempt did not use the daily limit, false = it counted,
   /// null = unknown (field missing, older server) -> "may have counted".
   final bool? slotReleased;
+
+  /// `details.retryAfterSec` of `ai_busy`, already normalised to 30–120 s
+  /// (missing or out of range -> 60 s, ADR-0016 pkt 10). Null for other kinds.
+  final int? retryAfterSec;
 
   @override
   String toString() => 'AppFailure(${kind.name})';
@@ -123,6 +133,12 @@ AppFailure classifyCallableError({required String code, Object? details}) {
           FailureKind.aiUnavailable,
           slotReleased: _slotReleased(map),
         );
+      case 'ai_busy':
+        return AppFailure(
+          FailureKind.aiBusy,
+          slotReleased: _slotReleased(map),
+          retryAfterSec: normalizeRetryAfterSec(map['retryAfterSec']),
+        );
       case 'ai_invalid_response':
         return AppFailure(
           FailureKind.aiInvalidResponse,
@@ -147,6 +163,19 @@ AppFailure classifyCallableError({required String code, Object? details}) {
     default:
       return const AppFailure(FailureKind.generic);
   }
+}
+
+/// Accepted `retryAfterSec` range and default (ADR-0016 pkt 10, ek-07-ai-busy.md).
+const minRetryAfterSec = 30;
+const maxRetryAfterSec = 120;
+const defaultRetryAfterSec = 60;
+
+/// Whole seconds in 30–120; anything else (missing, fractional, text, out of range) -> 60.
+int normalizeRetryAfterSec(Object? value) {
+  if (value is int && value >= minRetryAfterSec && value <= maxRetryAfterSec) {
+    return value;
+  }
+  return defaultRetryAfterSec;
 }
 
 /// `details.slotReleased` only when it is a real bool; anything else = unknown (null).

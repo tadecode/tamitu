@@ -70,7 +70,9 @@ class Notice extends StatelessWidget {
   }
 }
 
-/// CMP-02 filled/outlined button with a loading state: the label is replaced by a 20 dp
+enum _ButtonVariant { filled, tonal, outlined }
+
+/// CMP-02 filled/tonal/outlined button with a loading state: the label is replaced by a 20 dp
 /// spinner, width unchanged, taps blocked; TalkBack reads "[loadingLabel]".
 class AppButton extends StatelessWidget {
   const AppButton.filled({
@@ -80,7 +82,17 @@ class AppButton extends StatelessWidget {
     this.loading = false,
     this.loadingLabel,
     this.disabledHint,
-  }) : _outlined = false;
+  }) : _variant = _ButtonVariant.filled;
+
+  /// Tonal (secondary container) button, e.g. "Try now" in the CMP-18 "AI busy" variant.
+  const AppButton.tonal({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.loading = false,
+    this.loadingLabel,
+    this.disabledHint,
+  }) : _variant = _ButtonVariant.tonal;
 
   const AppButton.outlined({
     super.key,
@@ -89,7 +101,7 @@ class AppButton extends StatelessWidget {
     this.loading = false,
     this.loadingLabel,
     this.disabledHint,
-  }) : _outlined = true;
+  }) : _variant = _ButtonVariant.outlined;
 
   final String label;
   final VoidCallback? onPressed;
@@ -100,7 +112,7 @@ class AppButton extends StatelessWidget {
 
   /// Reason read together with a disabled button (EK-02: why it is disabled).
   final String? disabledHint;
-  final bool _outlined;
+  final _ButtonVariant _variant;
 
   @override
   Widget build(BuildContext context) {
@@ -117,17 +129,23 @@ class AppButton extends StatelessWidget {
         EdgeInsets.symmetric(horizontal: Space.s6, vertical: Space.s2),
       ),
     );
-    final button = _outlined
-        ? OutlinedButton(
-            onPressed: enabled ? onPressed : null,
-            style: style,
-            child: child,
-          )
-        : FilledButton(
-            onPressed: enabled ? onPressed : null,
-            style: style,
-            child: child,
-          );
+    final button = switch (_variant) {
+      _ButtonVariant.outlined => OutlinedButton(
+        onPressed: enabled ? onPressed : null,
+        style: style,
+        child: child,
+      ),
+      _ButtonVariant.tonal => FilledButton.tonal(
+        onPressed: enabled ? onPressed : null,
+        style: style,
+        child: child,
+      ),
+      _ButtonVariant.filled => FilledButton(
+        onPressed: enabled ? onPressed : null,
+        style: style,
+        child: child,
+      ),
+    };
     final spoken = loading
         ? (loadingLabel ?? label)
         : (!enabled && disabledHint != null ? '$label. $disabledHint' : label);
@@ -333,6 +351,7 @@ class StateView extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.body,
+    this.detail,
     this.primary,
     this.secondary,
   });
@@ -340,6 +359,10 @@ class StateView extends StatelessWidget {
   final AppIcons icon;
   final String title;
   final String body;
+
+  /// Optional content between the body and the actions (24 dp above), e.g. the
+  /// countdown of the "AI busy" variant (EK-07, ek-07-ai-busy.md).
+  final Widget? detail;
   final Widget? primary;
   final Widget? secondary;
 
@@ -378,6 +401,10 @@ class StateView extends StatelessWidget {
                 ),
                 textAlign: TextAlign.center,
               ),
+              if (detail != null) ...[
+                const SizedBox(height: Space.s6),
+                detail!,
+              ],
               if (primary != null) ...[
                 const SizedBox(height: Space.s6),
                 primary!,
