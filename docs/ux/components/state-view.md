@@ -1,7 +1,7 @@
 # Komponent: CMP-18 Stan ekranu
 
 - Status: szkic
-- Autor: ux · Data: 2026-11-16 · Wersja: 0.1
+- Autor: ux · Data: 2026-11-16 · Wersja: 0.2 (2026-11-24, TAM-98: wariant „Przeciążenie”)
 - Odpowiednik Material 3 / Flutter: brak gotowego widgetu M3; złożony z `Icon` (48 dp), `Text` (headlineSmall, bodyMedium) i CMP-02. Uzasadnienie: M3 opisuje stany puste i błędy jako wzorzec, nie komponent; jeden wspólny układ zapewnia spójność katalogu komunikatów EK-16. Koszt: niski (jeden widget kompozytowy).
 
 ## Cel
@@ -17,6 +17,7 @@ Nie służy do: błędów pojedynczych pól, chwilowych potwierdzeń.
 | Błąd | nie udało się wczytać/wykonać | `alert-circle` | tonalne „Spróbuj ponownie" + ewentualnie tekstowe „Wróć" |
 | Brak sieci | ekran wymaga sieci | `wifi-off-01` | tonalne „Spróbuj ponownie" |
 | Limit | limit dzienny wyczerpany (gdy pokazujemy na całym ekranie) | `clock-01` | tekstowe „Wróć do planów" |
+| Przeciążenie | chwilowe przeciążenie AI (`ai_busy`, EK-07 – `screens/ek-07-ai-busy.md`) | `ai` (sparkles) | tonalne „Spróbuj teraz”; opcjonalnie odliczanie (tekst `titleMedium` z cyframi stałej szerokości + CMP-17 „Liniowy określony – odliczanie”) między opisem a przyciskiem; wyjście („Wróć do formularza”) jako outlined na dole ekranu, nie w CMP-18 |
 | Blokujący | wymagana aktualizacja (U3), przerwane usuwanie konta (EK-01) | `reload` / `alert-circle` | wypełnione (np. „Zaktualizuj aplikację") + tekstowe alternatywy |
 
 ## Stany
@@ -29,7 +30,7 @@ Nie służy do: błędów pojedynczych pól, chwilowych potwierdzeń.
 | Błąd | wariant Błąd |
 
 ## Rozmiary i odstępy
-Ikona 48 dp `onSurfaceVariant`; ikona–tytuł 16 dp; tytuł–opis 8 dp; opis–działanie 24 dp; szerokość tekstu maks. 320 dp (wyśrodkowany); 32 dp od góry obszaru treści, gdy ekran ma też komunikat CMP-13.
+Ikona 48 dp `onSurfaceVariant`; ikona–tytuł 16 dp; tytuł–opis 8 dp; opis–działanie 24 dp (z odliczaniem: opis–odliczanie 24 dp, odliczanie–pasek 8 dp, pasek–działanie 24 dp); szerokość tekstu maks. 320 dp (wyśrodkowany); 32 dp od góry obszaru treści, gdy ekran ma też komunikat CMP-13.
 
 ## Tokeny
 Tytuł `headlineSmall` `onSurface`; opis `bodyMedium` `onSurfaceVariant`; ikona `onSurfaceVariant`.
@@ -43,6 +44,7 @@ Opis zawsze mówi: co się stało + co można zrobić. Przy skali 200% przewija 
 - Cel dotyku przycisków 48 dp.
 - Kontrast: onSurface/surface ≥ 14:1; onSurfaceVariant/surface ≥ 7,8:1.
 - Skalowanie do 200%: przewijanie, bez ucinania.
+- Odliczanie (wariant Przeciążenie): tekst bez regionu na żywo, etykieta w pełnych słowach, ogłoszenie uprzejme co 15 s; pasek ukryty przed TalkBack (szczegóły w `screens/ek-07-ai-busy.md`).
 
 ## Teksty
 | Klucz l10n | PL | EN |
@@ -55,4 +57,4 @@ Opis zawsze mówi: co się stało + co można zrobić. Przy skali 200% przewija 
 Pełny katalog komunikatów EK-16 – w `screens/` (krok 2).
 
 ## Użycie
-EK-01, EK-04, EK-08, EK-15, EK-16; wzorce pusty stan, błąd z ponowieniem, brak sieci.
+EK-01, EK-04, EK-07 (`ai_busy`), EK-08, EK-15, EK-16; wzorce pusty stan, błąd z ponowieniem, brak sieci.

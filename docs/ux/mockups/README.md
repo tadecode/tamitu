@@ -2,7 +2,7 @@
 
 Dokumentacja do akceptacji – **nie kod aplikacji**. Wariant marki A „Lazur".
 
-- `ek-01.html` … `ek-16.html` – makieta każdego ekranu (specyfikacje w `../screens/`). Każdy plik jest **samodzielny**
+- `ek-01.html` … `ek-16.html` – makieta każdego ekranu (specyfikacje w `../screens/`); `ek-07-ai-busy.html` – stan EK-07 „asystent AI przeciążony” (TAM-98). Każdy plik jest **samodzielny**
   (style, skrypt i grafiki wklejone), otwiera się bezpośrednio w przeglądarce, bez sieci i zasobów zewnętrznych.
   Grafiki źródłowe leżą w `../assets/` (np. `ek-02-illustration-light.svg` i `-dark.svg`); w makiecie EK-02 ilustracja jest wklejona jako `data:` w osobnym
   bloku `<style>` ekranu – po zmianie pliku źródłowego trzeba ją wkleić ponownie.
@@ -19,7 +19,7 @@ to **źródło**. Po ich zmianie trzeba wkleić je ponownie do makiet (między z
 ```bash
 cd docs/ux/mockups && node -e '
 const fs=require("fs");const css=fs.readFileSync("_kit.css","utf8"),js=fs.readFileSync("_kit.js","utf8");
-for(const f of fs.readdirSync(".").filter(f=>/^ek-\d\d\.html$/.test(f))){let s=fs.readFileSync(f,"utf8");
+for(const f of fs.readdirSync(".").filter(f=>/^ek-\d\d(-[a-z-]+)?\.html$/.test(f))){let s=fs.readFileSync(f,"utf8");
 s=s.replace(/<style data-kit>[\s\S]*?<\/style>/,()=>"<style data-kit>\n"+css+"</style>")
  .replace(/<script data-kit>[\s\S]*?<\/script>/,()=>"<script data-kit>\n"+js+"</script>");fs.writeFileSync(f,s);}'
 ```

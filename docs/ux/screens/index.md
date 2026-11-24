@@ -11,6 +11,7 @@ Krok 2 zadania P3-14b (ux, 2026-11-16), wariant marki A „Lazur". Każdy ekran:
 | [EK-05](ek-05.md) | Formularz podróży | US-004, 006 | tak (podpowiedzi o danych) | zatwierdzony (MVP) |
 | [EK-06](ek-06.md) | Zgoda na AI | US-003, 005 | **tak + [PRAWNIK]** | **zatwierdzony v0.2** (po przeglądzie P3-14c, 2026-11-16); tekst ostateczny `ai-consent-v2` po [PRAWNIK]/SEC-15 |
 | [EK-07](ek-07.md) | Generowanie planu | US-005, 011 | nie | zatwierdzony (MVP) |
+| [EK-07 `ai_busy`](ek-07-ai-busy.md) | Generowanie – stan „asystent AI przeciążony” (TAM-98) | US-005, 011 | nie | **uzgodniony v0.2** (2026-11-24: teksty i UX-TAM98-1 zatwierdzone przez właściciela); `ux-ready` po merge'u |
 | [EK-08](ek-08.md) | Widok planu | US-005, 006, 008, 009 | nie | zatwierdzony (MVP) |
 | [EK-09](ek-09.md) | Wybór trasy | US-007 | **tak** (lokalizacja) | **do ponownego zatwierdzenia** (v0.2, przegląd architekta P3-14c) |
 | [EK-10](ek-10.md) | Wyjaśnienie i prośba o lokalizację | US-007 | **tak** | zatwierdzony (MVP) |
