@@ -41,3 +41,6 @@ android/app/release/
 # System
 .DS_Store
 Thumbs.db
+
+# Szkice raportów recenzji i QA (publikowane jako komentarze w PR)
+.farm/tmp/

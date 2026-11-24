@@ -34,6 +34,10 @@ Każde przekazanie pracy między agentami to **osobny plik** w `.farm/log/` (dec
 - Pytania otwarte – zamknięte: <id i rozstrzygnięcie> lub „brak"
 ```
 
+**Recenzent i QA (od 2026-11-24):** nie tworzą pliku w `.farm/log/`. Ich przekazaniem jest raport
+opublikowany jako komentarz w PR zadania, zakończony tą samą sekcją „Dla orkiestratora”. Orkiestrator
+czyta ją przez `gh pr view <nr> --comments`.
+
 ## Zadania i pytania otwarte (zmienia tylko orkiestrator)
 
 **Zadania i statusy są w Jirze** (projekt TAM, od 2026-11-20; wcześniej Azure Boards; `docs/backlog.md` tylko wskazuje tablicę).

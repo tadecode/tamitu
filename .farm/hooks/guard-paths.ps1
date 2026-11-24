@@ -34,6 +34,9 @@ $full = $full.Replace('\', '/')
 $cmp = [StringComparison]::OrdinalIgnoreCase
 if (-not $full.StartsWith($rootFull + '/', $cmp)) { Block "ścieżka poza projektem: $target" }
 $rel = $full.Substring($rootFull.Length + 1)
+# Worktree w .claude/worktrees/<nazwa>/ (sesje z kart aplikacji): oceniamy ścieżkę względem tego worktree,
+# tak jak w tamitu-wt. Ochrona kontraktów działa dalej (np. .claude/worktrees/x/.claude/agents -> .claude/agents).
+if ($rel -match '^\.claude/worktrees/[^/]+/(.+)$') { $rel = $Matches[1] }
 
 # 1. Sekrety - zawsze zablokowane
 if ($rel -match '(^|/)\.env(\.|$)' -or $rel -match '\.(jks|keystore)$' -or $rel -match '(^|/)key\.properties$') {
