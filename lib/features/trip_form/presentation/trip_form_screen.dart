@@ -60,7 +60,10 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
   final _focus = {
     // Every field can take focus: after "Create plan" it goes to the first invalid one
     // (EK-05 "Dostępność", review PR #164 #4).
-    for (final f in TripField.values) f: FocusNode(),
+    for (final f in TripField.values)
+      // The arrival-mode node only receives focus after a validation error; keyboard
+      // traversal goes straight to the segments (QA PR #164 Q2).
+      f: FocusNode(skipTraversal: f == TripField.arrivalMode),
   };
   final _keys = {for (final f in TripField.values) f: GlobalKey()};
 
@@ -671,24 +674,28 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
       children: [
         Text(l10n.tripFormArrivalMode, style: theme.textTheme.bodyMedium),
         const SizedBox(height: Space.s2),
-        Focus(
-          focusNode: _focus[TripField.arrivalMode],
-          child: SegmentedButton<ArrivalMode>(
-            key: const Key('tripFormArrivalMode'),
-            segments: [
-              ButtonSegment(
-                value: ArrivalMode.flight,
-                label: Text(l10n.tripFormArrivalFlight),
-              ),
-              ButtonSegment(
-                value: ArrivalMode.car,
-                label: Text(l10n.tripFormArrivalCar),
-              ),
-            ],
-            // No default (EK-05).
-            emptySelectionAllowed: true,
-            selected: {?_mode},
-            onSelectionChanged: (s) => _setMode(s.isEmpty ? _mode : s.first),
+        // Labelled, so the focused node is not an empty stop (QA PR #164 Q2).
+        Semantics(
+          label: l10n.tripFormArrivalMode,
+          child: Focus(
+            focusNode: _focus[TripField.arrivalMode],
+            child: SegmentedButton<ArrivalMode>(
+              key: const Key('tripFormArrivalMode'),
+              segments: [
+                ButtonSegment(
+                  value: ArrivalMode.flight,
+                  label: Text(l10n.tripFormArrivalFlight),
+                ),
+                ButtonSegment(
+                  value: ArrivalMode.car,
+                  label: Text(l10n.tripFormArrivalCar),
+                ),
+              ],
+              // No default (EK-05).
+              emptySelectionAllowed: true,
+              selected: {?_mode},
+              onSelectionChanged: (s) => _setMode(s.isEmpty ? _mode : s.first),
+            ),
           ),
         ),
         if (error != null) _fieldError(context, error),

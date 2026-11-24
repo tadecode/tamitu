@@ -7,6 +7,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../../app/providers.dart';
 import '../../../app/router.dart';
 import '../../../core/errors/app_failure.dart';
+import '../../../core/ui/components.dart';
 import '../../../core/ui/tokens.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../consent/application/consent_service.dart';
@@ -315,10 +316,11 @@ class _GenerationScreenState extends ConsumerState<GenerationScreen> {
               ),
               child: SizedBox(
                 height: 48,
-                child: OutlinedButton(
+                // Q1 (QA PR #164): full width like "Back to the form" in AiBusyView.
+                child: AppButton.outlined(
                   key: const Key('generationCancel'),
+                  label: l10n.generationCancel,
                   onPressed: _confirmCancel,
-                  child: Text(l10n.generationCancel),
                 ),
               ),
             ),

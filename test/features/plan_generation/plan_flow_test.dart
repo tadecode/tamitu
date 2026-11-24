@@ -9,6 +9,7 @@ import 'package:tamitu/core/ui/update_app_view.dart';
 import 'package:tamitu/features/auth/domain/auth_gateway.dart';
 import 'package:tamitu/features/consent/domain/consent_record.dart';
 import 'package:tamitu/features/consent/presentation/ai_consent_screen.dart';
+import 'package:tamitu/features/consent/presentation/reconsent_screen.dart';
 import 'package:tamitu/features/consent/presentation/welcome_screen.dart';
 import 'package:tamitu/features/generation/presentation/ai_busy_view.dart';
 import 'package:tamitu/features/plan_generation/domain/generated_plan.dart';
@@ -485,6 +486,61 @@ void main() {
     expect(env.plans.requestIds, hasLength(2));
     expect(env.plans.requestIds.toSet(), hasLength(2));
   });
+
+  testWidgets(
+    'QA Q3: consent_required privacy_policy without a local acceptance '
+    'opens EK-03 with no message on EK-05',
+    (tester) async {
+      final env = await _ready();
+      env.plans.failures.add(
+        const AppFailure(
+          FailureKind.consentRequired,
+          consentType: ConsentType.privacyPolicy,
+        ),
+      );
+      await _openForm(tester, env);
+      await _fillCarTrip(tester);
+      // The policy acceptance is gone (latest record withdrawn) while the form is open.
+      await env.local.upsert(
+        'u1',
+        ConsentRecord(
+          id: 'p-u1-withdrawn',
+          type: ConsentType.privacyPolicy,
+          granted: false,
+          policyVersion: AppConstants.privacyPolicyVersion,
+          lang: 'pl',
+          clientAt: DateTime.utc(2026, 11, 20),
+          receivedAt: DateTime.utc(2026, 11, 20),
+          synced: true,
+        ),
+      );
+      await _tapGenerate(tester);
+      await tester.pumpAndSettle();
+      expect(find.byType(ReconsentScreen), findsOneWidget);
+      expect(find.byKey(const Key('tripFormFailure')), findsNothing);
+      expect(find.byType(UpdateAppView), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'QA Q1: "Cancel" in EK-07 is full width like "Back to the form"',
+    (tester) async {
+      final env = await _ready();
+      env.plans.gate = Completer<void>();
+      await _openForm(tester, env);
+      await _fillCarTrip(tester);
+      await _tapGenerate(tester);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      final width = tester
+          .getSize(find.byKey(const Key('generationCancel')))
+          .width;
+      // 360 dp screen minus 2 × 16 dp margins.
+      expect(width, 328);
+      env.plans.gate!.complete();
+      await tester.pumpAndSettle();
+    },
+  );
 
   testWidgets('#2 plan content carries the plan language in semantics', (
     tester,
