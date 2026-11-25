@@ -2,8 +2,9 @@
 
 Stan: 2026-11-15, wersja 0.3 (po przeglądzie ADR-0001..0008, P2-08, i uwagach architekta `docs/architecture/uwagi-dla-orchestratora.md` pkt 2; wcześniej 0.2 po G1). Autor: Security.
 Zmiany v0.3: pkt 2 (kolejność zgód: polityka przed logowaniem, zgoda AI przy pierwszym generowaniu i w Ustawieniach; treść zgody AI; pole noclegu), pkt 3 (Vertex AI, buforowanie u dostawcy), pkt 5 (usunięcie: stary token, logi, UID-HMAC), pkt 6 (retencja: TTL, logi, kubełek), pkt 7 (transfery, Auth), pkt 8 (zależności od Q1), pkt 10 (szkic polityki: Vertex AI, kubełek logów, IP, App Check, szyfrowanie lokalne); oznaczenia „[zależy od Q1]". Przegląd: `przeglad-adr.md`. **Nie jest to porada prawna** – punkty oznaczone [PRAWNIK] lub [WŁAŚCICIEL] wymagają potwierdzenia. Pytania S1..S12: `docs/security/open-questions-security.md` (odpowiedziane).
+Zmiana 2026-11-25 (TAM-109, bez zmiany wersji): po ADR-0017 (wariant C, Q1 = C) Tamitu nie przetwarza lokalizacji – pkt 1, 2, 6, 8, 9, 10 i 11 zaktualizowane; treść wariantu A przekreślona lub oznaczona „nieaktualne” jako ślad.
 Legenda statusu: [ ] do zrobienia, [~] zaplanowane w historyjce, [?] decyzja otwarta.
-Ustalone przez właściciela: administrator TadeCode bez IOD (dane firmy – do uzupełnienia), kontakt tamitu@tadecode.pl, minimalny zapis serwerowy zgód, `allowBackup` wyłączone, wariant AI korporacyjny UE z DPA bez trenowania (warunek przed realnymi danymi), lokalizacja dokładna, logi 30 dni bez treści ze skrótem UID, regulamin przed wydaniem publicznym [PRAWNIK], DPIA raczej nie w MVP [PRAWNIK], lit. f dla logów i licznika, tylko dorośli [PRAWNIK], języki PL + EN, preferencje podróży.
+Ustalone przez właściciela: administrator TadeCode bez IOD (dane firmy – do uzupełnienia), kontakt tamitu@tadecode.pl, minimalny zapis serwerowy zgód, `allowBackup` wyłączone, wariant AI korporacyjny UE z DPA bez trenowania (warunek przed realnymi danymi), ~~lokalizacja dokładna~~ (zmienione 2026-11-25: wariant C, ADR-0017 – Tamitu nie przetwarza lokalizacji), logi 30 dni bez treści ze skrótem UID, regulamin przed wydaniem publicznym [PRAWNIK], DPIA raczej nie w MVP [PRAWNIK], lit. f dla logów i licznika, tylko dorośli [PRAWNIK], języki PL + EN, preferencje podróży.
 
 ## 1. Podstawy prawne (propozycja, do potwierdzenia [PRAWNIK])
 | Przetwarzanie | Podstawa | Uwagi |
@@ -13,7 +14,7 @@ Ustalone przez właściciela: administrator TadeCode bez IOD (dane firmy – do 
 | Przekazanie danych do AI (D6) | Zgoda, art. 6 ust. 1 lit. a (osobna – N5, ustalone) + lit. b | Wymaga jasnej informacji kto jest odbiorcą i gdzie |
 | Preferencje podróży (D15) | Lit. b (plan); do AI – zgoda na AI (lit. a) | Budżet tylko jako poziom; zainteresowania z listy (bez danych art. 9); [PRAWNIK] potwierdza ocenę |
 | Język (D16) | Lit. b (ustawienie funkcjonalne) | Zwykła dana o niskiej wrażliwości; bez wnioskowania o pochodzeniu |
-| Lokalizacja dokładna (D7) | Zgoda (uprawnienie systemowe do dokładnej lokalizacji, na żądanie) | Nie utrwalamy |
+| ~~Lokalizacja dokładna (D7)~~ | Nie dotyczy – D7 wycofany (ADR-0017) | Link Maps (D8): lit. b, jak dane podróży |
 | Licznik użycia, logi (D10, D11) | Art. 6 ust. 1 lit. f (ustalone, S12) [PRAWNIK] | Zapisać ocenę równowagi interesów |
 | Dowód zgód (D3) | Art. 6 ust. 1 lit. c/f [PRAWNIK] | Minimalny zapis serwerowy (S3); okres po usunięciu konta: [PRAWNIK] |
 | Reklamy / identyfikator reklamowy (F1) | Zgoda | Poza MVP |
@@ -28,8 +29,8 @@ Ustalone przez właściciela: administrator TadeCode bez IOD (dane firmy – do 
 - [ ] Preferencje: zainteresowania jako lista predefiniowana (rekomendacja Security, N11 – decyzja właściciela); budżet tylko poziomy; brak pola tekstowego na dane wrażliwe; jeśli pole tekstowe zostanie – ostrzeżenie, limit długości, oczyszczanie. Pozycje listy nie ujawniają religii, zdrowia ani orientacji.
 - [ ] Wycofanie zgody równie łatwe jak wyrażenie (Ustawienia -> Prywatność).
 - [ ] Ponowna zgoda przy zmianie wersji polityki lub nowym celu (US-003).
-- [ ] **[zależy od Q1]** Przy opcji C (link bez `origin`): punkt wypada; zamiast niego w aplikacji krótka informacja przy starcie „moja lokalizacja": „Google Maps może zapytać o Twoją lokalizację; Tamitu jej nie odczytuje"; brak uprawnień lokalizacji, brak wpisu w Data Safety o lokalizacji (do potwierdzenia po teście na urządzeniu). Poniższe dotyczy opcji A.
-- [ ] Lokalizacja **dokładna (S6, ustalone; opcja A)**: prośba o uprawnienie dopiero przy wyborze „moja lokalizacja", poprzedzona wyjaśnieniem celu w PL/EN, np.: „Użyjemy Twojej dokładnej pozycji jednorazowo, by wyznaczyć trasę w Google Maps. Nie zapisujemy jej ani nie wysyłamy na nasze serwery; współrzędne trafią do Google Maps wraz z linkiem." Aplikacja działa po odmowie i przy przyznaniu tylko przybliżonej (US-007); tylko pierwszy plan, jednorazowy odczyt, bez zapisu, cache i logów; brak uprawnienia w tle. Uzasadnienie dokładności (trasa od miejsca, w którym stoi użytkownik) – do użycia w deklaracji Play.
+- [ ] **Obowiązuje wariant C (ADR-0017, Q1 = C, test na telefonie pozytywny – TAM-24):** Tamitu nie prosi o lokalizację; brak ekranu wyjaśnienia i prośby systemowej (EK-10 wycofany). Przy starcie „Moja lokalizacja” w aplikacji krótka informacja, np. „Google Maps może zapytać o Twoją lokalizację; Tamitu jej nie odczytuje” (tekst – UX, TAM-108); brak uprawnień lokalizacji, brak lokalizacji w Data Safety.
+- ~~Lokalizacja dokładna (S6; opcja A)~~ **Nieaktualne po ADR-0017 – nie wdrażać.** Treść zachowana jako ślad: prośba o uprawnienie dopiero przy wyborze „moja lokalizacja", poprzedzona wyjaśnieniem celu w PL/EN, np.: „Użyjemy Twojej dokładnej pozycji jednorazowo, by wyznaczyć trasę w Google Maps. Nie zapisujemy jej ani nie wysyłamy na nasze serwery; współrzędne trafią do Google Maps wraz z linkiem." Aplikacja działa po odmowie i przy przyznaniu tylko przybliżonej (US-007); tylko pierwszy plan, jednorazowy odczyt, bez zapisu, cache i logów; brak uprawnienia w tle. Uzasadnienie dokładności (trasa od miejsca, w którym stoi użytkownik) – do użycia w deklaracji Play.
 - [ ] **Reklamy i identyfikatory reklamowe [PRZYSZŁE, poza MVP]:** przed wdrożeniem AdMob wymagane: certyfikowany CMP (zgody TCF), brak ładowania SDK reklamowego przed zgodą, osobny wybór dla reklam spersonalizowanych, możliwość cofnięcia zgody, deklaracja Advertising ID w Google Play i w manifeście, obsługa ograniczenia śledzenia reklam przez użytkownika, aktualizacja Data Safety i polityki, analiza dla małoletnich (R14), wpis F1 w rejestrze zmieniony na aktywny. Nie dodawać zależności reklamowych do MVP.
 - [ ] Brak ciemnych wzorców (przycisk „Odrzuć" równorzędny z „Akceptuj").
 - [?] Wiek: aplikacja dla dorosłych (N8), granica wieku zgody w PL do potwierdzenia [PRAWNIK].
@@ -80,7 +81,7 @@ Ustalone przez właściciela: administrator TadeCode bez IOD (dane firmy – do 
 | Logi (D11) | 30 dni, własny kubełek w UE, bez treści, UID jako HMAC (ustalone, S7); logi audytu administracyjnego 400 dni bez danych użytkowników; adres IP w logach żądań |
 | Zgody (D3) po usunięciu konta | Q9: domyślnie 0 (usuwane z kontem); archiwum tylko po decyzji [PRAWNIK] |
 | Zapytania do AI | Po naszej stronie 0; po stronie dostawcy – S5 |
-| Lokalizacja (D7) | 0 (nieutrwalana) |
+| ~~Lokalizacja (D7)~~ | Nie dotyczy – nie przetwarzamy (ADR-0017); link Maps (D8) niezapisywany |
 | Preferencje i język (D15, D16) | Jak plany lokalne; po naszej stronie 0 |
 | Kontakt/wnioski (D14) | Czas obsługi + okres przedawnienia [PRAWNIK]; skrzynka tamitu@tadecode.pl (S8) |
 
@@ -96,19 +97,19 @@ Ustalone przez właściciela: administrator TadeCode bez IOD (dane firmy – do 
 
 ## 8. Zgodność ze sklepem Google Play
 - [ ] Formularz Data Safety spójny z rejestrem. Wstępne ustalenia do weryfikacji wg aktualnych zasad Google Play [WŁAŚCICIEL/PRAWNIK]:
-  - **Dokładna lokalizacja (D7):** zadeklarować użycie uprawnienia precyzyjnej lokalizacji; cel: funkcjonalność aplikacji (trasa); niezapisywana, nieprzekazywana na nasze serwery. Czy współrzędne przekazane do Google Maps przez link liczą się jako „udostępnienie/zbieranie" – do potwierdzenia w aktualnych wytycznych Play i zadeklarować ostrożnie (rekomendacja: ujawnić przekazanie do Google Maps w polityce).
+  - **Lokalizacja: NIE deklarujemy** – ani przybliżonej, ani dokładnej (ADR-0017). Tamitu nie ma uprawnień lokalizacji i nie zbiera pozycji; o pozycję może zapytać aplikacja Google Maps na własnych zasadach. Treść linku (cel, tryb, opcjonalnie nocleg/poprzedni punkt jako tekst – D8) otwiera użytkownik w Mapach; czy formularz wymaga ujawnienia tego jako udostępnienia danych podróży – do potwierdzenia [WŁAŚCICIEL/PRAWNIK] (rekomendacja Security: opisać w polityce; w Data Safety ocenić razem z kategorią danych podróży, D6). ~~Dokładna lokalizacja (D7): zadeklarować użycie uprawnienia precyzyjnej lokalizacji; cel: funkcjonalność aplikacji (trasa); współrzędne w linku do Google Maps.~~
   - **Identyfikatory i dane osobowe:** konto Google (UID, e-mail przez Firebase Auth), identyfikator użytkownika; zgody i licznik (D3, D10).
   - **Inne dane wysyłane do AI (D6, D15):** dane podróży i preferencje (informacje o podróży/upodobaniach; budżet jako poziom) – wysyłane do przetwarzającego (dostawca AI) w celu funkcji aplikacji, za zgodą; sprawdzić właściwe kategorie w formularzu.
-  - **[zależy od Q1]** Przy opcji C brak deklaracji lokalizacji i uprawnienia `ACCESS_FINE/COARSE_LOCATION`; przy A – jak wyżej. Dodatkowo do oceny: dane urządzenia przetwarzane przez Play Integrity/App Check (D17) – sprawdzić, czy wymagają ujawnienia w Data Safety (rekomendacja: ujawnić ostrożnie, potwierdzić w aktualnych zasadach Play).
+  - **Rozstrzygnięte (Q1 = C, ADR-0017):** brak deklaracji lokalizacji i uprawnień `ACCESS_FINE/COARSE_LOCATION`. Dodatkowo do oceny: dane urządzenia przetwarzane przez Play Integrity/App Check (D17) – sprawdzić, czy wymagają ujawnienia w Data Safety (rekomendacja: ujawnić ostrożnie, potwierdzić w aktualnych zasadach Play).
   - Szyfrowanie danych w spoczynku na urządzeniu: tak (SQLCipher) – Data Safety dotyczy danych przesyłanych poza urządzenie, więc to deklaracja pomocnicza.
   - Brak sprzedaży danych, brak reklam i Advertising ID w MVP, szyfrowanie w tranzycie (HTTPS), możliwość usunięcia konta i danych (US-010, strona z instrukcją).
 - [ ] Link do polityki prywatności w sklepie i w aplikacji (polityka PL i EN).
-- [ ] Deklaracja uprawnień: dokładna lokalizacja tylko na pierwszym planie (bez `ACCESS_BACKGROUND_LOCATION`); uzasadnienie: trasa startuje z faktycznej pozycji użytkownika; opis w sklepie i w aplikacji zgodny z faktyczną funkcją. Sprawdzić zmergowany manifest (biblioteki).
+- [ ] Deklaracja uprawnień: **brak uprawnień lokalizacji – nie ma czego uzasadniać (ADR-0017)**; opis w sklepie i w aplikacji zgodny z faktyczną funkcją (trasa otwierana w Google Maps). Sprawdzić zmergowany manifest (biblioteki): tylko `INTERNET`, bez `ACCESS_*_LOCATION`.
 - [ ] Deklaracja Advertising ID (po wdrożeniu reklam: „tak"; w MVP: „nie używa").
 - [ ] Wymagania konta organizacji i testów zamkniętych – prowadzi właściciel (R8).
 
 ## 9. Ocena skutków (DPIA)
-- Ustalenie właściciela (S11): w MVP raczej nie; ocena przy rozszerzeniach [PRAWNIK]. Uwaga Security: MVP ma teraz dokładną lokalizację (jednorazową, bez zapisu) i preferencje wysyłane do AI – nadal brak zapisu centralnego, śledzenia i profilowania na dużą skalę, ale [PRAWNIK] powinien to uwzględnić przy potwierdzeniu. Przed dodaniem zdjęć, reklam, lokalizacji w tle lub synchronizacji w chmurze – ponowna ocena.
+- Ustalenie właściciela (S11): w MVP raczej nie; ocena przy rozszerzeniach [PRAWNIK]. Uwaga Security: po ADR-0017 MVP nie przetwarza lokalizacji; preferencje są wysyłane do AI – nadal brak zapisu centralnego, śledzenia i profilowania na dużą skalę, ale [PRAWNIK] powinien to uwzględnić przy potwierdzeniu. Przed dodaniem zdjęć, reklam, lokalizacji w tle lub synchronizacji w chmurze – ponowna ocena.
 
 ## 10. Polityka prywatności – szkic treści (dla właściciela)
 Docelowy adres: `tadecode.pl/tamitu/prywatnosc` (musi być publiczny przed testami zewnętrznymi). **Wersje PL i EN** (np. `/pl` i `/en` lub przełącznik) publikowane razem; poniżej szkic w PL, wersję EN przygotować równolegle (tłumaczenie prawne [PRAWNIK]). Szkic wymaga uzupełnienia pól w nawiasach `[...]` i weryfikacji prawnika.
@@ -121,9 +122,10 @@ Docelowy adres: `tadecode.pl/tamitu/prywatnosc` (musi być publiczny przed testa
    - zgody (rodzaj, wersja, język, data) – wykazanie, że je wyraziłeś; zapisujemy minimalny rekord (identyfikator konta, wersja, wartość, data) także na serwerze;
    - licznik użycia (dzienna liczba wygenerowanych planów powiązana z identyfikatorem konta; przechowywany do 4 dni od ostatniego użycia) – limity kosztowe, bezpieczeństwo;
    - logi techniczne (bez treści formularza; identyfikator konta w postaci skrótu; przechowywane 30 dni) – diagnostyka, bezpieczeństwo;
-   - lokalizacja dokładna – tylko gdy wybierzesz „moja lokalizacja"; odczytujemy ją jednorazowo, nie zapisujemy i nie wysyłamy na nasze serwery ani do AI; współrzędne trafiają do Google Maps (odrębny administrator) w linku trasy.
+   - **nie zbieramy Twojej lokalizacji** – Tamitu nie prosi o dostęp do lokalizacji i jej nie odczytuje;
+   - trasa w Google Maps – gdy dotkniesz „Trasa”, otwieramy link Google Maps z celem (nazwa miejsca, miejscowość, cel podróży), trybem podróży i – jeśli tak wybierzesz – punktem startu z planu (nazwa noclegu albo poprzedni punkt dnia); link nie zawiera Twojej pozycji. Przy starcie „Moja lokalizacja” Twoją pozycję może odczytać aplikacja Google Maps lub przeglądarka, jeśli dałeś im na to zgodę – Google przetwarza te dane jako odrębny administrator, według własnej polityki prywatności. Otwarta trasa może zostać w historii aktywności konta Google lub w historii przeglądarki.
 3. **Przekazanie do modelu AI:** dane podróży i preferencje (bez Twojego e-maila, nazwy, identyfikatora konta, lokalizacji i numeru lotu) są przekazywane przez nasz serwer pośredniczący (przetwarza je w pamięci, nie zapisuje i nie loguje) do [Google Cloud Vertex AI / Gemini, region UE – po potwierdzeniu SEC-15] w celu wygenerowania planu, na podstawie Twojej zgody; [informacja o braku trenowania na danych, DPA oraz o ewentualnym krótkotrwałym buforowaniu/monitoringu nadużyć u dostawcy i jego okresie – po potwierdzeniu S5/SEC-15]. Nie wpisuj pełnego adresu prywatnego noclegu. Nie wpisuj w pola formularza danych wrażliwych ani danych innych osób. Plan może zawierać błędy.
-4. **Podstawy prawne:** wykonanie umowy (art. 6 ust. 1 lit. b), zgoda (lit. a) dla AI i lokalizacji, uzasadniony interes (lit. f) dla limitów i logów – [do potwierdzenia przez prawnika].
+4. **Podstawy prawne:** wykonanie umowy (art. 6 ust. 1 lit. b), zgoda (lit. a) dla AI, uzasadniony interes (lit. f) dla limitów i logów – [do potwierdzenia przez prawnika].
 5. **Odbiorcy:** Google (Firebase, Google Cloud – podmiot przetwarzający), [dostawca AI], Google Maps i Google Play (odrębni administratorzy). Nie sprzedajemy danych. [W przyszłości: reklamodawcy po zgodzie.]
 6. **Transfery poza EOG:** [opis wg S2/SEC-10 i warunków Google; Firebase Authentication nie ma wyboru regionu – możliwe przetwarzanie poza UE]. Dane aplikacji (zgody, licznik, logi) przechowujemy w regionie UE (`europe-west4`, Holandia) [do potwierdzenia].
 6a. **Logi i infrastruktura:** logi techniczne (bez treści formularza; identyfikator konta w postaci skrótu; adres IP w logach żądań) 30 dni w UE; logi administracyjne konta Google Cloud do 400 dni (bez danych użytkowników); ochrona przed nadużyciami (Firebase App Check / Google Play Integrity) [opis po SEC-10].
@@ -138,9 +140,9 @@ Docelowy adres: `tadecode.pl/tamitu/prywatnosc` (musi być publiczny przed testa
 
 ## 11. Pytania wymagające potwierdzenia
 Wszystkie S1..S12 odpowiedziane (`docs/open-questions.md`). Nadal wymagane:
-- [WŁAŚCICIEL, G2] Q1 (lokalizacja A/C – rekomendacja Security: C po teście na urządzeniu), Q2 (App Check a dystrybucja testów), Q9 [PRAWNIK] (dowód zgód po usunięciu konta); szczegóły: `przeglad-adr.md`.
+- [WŁAŚCICIEL, G2] ~~Q1 (lokalizacja A/C)~~ – rozstrzygnięte 2026-11-25: C (ADR-0017), Q2 (App Check a dystrybucja testów), Q9 [PRAWNIK] (dowód zgód po usunięciu konta); szczegóły: `przeglad-adr.md`.
 - [WŁAŚCICIEL] dane administratora (nazwa, adres, NIP) – blokuje publikację polityki i testy zewnętrzne (S1).
 - [WŁAŚCICIEL] potwierdzenie warunków dostawcy AI w ADR – blokuje realne dane w AI (S5).
 - [WŁAŚCICIEL] odpowiedź na N11 (lista zainteresowań, formaty preferencji, język planu).
-- [PRAWNIK] okres dowodu zgód po usunięciu konta (S3), regulamin przed wydaniem publicznym (S10), DPIA (S11), lit. f dla logów/licznika i granica wieku (S12), ocena budżetu i zainteresowań jako danych, tłumaczenie EN, Data Safety dla lokalizacji.
+- [PRAWNIK] okres dowodu zgód po usunięciu konta (S3), regulamin przed wydaniem publicznym (S10), DPIA (S11), lit. f dla logów/licznika i granica wieku (S12), ocena budżetu i zainteresowań jako danych, tłumaczenie EN, Data Safety dla treści linku Maps (D8; lokalizacji nie deklarujemy – ADR-0017).
 - Security (faza 2): weryfikacja lokalizacji przetwarzania Firebase i transferów (S2, SEC-10).
