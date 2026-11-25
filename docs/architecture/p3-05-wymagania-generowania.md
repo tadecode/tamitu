@@ -53,7 +53,7 @@ Po usunięciu samego wewnętrznego `maxItems = 7` żądanie przechodzi. Szkic
 3. Błąd 400 z Vertex (np. po zmianie schematu) – traktować jak błąd konfiguracji: log metadanych, `ai_unavailable`,
    **bez** ponowienia (ponowienie nic nie da i kosztuje slot limitu). Tak samo inne kody 4xx (403, 404, 417).
    **Ponawiane** są tylko: **408, 429, 5xx, przekroczenie czasu** (45 s na próbę), **błąd sieci** i `bad_body`.
-   **Od TAM-96 (ADR-0016, zatwierdzony warunkowo; merge implementacji po sprawdzeniu w Billing):** odczekanie z narastaniem i losowym rozrzutem, **2–4 s** przed wywołaniem 2
+   **Od TAM-96 (ADR-0016, zatwierdzony; Billing potwierdził 2026-11-24 (TAM-97), że 429 nie jest rozliczane):** odczekanie z narastaniem i losowym rozrzutem, **2–4 s** przed wywołaniem 2
    i **4–8 s** przed wywołaniem 3. Najwyżej **3 wywołania i najwyżej 2 próby płatne** na generowanie, a wywołanie z 429
    nie jest płatne, więc trzecie wywołanie jest możliwe tylko po 429. Generowanie ma **budżet 100 s** od pierwszego
    wywołania, a kolejne wywołanie rusza tylko wtedy, gdy zostało ≥ 45 s. Lista błędów walidacji z ostatniej płatnej próby
