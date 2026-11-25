@@ -6,15 +6,14 @@ import 'package:drift/native.dart';
 
 /// Encrypted per-account database (ADR-0005 pkt 1, docs/data/model-danych.md pkt 2.2).
 ///
-/// P3-04 ships the core only: file per account, SQLCipher key, versioned migrations and
-/// `consents_local`. Plan tables (`trips`, `plan_days`, `plan_items`) come with P3-06 as
-/// migration v2. Drift is used without code generation (raw SQL), so P3-06 can switch to
-/// generated tables on the same file.
+/// v1 (P3-04): file per account, SQLCipher key, versioned migrations and `consents_local`.
+/// v2 (P3-06, TAM-19): saved plans `trips`, `plan_days`, `plan_items`. Drift is used
+/// without code generation (raw SQL).
 class AccountDatabase extends GeneratedDatabase {
   AccountDatabase(super.executor);
 
   /// Bump together with a new step in [migrations].
-  static const currentSchemaVersion = 1;
+  static const currentSchemaVersion = 2;
 
   /// Migration steps: index i migrates from version i to i + 1.
   static const migrations = <List<String>>[
@@ -36,6 +35,54 @@ class AccountDatabase extends GeneratedDatabase {
       'CREATE TABLE schema_meta (version INTEGER NOT NULL)',
       'INSERT INTO schema_meta (version) VALUES (1)',
     ],
+    // v1 -> v2 (P3-06, TAM-19): saved plans. Deleting a trip cascades to its days and
+    // items (US-009); a plan is written in one transaction (US-005).
+    [
+      '''
+      CREATE TABLE trips (
+        id             TEXT PRIMARY KEY NOT NULL,
+        created_at     INTEGER NOT NULL,
+        destination    TEXT NOT NULL,
+        lodging        TEXT NOT NULL,
+        days_count     INTEGER NOT NULL,
+        arrival_mode   TEXT NOT NULL,
+        arrival_date   TEXT NOT NULL,
+        arrival_time   TEXT NOT NULL,
+        airport        TEXT NULL,
+        flight_number  TEXT NULL,
+        interests      TEXT NOT NULL,
+        budget         TEXT NOT NULL,
+        pace           TEXT NOT NULL,
+        party_size     INTEGER NOT NULL,
+        plan_language  TEXT NOT NULL,
+        prompt_version TEXT NOT NULL
+      )
+      ''',
+      'CREATE INDEX trips_created_at ON trips (created_at)',
+      '''
+      CREATE TABLE plan_days (
+        trip_id    TEXT NOT NULL REFERENCES trips (id) ON DELETE CASCADE,
+        day_number INTEGER NOT NULL,
+        title      TEXT NOT NULL,
+        PRIMARY KEY (trip_id, day_number)
+      )
+      ''',
+      '''
+      CREATE TABLE plan_items (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        trip_id     TEXT NOT NULL,
+        day_number  INTEGER NOT NULL,
+        position    INTEGER NOT NULL,
+        name        TEXT NOT NULL,
+        locality    TEXT NOT NULL,
+        description TEXT NOT NULL,
+        start_time  TEXT NOT NULL,
+        FOREIGN KEY (trip_id, day_number)
+          REFERENCES plan_days (trip_id, day_number) ON DELETE CASCADE,
+        UNIQUE (trip_id, day_number, position)
+      )
+      ''',
+    ],
   ];
 
   @override
@@ -49,7 +96,7 @@ class AccountDatabase extends GeneratedDatabase {
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-    onCreate: (m) => _migrate(0, currentSchemaVersion),
+    onCreate: (m) => _migrate(0, schemaVersion),
     onUpgrade: (m, from, to) => _migrate(from, to),
   );
 

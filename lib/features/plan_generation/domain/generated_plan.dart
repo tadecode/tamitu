@@ -1,6 +1,6 @@
 /// `generatePlan` 200 response (posrednik-api.md pkt 2,
-/// `docs/api/schemas/generate-plan.response.schema.json`). Kept in memory only:
-/// saving plans on the phone is P3-06 (TAM-19).
+/// `docs/api/schemas/generate-plan.response.schema.json`). Saved on the phone by
+/// `PlanRepository` (P3-06, TAM-19).
 library;
 
 class PlanItem {
@@ -49,10 +49,14 @@ class GeneratedPlan {
     required this.requestId,
     required this.language,
     required this.days,
+    this.promptVersion,
     this.quota,
   });
 
   final String requestId;
+
+  /// Prompt version from the server (`trips.prompt_version`, diagnostics only).
+  final String? promptVersion;
 
   /// `pl` or `en` – language of the plan content (TalkBack locale in EK-08).
   final String language;
@@ -111,6 +115,9 @@ class GeneratedPlan {
       requestId: _str(m['requestId']),
       language: language as String,
       days: List.unmodifiable(days),
+      promptVersion: m['promptVersion'] is String
+          ? m['promptVersion'] as String
+          : null,
       quota: quota,
     );
   }

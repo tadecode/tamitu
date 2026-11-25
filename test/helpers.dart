@@ -17,6 +17,7 @@ import 'package:tamitu/features/plan_generation/data/fake_plan_api.dart';
 import 'package:tamitu/l10n/app_localizations.dart';
 
 import 'fakes/in_memory_consent_local_store.dart';
+import 'fakes/in_memory_plan_repository.dart';
 
 /// Deterministic UUID v4-shaped ids.
 String Function() idSequence() {
@@ -48,6 +49,7 @@ class TestEnv {
   final InMemoryConsentLocalStore local;
   final MemoryPendingPolicyStore pending;
   final plans = FakePlanApi();
+  final savedPlans = InMemoryPlanRepository();
   final requestIds = idSequence();
 
   /// Fake monotonic clock of the EK-07 "AI busy" countdown (advance with the timers).
@@ -75,6 +77,7 @@ class TestEnv {
     authGatewayProvider.overrideWithValue(auth),
     consentServiceProvider.overrideWithValue(consents),
     planApiProvider.overrideWithValue(plans),
+    planRepositoryProvider.overrideWithValue(savedPlans),
     requestIdProvider.overrideWithValue(requestIds),
     aiBusyClockProvider.overrideWithValue(() => mono),
     urlOpenerProvider.overrideWithValue((uri) async {
