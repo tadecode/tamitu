@@ -20,6 +20,9 @@ abstract final class Radii {
 /// Layout limits (layout.md): max content column on medium/expanded windows.
 abstract final class LayoutLimits {
   static const contentMaxWidth = 560.0;
+
+  /// Window width where compact ends and medium starts (layout.md, M3 window classes).
+  static const mediumWindowMinWidth = 600.0;
   static const stateTextMaxWidth = 320.0;
   static const minTouchTarget = 48.0;
 

@@ -66,6 +66,7 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
       f: FocusNode(skipTraversal: f == TripField.arrivalMode),
   };
   final _keys = {for (final f in TripField.values) f: GlobalKey()};
+  final _generateFocus = FocusNode();
 
   int? _days;
   ArrivalMode? _mode;
@@ -111,6 +112,7 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
     for (final f in _focus.values) {
       f.dispose();
     }
+    _generateFocus.dispose();
     super.dispose();
   }
 
@@ -225,6 +227,9 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
       );
       return;
     }
+    // EK-05 v0.2 "Fokus i klawiatura po powrocie" (TAM-102, Q5): leave the text fields
+    // before EK-06/EK-07 so the route does not restore focus (and the keyboard) on pop.
+    FocusManager.instance.primaryFocus?.unfocus();
     setState(() => _busy = true);
     try {
       final state = await ref
@@ -244,8 +249,19 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
       _consentWithdrawn = false;
       await _runGeneration();
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) {
+        setState(() => _busy = false);
+        // Back on the form: focus "Create plan" (where the user left), keyboard closed.
+        // Exception: the server rejected a field, which already took the focus.
+        if (_serverField == null) _focusGenerate();
+      }
     }
+  }
+
+  void _focusGenerate() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _generateFocus.requestFocus();
+    });
   }
 
   Future<bool> _askAiConsent({required bool updated}) async {
@@ -339,11 +355,17 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
     _touched.add(TripField.arrivalMode);
   });
 
+  /// CMP-06 v0.2 (TAM-102): the picker field takes focus away from the text fields
+  /// before the picker opens, so on close the route restores focus to this field
+  /// (not a text field) and the keyboard stays closed.
+  void _focusPickerField(TripField field) => _focus[field]!.requestFocus();
+
   Future<void> _pickDate() async {
     final r = arrivalDateRange(_now());
     final initial = _date != null && dateInRange(_date!, _now())
         ? _date!
         : LocalDate.fromDateTime(_now());
+    _focusPickerField(TripField.date);
     final picked = await showDatePicker(
       context: context,
       firstDate: r.from.toDateTime(),
@@ -359,6 +381,7 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
 
   Future<void> _pickTime() async {
     final pl = Localizations.localeOf(context).languageCode == 'pl';
+    _focusPickerField(TripField.time);
     final picked = await showTimePicker(
       context: context,
       initialTime: _time == null
@@ -521,6 +544,7 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
                   key: const Key('tripFormGenerate'),
                   label: l10n.tripFormGenerate,
                   loading: _busy,
+                  focusNode: _generateFocus,
                   onPressed: _generate,
                 ),
                 const SizedBox(height: Space.s4),
@@ -725,8 +749,12 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
       onTap: _pickTime,
       l10n: l10n,
     );
-    // From 150 % text scale the two fields go into one column (EK-05 "Dostępność").
-    final narrow = MediaQuery.textScalerOf(context).scale(10) >= 15;
+    // EK-05 v0.2 "Układ" (TAM-102, Q4): one column on compact windows (< 600 dp, every
+    // phone, whatever the text scale) and from 150 % text scale; two columns only on
+    // medium/expanded windows. Labels like "Godzina przylotu" never get truncated.
+    final narrow =
+        MediaQuery.sizeOf(context).width < LayoutLimits.mediumWindowMinWidth ||
+        MediaQuery.textScalerOf(context).scale(10) >= 15;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

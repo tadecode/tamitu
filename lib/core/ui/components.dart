@@ -82,6 +82,7 @@ class AppButton extends StatelessWidget {
     this.loading = false,
     this.loadingLabel,
     this.disabledHint,
+    this.focusNode,
   }) : _variant = _ButtonVariant.filled;
 
   /// Tonal (secondary container) button, e.g. "Try now" in the CMP-18 "AI busy" variant.
@@ -92,6 +93,7 @@ class AppButton extends StatelessWidget {
     this.loading = false,
     this.loadingLabel,
     this.disabledHint,
+    this.focusNode,
   }) : _variant = _ButtonVariant.tonal;
 
   const AppButton.outlined({
@@ -101,6 +103,7 @@ class AppButton extends StatelessWidget {
     this.loading = false,
     this.loadingLabel,
     this.disabledHint,
+    this.focusNode,
   }) : _variant = _ButtonVariant.outlined;
 
   final String label;
@@ -112,6 +115,9 @@ class AppButton extends StatelessWidget {
 
   /// Reason read together with a disabled button (EK-02: why it is disabled).
   final String? disabledHint;
+
+  /// Lets a screen put input focus back on the button (EK-05 after EK-07, TAM-102).
+  final FocusNode? focusNode;
   final _ButtonVariant _variant;
 
   @override
@@ -132,16 +138,19 @@ class AppButton extends StatelessWidget {
     final button = switch (_variant) {
       _ButtonVariant.outlined => OutlinedButton(
         onPressed: enabled ? onPressed : null,
+        focusNode: focusNode,
         style: style,
         child: child,
       ),
       _ButtonVariant.tonal => FilledButton.tonal(
         onPressed: enabled ? onPressed : null,
+        focusNode: focusNode,
         style: style,
         child: child,
       ),
       _ButtonVariant.filled => FilledButton(
         onPressed: enabled ? onPressed : null,
+        focusNode: focusNode,
         style: style,
         child: child,
       ),

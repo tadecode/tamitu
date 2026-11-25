@@ -227,6 +227,8 @@ class _GenerationScreenState extends ConsumerState<GenerationScreen> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
+        // EK-07 v0.2 (TAM-102, TAM101-2): the bar names the task ("New trip") in every
+        // state, ai_busy included; "Building your plan…" is only the heading in the body.
         title: Semantics(header: true, child: Text(l10n.tripFormTitle)),
       ),
       body: SafeArea(
