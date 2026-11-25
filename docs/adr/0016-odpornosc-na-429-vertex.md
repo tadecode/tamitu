@@ -1,8 +1,8 @@
 # ADR-0016: Odporność generowania na przeciążenie Vertex (HTTP 429)
 
-- Status: **zatwierdzony warunkowo** (właściciel, 2026-11-21, O-TAM96-1: „TAK, z rozszerzeniem”). Zatwierdzenie
-  staje się pełne, gdy sprawdzenie w Billing (sekcja „Warunek: 429 nic nie kosztuje”) potwierdzi, że wywołania
-  z 429 nie są rozliczane. Do tego czasu implementacja może powstać, ale nie trafia do `main` (sekcja „Kolejność”).
+- Status: **zatwierdzony** (właściciel, 2026-11-21, O-TAM96-1: „TAK, z rozszerzeniem”; warunek spełniony
+  2026-11-24, TAM-97). Billing pokazał dokładnie tyle tokenów, ile dały 38 odpowiedzi z TAM-88, więc wywołania
+  z 429 nie są rozliczane (sekcja „Warunek: 429 nic nie kosztuje”, punkt (c)). Do 2026-11-24: zatwierdzony warunkowo.
 - Data: 2026-11-21
 - Autor (rola): architect
 - Zadanie: TAM-96 (P3-05-429), na podstawie raportu `docs/qa/QA-TAM-88-eval.md` (sekcje 2 i 2.1)
@@ -205,6 +205,19 @@ dokładności raportu. **Dlatego porównujemy ilość (usage) w SKU, a nie koszt
      pytanie do wsparcia Google Cloud.
 7. Wynik (dwie liczby: wejście i wyjście z Billing, oraz jednostka) właściciel wpisuje w odpowiedzi do O-TAM96-1.
 
+### (c) Wynik sprawdzenia (2026-11-24, TAM-97)
+
+| | Billing (SKU `gemini-3.1-flash-lite`, 21.11.2026, `tamitu-dev-tadecode`) | Suma z 38 odpowiedzi (QA TAM-88) |
+|---|---|---|
+| Tokeny wejścia | **38 534** | 38 534 |
+| Tokeny wyjścia | **55 131** | 55 131 |
+
+- Kontrola czystości (krok 5): wyjście zgadza się co do tokena, więc w tej dobie nie było innych wywołań modelu
+  i porównanie wejścia jest wiarygodne.
+- Ocena (krok 6): wejście 38 534 ≤ 40 000 i równe sumie z samych odpowiedzi. Gdyby 429 było rozliczane, wejście
+  wyniosłoby ok. 44 600. **6 wywołań z 429 nie zostało rozliczonych – warunek spełniony.**
+- Skutek: pułapy kosztów z `costs.md` bez zmian; merge implementacji (sekcja „Kolejność”) odblokowany.
+
 ### Kolejność
 
 - Dokumenty (ten ADR, kontrakt v0.7) i specyfikację UX można przygotować od razu.
@@ -268,3 +281,6 @@ kończy się `ai_busy` albo `ai_unavailable` przez 429, architekt przygotuje wyc
 - 2026-11-21: decyzja właściciela O-TAM96-1 „TAK, z rozszerzeniem”: warunek braku kosztu 429 (sekcja „Warunek”),
   nowy kod `ai_busy` bez zużycia limitu i z zabezpieczeniem przed nadużyciem, jedno automatyczne ponowienie w aplikacji
   po 60 s. `retryAfterSec` przeniesione z `ai_unavailable` do `ai_busy`. Zatwierdzenie warunkowe.
+- 2026-11-24 (TAM-97): Billing – 38 534 tokeny wejścia i 55 131 wyjścia, dokładnie tyle co z 38 odpowiedzi; 429 nie jest
+  rozliczane. Warunek spełniony.
+- 2026-11-25 (TAM-103, architect): status zmieniony na **zatwierdzony**, dopisany punkt (c). Treść decyzji bez zmian.

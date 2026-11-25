@@ -6,6 +6,13 @@
   `.github/workflows/deploy.yml`, `docs/security/review-SEC-17-iam.md`, runbook `.farm/runbooks/P3-03-firebase.md`,
   ADR-0002, ADR-0003, ADR-0011, ADR-0014, `docs/qa/QA-P3-04-DEV-2.md`.
 - Stan chmury sprawdzony 2026-11-20 **tylko poleceniami odczytu** (`list`, `describe`, `get-iam-policy`). Niczego nie zmieniano.
+- **Aktualizacja 2026-11-25 (TAM-103, architect):** wdrożenie `generatePlan` (TAM-90) – sekcja 2, 3.3, **5.2**
+  (kroki), **5.3** (włączanie i wyłączanie AI w dev), **5.4** (przebieg 2026-11-25), sekcja 6. Źródła: wpis
+  `.farm/log/2026-11-25/0820-mobile-dev-TAM-90.md`, recenzja i raport QA w PR #166. Bez zmian w chmurze.
+
+> **Stan na 2026-11-25:** w `dev` działają `recordConsent` (TAM-84) i `generatePlan` (TAM-90, z modelem AI).
+> Sekcje 1, 3.1–3.5 i 4 opisują pierwsze wdrożenie (`recordConsent`) i zostają jako historia; kroki dla
+> `generatePlan` są w sekcji 5.2.
 
 ## 1. W skrócie
 
@@ -34,12 +41,12 @@ App Check na telefonie testowym: decyzja właściciela – token debug dla QA (s
 |---|---|---|
 | `recordConsent` | **TAK** | Jedyna potrzebna do testu zgody (SIGN-11, CONS-01, RECON-03, AIC-04). Kod gotowy (P3-04, testy zielone). Nie woła AI. Konto `fn-consent` ma potrzebne role i dostęp do sekretu. Zapisuje tylko dane kont testowych (dev = tylko dane testowe, ADR-0011 pkt 5). |
 | `deleteAccount` | **NIE** (razem z P3-08) | Kod po sprawdzeniu tokenu zwraca `not_implemented` (P3-08) – w teście nic by nie dał. Konto `fn-account` ma dziś szeroką rolę `roles/firebaseauth.admin` (SEC-17 W-2 – do zawężenia **przed** wdrożeniem). Wdrożyć razem z P3-08 i po W-2. |
-| `generatePlan` | **NIE** (razem z P3-05) | Kod P3-05 jest w `main` (PR #136, #138), ale bez zmiennych `AI_MODEL_ID` i `AI_LOCATION` funkcja odpowiada `ai_unavailable` przed rezerwacją limitu (fail-closed): nie woła Vertex AI, nie zapisuje `usage/{uid}` i nic nie kosztuje. Wdrożenie wystawiłoby publicznie funkcję działającą jako `fn-ai-plan`, która ma szeroką rolę `roles/aiplatform.user` (SEC-17 W-1). Spend cap 15 PLN chroni koszt, ale nie zastępuje B-1 (wyłączenie buforowania Vertex) i W-1. **Zanim ktoś ustawi zmienne AI** (P3-05-CFG, TAM-90), muszą być spełnione: **O4-2** (polityki TTL na `usage.expireAt` i `usage_global.expireAt` wdrożone w dev, bo od tej chwili funkcja zapisuje licznik D10), **B-1** (`disableCache=true`) i **W-1** (zawężenie roli `fn-ai-plan`), a także TAM-93 (komunikat o zwrocie próby w aplikacji zgodny z limitem 2 zwrotów na dobę). |
+| `generatePlan` | **TAK (TAM-90, wdrożone 2026-11-25)** | Warunki O4-2, B-1, W-1 i TAM-93 spełnione przed wdrożeniem (sprawdził orkiestrator 2026-11-25). Zmienne AI w pliku `.env` (sekcja 3.3), kroki w sekcji 5.2, przebieg w 5.4. Poniżej – uzasadnienie z 2026-11-20, dlaczego czekała. **Historia (2026-11-20): NIE** (razem z P3-05). Kod P3-05 jest w `main` (PR #136, #138), ale bez zmiennych `AI_MODEL_ID` i `AI_LOCATION` funkcja odpowiada `ai_unavailable` przed rezerwacją limitu (fail-closed): nie woła Vertex AI, nie zapisuje `usage/{uid}` i nic nie kosztuje. Wdrożenie wystawiłoby publicznie funkcję działającą jako `fn-ai-plan`, która ma szeroką rolę `roles/aiplatform.user` (SEC-17 W-1). Spend cap 15 PLN chroni koszt, ale nie zastępuje B-1 (wyłączenie buforowania Vertex) i W-1. **Zanim ktoś ustawi zmienne AI** (P3-05-CFG, TAM-90), muszą być spełnione: **O4-2** (polityki TTL na `usage.expireAt` i `usage_global.expireAt` wdrożone w dev, bo od tej chwili funkcja zapisuje licznik D10), **B-1** (`disableCache=true`) i **W-1** (zawężenie roli `fn-ai-plan`), a także TAM-93 (komunikat o zwrocie próby w aplikacji zgodny z limitem 2 zwrotów na dobę). |
 | `budgetGuard` | **NIE w dev** (nigdy) | ADR-0014 Aneks A: w `dev` nie ma `budgetGuard`, ochronę daje spend cap. W dev nie ma też tematu `budget-alerts` ani włączonego Eventarc – wdrożenie i tak by się nie udało albo włączyłoby dodatkowe API. |
 
 Ważne: **nigdy** nie uruchamiać samego `firebase deploy` ani `firebase deploy --only functions` – to wdraża
 wszystkie cztery funkcje (w tym `budgetGuard`), a samo `firebase deploy` także reguły i indeksy. Zawsze
-`--only functions:recordConsent`.
+`--only functions:<nazwa>` – jedna funkcja naraz (`functions:recordConsent` albo `functions:generatePlan`).
 
 ## 3. Gotowość kodu i konfiguracji
 
@@ -91,6 +98,22 @@ ALLOW_REAL_DATA=false
 ```
 W pliku nigdy nie ma sekretów (sekrety tylko w Secret Managerze). Ten sam plik posłuży później wdrożeniom z CI.
 
+**Zmienne modelu AI (TAM-90, 2026-11-25).** `generatePlan` czyta dodatkowo dwie zmienne (`ai.ts`, `parseAiConfig`,
+też „fail-closed”):
+
+| Zmienna | Wartość w dev | Co, jeśli brak lub zła wartość |
+|---|---|---|
+| `AI_MODEL_ID` | `gemini-3.1-flash-lite` (ADR-0001 Aneks C pkt 1; musi być na liście `ALLOWED_MODEL_IDS`) | `ai_unavailable` bez wywołania modelu i bez zużycia limitu |
+| `AI_LOCATION` | `eu` (ADR-0001 Aneks B i C pkt 3; host `aiplatform.eu.rep.googleapis.com`; nigdy `global`) | jak wyżej |
+| `AI_PROMPT_VERSION` | **nie ustawiamy** – domyślnie `plan-v1` | – |
+
+**Stan pliku w repo (od PR #166):** trzy linie – `ENVIRONMENT=dev`, `AI_MODEL_ID=gemini-3.1-flash-lite`,
+`AI_LOCATION=eu`. `ENFORCE_APP_CHECK` i `ALLOW_REAL_DATA` **nie są** w pliku i działają z wartości domyślnych
+(`true` i `false`), czyli tak samo jak w tabeli wyżej. Treść pliku z 2026-11-20 (wyżej) to plan; obowiązuje stan z repo.
+
+Zmienne `.env` decydują, **którym** modelem i gdzie funkcja może generować. To, **czy** w ogóle woła model, decyduje
+dokument Firestore `config/runtime` (`aiEnabled`, `testUids`) – sekcja 5.3.
+
 ### 3.4 App Check na telefonie testowym
 
 `recordConsent` odrzuca wywołanie bez ważnego tokenu App Check (`app_check_failed`). Aplikacja instalowana
@@ -133,7 +156,7 @@ niczego ponad uzgodnione minimum. Konto Compute **nie** służy jako konto dzia�
 | W-5 (konto Compute) | **Tak, częściowo** – brak `editor` sprawdzony (OK); brakuje `cloudbuild.builds.builder` → B1 | teraz |
 | N-5 (`run.invoker`) | **Tak – kontrola po wdrożeniu**: callable `allUsers`, nic więcej | zaraz po wdrożeniu (sekcja 5, krok 6) |
 | W-3 (poświadczenia Ownera w CLI na maszynie agentów) | Nie blokuje, ale **zalecane**: wdrożenie wykonuje właściciel; po sesji `gcloud auth revoke` i `firebase logout` | przy tym wdrożeniu |
-| B-1 (buforowanie Vertex), W-1 (`fn-ai-plan`) | Nie – `generatePlan` nie jest wdrażany, AI nie jest wołane | przed P3-05 |
+| B-1 (buforowanie Vertex), W-1 (`fn-ai-plan`) | Nie – `generatePlan` nie jest wdrażany, AI nie jest wołane | przed P3-05 – **spełnione przed wdrożeniem `generatePlan` (2026-11-25)** |
 | W-2 (`fn-account`) | Nie – `deleteAccount` nie jest wdrażany | przed P3-08 |
 | B-2 (monitoring nadużyć Google), Ś-1 (zawężenie Firestore dla `fn-consent`), Ś-2, Ś-4, N-1…N-4, N-6, N-7 | Nie – dev ma tylko dane testowe | przed realnymi danymi / prod |
 | W-4, Ś-3 (CI/WIF, role `ci-deployer`) | Nie – nie wdrażamy przez CI | przed wdrożeniem z CI (sekcja 4.3) |
@@ -156,6 +179,13 @@ Nowe zadanie dla Stewarda (po tym wdrożeniu): w `deploy.yml` opcja `functions:r
 
 Wszystkie polecenia dotyczą **wyłącznie** `tamitu-dev-tadecode`. Żadne nie zawiera sekretów.
 Firebase CLI w wersji ≥ 15.34 (`firebase --version`), Node 22.
+
+- 5.1 – pierwsze wdrożenie `recordConsent` (TAM-84, 2026-11-20; wykonane);
+- 5.2 – wdrożenie `generatePlan` (TAM-90, 2026-11-25; wykonane, kroki do powtórzenia przy kolejnych wdrożeniach);
+- 5.3 – włączanie i wyłączanie AI w dev (`config/runtime`);
+- 5.4 – faktyczny przebieg wdrożenia `generatePlan` 2026-11-25.
+
+### 5.1 `recordConsent` (TAM-84)
 
 **Krok 0 – przygotowanie (raz)**
 ```powershell
@@ -240,6 +270,176 @@ firebase logout
 Następnie wpis (data, wynik kroków 6–7, bez adresów e-mail i numerów kont) do runbooka P3-03 i do
 `docs/github-ops/log.md` (Steward/orkiestrator), a orkiestrator ponownie zleca QA-P3-04-DEV-2.
 
+### 5.2 `generatePlan` (TAM-90)
+
+**Co i po co.** `generatePlan` tworzy plan podróży modelem Gemini (Vertex AI, punkt `eu`). To jedyna funkcja, która
+**kosztuje za każde wywołanie modelu** (ok. 1 grosz za plan), dlatego ma więcej kontroli niż `recordConsent`.
+Wdrażamy **tylko** `generatePlan` – nigdy całe `functions` (poszedłby też `budgetGuard`, w dev zakazany).
+Schemat jak w 5.1; uzupełniony o uwagi recenzji PR #166 (pełne kontrole IAM, odczyt `fn_error`, szybka blokada
+w sekcji 6) i o krok `config/runtime` z raportu QA (krok 5).
+
+**Warunki wstępne** (sprawdzone 2026-11-25; przy kolejnym wdrożeniu potwierdzić jednym spojrzeniem): TTL `ACTIVE`
+na `usage.expireAt` i `usage_global.expireAt` (O4-2), `disableCache=true` w Vertex (B-1), `fn-ai-plan` tylko
+z rolami `tamitu.vertexInvoker`, `tamitu.authUserReader`, `tamitu.fsUsageWriter` (W-1).
+
+**Krok 0 – przygotowanie**
+```powershell
+$p = 'tamitu-dev-tadecode'
+gcloud auth login            # konto właściciela
+firebase login --reauth
+cd C:\Repository\tamitu       # katalog na gałęzi main
+git pull
+```
+
+**Krok 1 – plik środowiska (z repo)**
+```powershell
+Get-Content backend\functions\.env.tamitu-dev-tadecode
+```
+Oczekiwane: `ENVIRONMENT=dev`, `AI_MODEL_ID=gemini-3.1-flash-lite`, `AI_LOCATION=eu`, bez `AI_PROMPT_VERSION`
+(sekcja 3.3). Brak linii AI = zmiany TAM-90 nie ma w `main`: **nie wdrażać** i nie dopisywać ręcznie.
+
+**Krok 2 – kontrola przed wdrożeniem**
+```powershell
+cd backend\functions; npm ci; npm run lint; npm run typecheck; npm test; cd ..\..
+gcloud run services list --project=$p --region=europe-west4   # pierwsze wdrożenie: tylko recordconsent
+```
+
+**Krok 3 – wdrożenie tylko `generatePlan`**
+```powershell
+cd backend
+firebase deploy --only functions:generatePlan --project tamitu-dev-tadecode
+```
+- Cleanup policy dla obrazów: **1 dzień**.
+- Pytanie o włączenie dodatkowego API: **przerwać** (Ctrl+C) i zgłosić.
+- CLI może wypisać, że konto `fn-ai-plan` ma dostęp do sekretu `UID_HASH_PEPPER` (funkcja używa sekretu do skrótu UID
+  w logach). To oczekiwane – dostęp nadano wcześniej (sekcja 3.5); kontrola 4d potwierdza, że nic nie doszło.
+
+**Krok 4 – kontrola po wdrożeniu**
+```powershell
+# a) konto fn-ai-plan, europe-west4, max 10 instancji, zmienne ENVIRONMENT/AI_MODEL_ID/AI_LOCATION
+gcloud functions describe generatePlan --region=europe-west4 --project=$p --format="yaml(state,serviceConfig.serviceAccountEmail,serviceConfig.maxInstanceCount,serviceConfig.environmentVariables)"
+# b) usługi Cloud Run: recordconsent i generateplan (żadnej innej)
+gcloud run services list --project=$p --region=europe-west4
+# c) N-5: wywołać może allUsers (wymóg callable; logowanie, App Check i zgody sprawdza kod) – i nic więcej
+gcloud run services get-iam-policy generateplan --region=europe-west4 --project=$p
+# d) PEŁNA polityka IAM projektu i sekretu – bez nowych, nieoczekiwanych wpisów (porównać z SEC-17 sekcja 3)
+gcloud projects get-iam-policy $p --flatten="bindings[].members" --format="table(bindings.role,bindings.members)"
+gcloud secrets get-iam-policy UID_HASH_PEPPER --project=$p
+# e) wywołanie bez logowania: oczekiwany "unauthenticated" (HTTP 401), bez wywołania modelu
+$url = gcloud functions describe generatePlan --region=europe-west4 --project=$p --format="value(url)"
+try { Invoke-RestMethod -Method Post -Uri $url -ContentType 'application/json' -Body '{"data":{}}' } catch { $_.Exception.Response.StatusCode; $_.ErrorDetails.Message }
+```
+Oczekiwane:
+- (a) `ACTIVE`, `fn-ai-plan@…`, `10`, `ENVIRONMENT: dev`, `AI_MODEL_ID: gemini-3.1-flash-lite`, `AI_LOCATION: eu`;
+- (c) jedna rola `roles/run.invoker` dla `allUsers`;
+- (d) `fn-ai-plan` tylko z `tamitu.vertexInvoker`, `tamitu.authUserReader`, `tamitu.fsUsageWriter`; żadne inne konto
+  (np. domyślne konto Compute) nie dostało nowej roli; na sekrecie `secretAccessor` mają tylko `fn-consent`,
+  `fn-account`, `fn-ai-plan`. Każdy nowy wpis – zgłosić security, przed testem z telefonu;
+- (e) `Unauthorized` / `unauthenticated`.
+
+**Krok 5 – przed pierwszym testem: `config/runtime` w dev (właściciel, konsola)**
+Bez tego kroku pierwsze wywołanie kończy się `test_data_only` albo `ai_unavailable` (bez kosztu, ale test jest
+stracony – tak było 2026-11-25, sekcja 5.4). Ustawienie: sekcja 5.3, „Włączenie AI dla konta testowego”.
+
+**Krok 6 – pierwszy test: 1 plan z telefonu**
+Telefon testowy z tokenem debug App Check (sekcja 3.4), konto testowe z kroku 5, zgoda na AI udzielona w aplikacji.
+Jeden krótki plan (np. 2 dni). Koszt: ok. 1 grosz (`gemini-3.1-flash-lite`); limit 25 wywołań na dobę, spend cap 15 PLN.
+
+| Wynik | Znaczenie |
+|---|---|
+| plan na ekranie (EK-08) | działa |
+| komunikat „Tworzenie planów jest chwilowo niedostępne” + w logu `test_data_only` | konta nie ma w `testUids` (sekcja 5.3) |
+| ten sam komunikat + w logu `ai_unavailable` bez `configError` | `aiEnabled` nie jest `true` (sekcja 5.3) |
+| `ai_unavailable` z `configError` | zmienne AI nie dotarły albo są złe – wróć do kroku 4a |
+| `ai_busy` | przeciążenie modelu (ADR-0016) – spróbować później, to nie błąd wdrożenia |
+
+**Krok 7 – logi bez danych osobowych (`fn_event` i `fn_error`)**
+```powershell
+gcloud logging read 'resource.type="cloud_run_revision" AND resource.labels.service_name="generateplan" AND jsonPayload.message=("fn_event" OR "fn_error")' --project=$p --freshness=1h --limit=20 --format=json
+```
+Odczyt obejmuje także `fn_error`, bo tylko tam widać przyczynę nieudanej próby (`errorCode`, `configError`,
+`stopReason`) – i tam też trzeba sprawdzić, że nie ma danych osobowych. Sprawdzić:
+- pola tylko z listy w `backend/functions/src/logger.ts` (`fn`, `result`, `uidHash`, `outcome`, `errorCode`, `aiModel`,
+  `aiLocation`, `modelVersion`, `promptVersion`, `tokensIn`/`tokensOut`/`tokensThought`, `billable`, `calls`,
+  `stopReason`, `durationMs` itp.);
+- **brak** UID, e-maila, tokenu, celu podróży, nazw miejsc z formularza, treści promptu i odpowiedzi modelu;
+- przy udanym teście: `outcome=ok`, `calls=1`, `aiLocation=eu`, `promptVersion=plan-v1`, `billable=true`;
+- w Firestore powstał dokument licznika w `usage` z `expireAt` (TTL), a `usage_global` ma licznik dnia.
+Logi żądań platformy mogą mieć IP i user agent (oczekiwane, rejestr D11).
+
+**Krok 8 – decyzja o AI i zamknięcie sesji**
+- Jeśli w najbliższym czasie nie ma testów: **wyłączyć AI w dev** (`aiEnabled=false`, sekcja 5.3). Funkcja zostaje
+  wdrożona, ale nie woła modelu i nic nie kosztuje.
+- Token debug App Check z testu: zostawić na dalsze testy albo usunąć w konsoli (sekcja 3.4).
+```powershell
+gcloud auth revoke    # konto właściciela
+firebase logout
+```
+Wynik (data, kroki 4–7, bez e-maili, numerów kont i UID) do runbooka P3-03 i do `docs/github-ops/log.md`.
+
+### 5.3 Włączanie i wyłączanie AI w dev (`config/runtime`)
+
+**Co i po co.** Dokument Firestore `config/runtime` w projekcie `tamitu-dev-tadecode` to **wyłącznik AI bez
+wdrażania**. `generatePlan` czyta go przy **każdym** żądaniu, więc zmiana działa od następnego wywołania. Zmienia go
+**tylko właściciel w konsoli Firebase** (2FA; ADR-0002 Aneks A pkt 7). Agenci go nie zmieniają.
+
+Dwa pola decydują o wywołaniu modelu (kolejność sprawdzeń w `endpoints.ts`):
+
+| Pole | Typ | Rola | Gdy nie pasuje |
+|---|---|---|---|
+| `testUids` | tablica tekstów (UID) | w dev funkcja przyjmuje tylko żądania z `testData=true` od kont z tej listy (ADR-0011 pkt 5, SEC-24) | `test_data_only` – przed limitem i przed modelem, 0 zł |
+| `aiEnabled` | wartość logiczna (boolean) | główny wyłącznik AI | `ai_unavailable` (`slotReleased=true`) – przed limitem i przed modelem, 0 zł |
+
+Brak dokumentu albo brak pola = bezpieczne wartości domyślne: `aiEnabled=false`, `testUids=[]` (`config.ts`).
+
+**Włączenie AI dla konta testowego (przed pierwszym testem)**
+1. Firebase Console → projekt `tamitu-dev-tadecode` → **Authentication → Users**: znaleźć konto testowe i skopiować
+   **User UID** (kolumna UID; nie e-mail).
+2. **Firestore Database → Data** → kolekcja `config` → dokument `runtime`:
+   - pole `testUids` (typ **array**): dodać element typu **string** z tym UID (istniejących wpisów nie usuwać);
+   - pole `aiEnabled` (typ **boolean**): `true`. Uwaga: tekst `"true"` (typ string) **nie** włącza AI – kod wymaga
+     wartości logicznej.
+3. Zapisać. Bez wdrażania i bez restartu funkcji.
+
+UID konta testowego to dana osobowa (ADR-0002 Aneks A pkt 7, ADR-0011): wpisuje go **tylko właściciel w konsoli**.
+**Nigdy** w repozytorium, dzienniku `.farm/log`, Jirze, Confluence, PR-ach ani w rozmowie z agentem. W raportach
+pisać tylko „`testUids` ma N wpisów”.
+
+**Wyłączenie AI w dev (zatrzymanie kosztów)**
+1. Firestore → `config/runtime` → `aiEnabled` = `false` (boolean) → zapisać.
+2. Od następnego żądania `generatePlan` odpowiada `ai_unavailable` **bez wywołania modelu i bez zużycia limitu**;
+   aplikacja pokazuje komunikat „Tworzenie planów jest chwilowo niedostępne”. Funkcja zostaje wdrożona, więc
+   ponowne włączenie to znowu `aiEnabled=true`.
+3. Wpis w `testUids` może zostać (sam nic nie kosztuje). Usunąć go, gdy konto testowe przestaje być używane albo
+   jest usuwane.
+4. Sprawdzenie bez kosztu: odczytać pole w konsoli. Nie trzeba wołać funkcji.
+
+| Potrzeba | Co zrobić | Szybkość | Koszt modelu po zmianie |
+|---|---|---|---|
+| Przerwa w testach, koniec dnia | `aiEnabled=false` | od następnego żądania | 0 |
+| Podejrzany ruch, ktoś spoza zespołu woła funkcję | zdjąć `allUsers` z usługi `generateplan` (sekcja 6) | kilka sekund | 0, funkcja w ogóle nie odpowiada (403) |
+| Koniec testów na dłużej | `aiEnabled=false`, a potem ewentualnie usunięcie funkcji (sekcja 6) | – | 0 |
+
+Ochrony, które działają niezależnie od `aiEnabled`: limit 25 wywołań na dobę dla całej aplikacji (`usage_global`),
+limit dzienny konta, spend cap Vertex AI 15 PLN, `maxInstances: 10`.
+
+### 5.4 Przebieg wdrożenia `generatePlan` 2026-11-25
+
+Wykonał właściciel ze swojego komputera według kroków z wpisu `0820-mobile-dev-TAM-90.md` (pierwowzór sekcji 5.2).
+Bez numerów kont i UID.
+
+| Etap | Wynik |
+|---|---|
+| Wdrożenie (`--only functions:generatePlan`) | udane. Firebase CLI sam sprawdził i potwierdził, że `fn-ai-plan` ma dostęp do sekretu `UID_HASH_PEPPER` (dostęp był nadany wcześniej, sekcja 3.5) |
+| Kontrola po wdrożeniu | `ACTIVE`, konto `fn-ai-plan`, max **10** instancji, invoker: `allUsers` z `roles/run.invoker`; wywołanie bez logowania: **401** (`unauthenticated`, bez wywołania modelu) |
+| Pierwsza próba z telefonu (QA) | `test_data_only`, bez wywołania modelu: w `config/runtime` lista `testUids` była pusta, a `aiEnabled=false`. Procedura nie miała tego kroku – dlatego dodany krok 5 i sekcja 5.3 |
+| Poprawka | właściciel dopisał UID konta testowego do `testUids` i ustawił `aiEnabled=true` w konsoli |
+| Druga próba – **pierwszy plan z AI** | plan na EK-08 po ok. 3 s; **1 wywołanie modelu**, **955** tokenów wejścia i **546** wyjścia (myślenie 0), `aiLocation=eu`, `promptVersion=plan-v1`; koszt ok. 1 grosza |
+| Logi (`fn_event` + `fn_error`) | tylko pola z listy `logger.ts`, `uidHash` zamiast UID; bez e-maili, celu podróży i treści promptu/odpowiedzi (raport QA w PR #166) |
+
+Nie sprawdzono jeszcze dokumentów `usage` i `usage_global` (krok 7, ostatni punkt) – opcjonalne zadanie QA, bez
+wywołań modelu. Otwarte decyzje właściciela po teście: czy `aiEnabled=true` i token debug App Check zostają w dev.
+
 ## 6. Jak cofnąć
 
 | Sytuacja | Polecenie | Skutek |
@@ -247,6 +447,10 @@ Następnie wpis (data, wynik kroków 6–7, bez adresów e-mail i numerów kont)
 | Szybko zablokować wywołania (np. podejrzany ruch) | `gcloud run services remove-iam-policy-binding recordconsent --region=europe-west4 --project=$p --member=allUsers --role=roles/run.invoker` | funkcja zostaje, ale nikt z zewnątrz jej nie wywoła (HTTP 403); powrót: `add-iam-policy-binding` z tymi samymi parametrami |
 | Wrócić do poprzedniej wersji kodu (po kolejnym wdrożeniu) | `gcloud run revisions list --service=recordconsent --region=europe-west4 --project=$p`, potem `gcloud run services update-traffic recordconsent --to-revisions=<poprzednia>=100 --region=europe-west4 --project=$p` | ruch na starą wersję w kilka sekund |
 | Usunąć funkcję całkowicie | `firebase functions:delete recordConsent --region europe-west4 --project tamitu-dev-tadecode` | usuwa funkcję i usługę Cloud Run; dane zgód w Firestore zostają (to dane testowe) |
+| **`generatePlan`: najszybsza blokada** (podejrzany ruch, niespodziewany koszt) | `gcloud run services remove-iam-policy-binding generateplan --region=europe-west4 --project=$p --member=allUsers --role=roles/run.invoker` | w kilka sekund nikt z zewnątrz nie wywoła funkcji (HTTP 403), więc nie ma też wywołań modelu; powrót: `add-iam-policy-binding` z tymi samymi parametrami. Bez zmian w repo i bez wdrażania |
+| `generatePlan`: wyłączyć samo AI, funkcja odpowiada | `config/runtime.aiEnabled=false` w konsoli (sekcja 5.3) | od następnego żądania `ai_unavailable` bez modelu i bez zużycia limitu |
+| `generatePlan`: wrócić do poprzedniej wersji kodu | jak wyżej dla `recordConsent`, usługa `generateplan` | ruch na starą wersję w kilka sekund |
+| `generatePlan`: usunąć funkcję | `firebase functions:delete generatePlan --region europe-west4 --project tamitu-dev-tadecode` | usuwa funkcję i usługę Cloud Run; liczniki `usage` wygasną same (TTL) |
 | Cofnąć B1 | `gcloud projects remove-iam-policy-binding $p --member="serviceAccount:$build" --role=roles/cloudbuild.builds.builder --condition=None` | kolejne wdrożenia funkcji przestaną się budować |
 
 ## 7. Koszt (szacunek)
@@ -262,7 +466,7 @@ regionów (tier 1). Ceny i pule – wg cennika Google na dzień wdrożenia (do p
 | Secret Manager | 1 wersja, dostęp przy uruchomieniu instancji | 6 wersji, 10 tys. odczytów | 0 zł |
 | Firestore | kilka–kilkadziesiąt zapisów | 20 tys. zapisów, 50 tys. odczytów dziennie | 0 zł |
 | Cloud Logging | kilka MB | 50 GiB na projekt | 0 zł |
-| Vertex AI | **brak wywołań** | – | 0 zł |
+| Vertex AI | `recordConsent`: **brak wywołań**. `generatePlan` (od 2026-11-25): ok. 1 grosz za plan; pułap: 25 wywołań na dobę i spend cap 15 PLN; 0 zł przy `aiEnabled=false` | – | grosze |
 
 **Razem: ~0 zł.** Budżet dev 20 PLN z alertami działa dalej. Uwaga: spend cap 15 PLN obejmuje tylko
 Vertex AI – nie chroni Cloud Run/Functions (świadoma decyzja ADR-0014 Aneks A pkt 1); tu ochroną są
@@ -282,7 +486,8 @@ Vertex AI – nie chroni Cloud Run/Functions (świadoma decyzja ADR-0014 Aneks A
 
 ## 9. Później (poza TAM-84)
 
-- `generatePlan` – z P3-05; zmienne AI dopiero po O4-2, B-1 i W-1 (sekcja 2); ten sam schemat (`--only functions:generatePlan`).
+- ~~`generatePlan` – z P3-05; zmienne AI dopiero po O4-2, B-1 i W-1 (sekcja 2); ten sam schemat (`--only functions:generatePlan`).~~
+  **Zrobione 2026-11-25 (TAM-90)** – sekcja 5.2–5.4.
 - `deleteAccount` – z P3-08, po W-2.
 - `budgetGuard` – tylko w prod (P3-09), z `run.invoker` dla `fn-budget` i bez `allUsers` (N-5).
 - Wdrożenia z CI – po zadaniu dla Stewarda z sekcji 4.3.

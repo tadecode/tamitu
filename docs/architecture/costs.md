@@ -52,7 +52,7 @@ Wnioski:
   pułap typowy ≈ 20 PLN/mies. (kolumny w sekcjach 2–4).
 - Względem klasy Flash wybrany model jest ok. 5–6× tańszy. Zasada 10: decyzja **obniża** koszt; limity bez zmian.
 
-### 0.1 Odporność na przeciążenie Vertex (HTTP 429) – TAM-96, ADR-0016 (zatwierdzony warunkowo)
+### 0.1 Odporność na przeciążenie Vertex (HTTP 429) – TAM-96, ADR-0016 (zatwierdzony; warunek Billing spełniony 2026-11-24, TAM-97)
 
 **Warunek właściciela:** 429 ma naprawdę nic nie kosztować. Dokumentacja Google nie mówi tego wprost dla Vertex,
 więc rozstrzyga sprawdzenie w Billing na danych z TAM-88 (ADR-0016, sekcja „Warunek”, procedura (b)).

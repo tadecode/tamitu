@@ -1,6 +1,6 @@
 # Kontrakt API pośrednika (Cloud Functions callable)
 
-Stan: 2026-11-21, wersja 0.6 (ponowienia po 429, nowy kod `ai_busy` bez zużycia limitu, jedno automatyczne ponowienie w aplikacji; TAM-96, ADR-0016 zatwierdzony warunkowo – pkt 2 „Ponowienia po stronie serwera”, „Slot limitu i zwrot próby”, pkt 6, pkt 7); wcześniej 0.5 (zwrot próby i pole `slotReleased`, TAM-93/TAM-91), 0.4 (v0.2 zatwierdzona na G2 wraz z ADR-0002 i jego Aneksem A; v0.3 z ADR-0011 i v0.4 z ADR-0012, oba zatwierdzone przez właściciela 2026-11-16 – historia w pkt 7), autor: architect. ADR-0002, ADR-0011, ADR-0012. Schematy: `schemas/generate-plan.request.schema.json`, `schemas/generate-plan.response.schema.json`.
+Stan: 2026-11-21, wersja 0.6 (ponowienia po 429, nowy kod `ai_busy` bez zużycia limitu, jedno automatyczne ponowienie w aplikacji; TAM-96, ADR-0016 zatwierdzony warunkowo, w pełni od 2026-11-24 po TAM-97 – pkt 2 „Ponowienia po stronie serwera”, „Slot limitu i zwrot próby”, pkt 6, pkt 7); wcześniej 0.5 (zwrot próby i pole `slotReleased`, TAM-93/TAM-91), 0.4 (v0.2 zatwierdzona na G2 wraz z ADR-0002 i jego Aneksem A; v0.3 z ADR-0011 i v0.4 z ADR-0012, oba zatwierdzone przez właściciela 2026-11-16 – historia w pkt 7), autor: architect. ADR-0002, ADR-0011, ADR-0012. Schematy: `schemas/generate-plan.request.schema.json`, `schemas/generate-plan.response.schema.json`.
 Region: `europe-west4`. Wywołanie przez SDK `cloud_functions` (callable): token ID Firebase i token App Check dołączane automatycznie. Format: JSON, UTF-8, `Content-Type: application/json`.
 
 ## 1. Zasady wspólne
