@@ -22,8 +22,8 @@ Ekran systemowy (wybór konta Google, okno uprawnień Androida, aplikacja Google
 | EK-06 | Zgoda na AI | Przy pierwszym generowaniu uzyskać osobną zgodę na przekazanie danych do AI (z treścią wg privacy-checklist pkt 2) | US-003, US-005 |
 | EK-07 | Generowanie planu | Pokazać postęp, pozwolić anulować, obsłużyć wynik (sukces → EK-08; błąd/limit → komunikat, powrót do EK-05 z zachowanymi danymi) | US-005, US-011 |
 | EK-08 | Widok planu | Pokazać dane podróży (cel, nocleg, godzina przylotu/przyjazdu), plan dzień po dniu z punktami w kolejności pór, informację „plan stworzony przez AI, możliwe błędy; sprawdź godziny otwarcia", wejście do trasy i do usunięcia planu; dostępny offline | US-005, US-006, US-008, US-009 |
-| EK-09 | Wybór trasy do punktu | Wybrać punkt startowy (nocleg / poprzedni punkt dnia / moja lokalizacja) i tryb (auto / komunikacja / pieszo), potwierdzić otwarcie Google Maps | US-007 |
-| EK-10 | Wyjaśnienie i prośba o lokalizację | Przed prośbą systemową wyjaśnić cel (jednorazowa dokładna pozycja do trasy, bez zapisu i wysyłki na nasze serwery); obsłużyć odmowę | US-007 |
+| EK-09 | Wybór trasy do punktu | Wybrać punkt startowy (moja lokalizacja – domyślnie / poprzedni punkt dnia / nocleg) i tryb (auto / komunikacja / pieszo, zapamiętany), potwierdzić otwarcie Google Maps | US-007 |
+| ~~EK-10~~ | ~~Wyjaśnienie i prośba o lokalizację~~ | **Wycofany (TAM-110):** Q1 = C (ADR-0017) – Tamitu nie prosi o lokalizację; specyfikacja w archiwum UX (TAM-108) | – |
 | EK-11 | Potwierdzenie usunięcia planu | Zapobiec przypadkowemu usunięciu; potwierdzić lub anulować | US-009 |
 | EK-12 | Ustawienia | Zebrać: język interfejsu, Prywatność, link do polityki, Wyloguj, Usuń konto | US-002, US-003, US-010 |
 | EK-13 | Ustawienia → Prywatność | Pokazać stan zgód (polityka, AI) i daty ich wyrażenia; wycofać lub ponownie wyrazić zgodę na AI; link do polityki | US-003 |
@@ -76,14 +76,11 @@ Uwaga: zgoda na AI **nie** jest pytana w tym przepływie (decyzja kolejności wg
 3. Dwa konta na urządzeniu: każde widzi tylko własne plany (US-008); komunikat o tym w wylogowaniu (P8).
 
 ### P6. Link do map i lokalizacja (US-007)
-1. EK-08 → dotknięcie punktu → EK-09 (domyślny start: baza noclegowa lub poprzedni punkt dnia; tryb do wyboru).
+1. EK-08 → dotknięcie punktu → EK-09 (domyślny start: „Moja lokalizacja"; „Poprzedni punkt dnia" ukryty przy pierwszym punkcie dnia, „Nocleg" ukryty bez noclegu; tryb zapamiętany). **[ZMIANA TAM-110]**
 2. Start z planu → „Otwórz w Google Maps" → system (aplikacja Maps lub przeglądarka). Wymaga internetu.
-3. Start „moja lokalizacja" i brak uprawnienia → EK-10 (wyjaśnienie) → prośba systemowa o dokładną lokalizację (pierwszy plan) →
-   - przyznano: jednorazowy odczyt, otwarcie Google Maps z trasą;
-   - odmowa lub tylko przybliżona: informacja, aplikacja działa dalej, trasa z punktu startowego z planu;
-   - odmowa „nie pytaj ponownie": EK-09 oferuje wyłącznie starty z planu; pozostaje informacja, jak zmienić uprawnienie w ustawieniach systemu.
-4. Punkt bez rozpoznanej lokalizacji → link na podstawie nazwy i miasta (bez zmiany przepływu widocznej dla użytkownika).
-5. [Q1] Jeśli test wariantu C (link bez `origin`) wyjdzie pozytywnie i zostanie przyjęty nowym ADR, EK-10 wypada, a w EK-09 pozostaje krótka informacja „Google Maps może zapytać o Twoją lokalizację; Tamitu jej nie odczytuje" (privacy-checklist pkt 2). Mockup powinien uwzględniać obie wersje (U11).
+3. Start „Moja lokalizacja" → „Otwórz w Google Maps" → link **bez `origin`**; bieżącą pozycję ustala Google Maps i to Mapy (nie Tamitu) ewentualnie proszą o zgodę na lokalizację. Tamitu nie ma uprawnień lokalizacji, nie pokazuje prośby ani ekranu wyjaśnienia (EK-10 wycofany). **[ZMIANA TAM-110: Q1 = C, ADR-0017]**
+4. Cel w linku zawsze jako nazwa punktu i miejscowość (z celem podróży), nigdy same współrzędne (test TAM-24). **[ZMIANA TAM-110]**
+5. [Q1 – rozstrzygnięte 2026-11-25: wariant C] EK-10 wypada; w EK-09 przy „Moja lokalizacja" krótka informacja, że o dostęp do lokalizacji może poprosić Google Maps (EK-09 v0.4). System nie otworzył linku → komunikat, arkusz zostaje, można ponowić.
 
 ### P7. Ustawienia, język, prywatność (US-003)
 1. EK-04 → EK-12. Język interfejsu: zmiana natychmiast przełącza interfejs; zapisane plany zachowują język oryginalny (US-005).
@@ -129,15 +126,15 @@ n/d = stan nie dotyczy ekranu.
 | EK-05 | pola puste; preferencje z wartościami domyślnymi | n/d (formularz lokalny) | błędy walidacji przy polach: braki (cel, nocleg, dni, dojazd, data/godzina, lotnisko przy locie), dni poza 1–14, liczba osób poza 1–10, więcej niż 5 zainteresowań, data poza zakresem (U10), limity długości | formularz działa; brak sieci komunikowany dopiero przy „Generuj" (generowanie wymaga sieci) – komunikat przed próbą lub po niej (U6) | po „Generuj" komunikat limitu z godziną odnowienia; dane zachowane | powrót z EK-07 z zachowanymi danymi | n/d | etykiety, walidacje i podpowiedzi w języku interfejsu; wybór języka planu (domyślnie język interfejsu); etykieta noclegu „Nazwa obiektu lub dzielnica" / EN odpowiednik |
 | EK-06 | n/d | zapis zgody (wymaga sieci) | błąd zapisu: komunikat + ponów; nic nie wysyłane do AI | brak sieci → nie można wyrazić zgody (zgoda i generowanie wymagają sieci) → komunikat, powrót do EK-05 z danymi | n/d (limit sprawdzany po zgodzie) | odmowa = powrót do EK-05, dane zachowane, limit niezużyty | n/d | pełna treść zgody w języku interfejsu; zapisywany język i wersja zgody |
 | EK-07 | n/d | postęp bez fałszywego procentu (czas nieznany; timeout klienta 120 s); informacja, że może potrwać | błąd usługi / niepoprawna odpowiedź AI / przekroczony czas / usługa wyłączona → EK-16, limit zwrócony (poza anulowaniem), powrót do EK-05 | utrata sieci w trakcie → komunikat jak błąd, dane zachowane (limit: zgodnie z tym, czy model ruszył – jak anulowanie, U4) | wynik `limit_exceeded` → komunikat z godziną odnowienia | „Anuluj" z informacją o ewentualnym niezwróceniu limitu; „wstecz" = anulowanie z potwierdzeniem; po anulowaniu nic nie zapisane | n/d | komunikaty w języku interfejsu; wskaźnik nie zdradza treści |
-| EK-08 | plan bez punktów w dniu 1 (np. przylot po 22:00): dzień pokazuje wyłącznie godzinę przylotu/dotarcie do noclegu, bez „błędu" | wczytanie z lokalnej bazy | błąd odczytu planu: komunikat + powrót do listy | w pełni dostępny; akcja trasy: komunikat, że otwarcie map wymaga internetu | n/d | n/d | wybór „moja lokalizacja" prowadzi do EK-10; sam widok działa bez uprawnień | interfejs w języku UI, treść planu w języku planu (może się różnić); informacja o AI w języku UI |
-| EK-09 | n/d | pobranie lokalizacji (jednorazowo, na pierwszym planie): wskaźnik oczekiwania z możliwością rezygnacji | brak sygnału/pozycji: komunikat i propozycja startu z planu | otwarcie Maps wymaga internetu: komunikat | n/d | rezygnacja z oczekiwania na pozycję = powrót do EK-09 | odmowa lub tylko przybliżona: aplikacja działa, dostępne starty z planu; po odmowie trwałej – informacja o ustawieniach systemu | etykiety trybów (auto/komunikacja/pieszo) i startów w języku UI |
-| EK-10 | n/d | n/d | n/d | n/d | n/d | rezygnacja = powrót do EK-09 | odmowa → komunikat nieblokujący, następny krok: start z planu | wyjaśnienie celu w PL/EN |
+| EK-08 | plan bez punktów w dniu 1 (np. przylot po 22:00): dzień pokazuje wyłącznie godzinę przylotu/dotarcie do noclegu, bez „błędu" | wczytanie z lokalnej bazy | błąd odczytu planu: komunikat + powrót do listy | w pełni dostępny; akcja trasy działa (brak sieci obsługuje Google Maps; ADR-0011 pkt 2, EK-09) | n/d | n/d | n/d – Tamitu nie używa lokalizacji (Q1 = C) | interfejs w języku UI, treść planu w języku planu (może się różnić); informacja o AI w języku UI |
+| EK-09 | n/d („Moja lokalizacja" zawsze dostępna) | brak (dane lokalne) | system nie otworzył linku: komunikat, arkusz zostaje, można ponowić | Tamitu nie sprawdza; brak sieci obsługuje Google Maps | n/d | zamknięcie arkusza = powrót do EK-08 | n/d – Tamitu nie prosi o lokalizację (Q1 = C) | etykiety trybów (auto/komunikacja/pieszo) i startów w języku UI |
+| ~~EK-10~~ | wycofany (TAM-110, Q1 = C) | – | – | – | – | – | – | – |
 | EK-11 | n/d | usuwanie (krótkie) | błąd usunięcia: komunikat, plan pozostaje | działa offline | n/d | „Anuluj" = plan bez zmian | n/d | PL/EN |
 | EK-12 | n/d | n/d | n/d | działa offline; pozycje wymagające sieci (Usuń konto, zgody) sygnalizują to dopiero przy użyciu | n/d | n/d | n/d | zmiana języka stosowana natychmiast; nazwa bieżącego języka |
 | EK-13 | n/d | pobranie/zapis zgód | błąd zapisu wycofania: komunikat, stan zgody nie zmienia się | wycofanie/ponowne wyrażenie wymaga sieci: komunikat | n/d | n/d | n/d | daty zgód wg lokalizacji; opis zgody w języku UI |
 | EK-14 | n/d | zamykanie sesji (krótkie) | błąd wylogowania: komunikat + ponów | wylogowanie działa lokalnie, brak sieci nie blokuje (U8) | n/d | „Anuluj" = pozostaje zalogowany | n/d | komunikat PL/EN |
 | EK-15 | n/d | postęp usuwania (nieprzerywalny lub z informacją) | błąd usunięcia: komunikat, jasna informacja, co usunięto, możliwość ponowienia (operacja idempotentna) | komunikat „wymaga internetu", nic nie usunięto | n/d | rezygnacja przed potwierdzeniem lub przy ponownym uwierzytelnieniu = dane bez zmian | n/d | ostrzeżenie PL/EN |
-| EK-16 | n/d | n/d | katalog: błąd sieci, usługa niedostępna, niepoprawna odpowiedź AI, brak zgody AI, wymagana aktualizacja aplikacji (U3), usługa niedostępna w wersji testowej (U3), błąd nieoczekiwany | komunikat braku połączenia | komunikat limitu z godziną odnowienia | informacja przy anulowaniu | informacja o odmowie lokalizacji | komplet kluczy PL i EN |
+| EK-16 | n/d | n/d | katalog: błąd sieci, usługa niedostępna, niepoprawna odpowiedź AI, brak zgody AI, wymagana aktualizacja aplikacji (U3), usługa niedostępna w wersji testowej (U3), błąd nieoczekiwany | komunikat braku połączenia | komunikat limitu z godziną odnowienia | informacja przy anulowaniu | n/d (Q1 = C) | komplet kluczy PL i EN |
 
 ---
 
@@ -155,7 +152,7 @@ Wszystkie zmiany oznaczono w plikach tagiem **[ZMIANA P3-12]** / **[ZMIANA P3-12
 | Zakres daty przylotu | `US-004-formularz-podrozy.md` | Kryterium (propozycja, U10): data nie wcześniejsza niż wczoraj i nie późniejsza niż za 2 lata – zgodnie z kontraktem API |
 | Powrót zwrotu limitu | `US-011` | j.w. |
 
-Niezmienione, zgodne ze stanem: N3 (plany zostają po wylogowaniu), N7 (usunięcie natychmiastowe), Q6/N11 (preferencje), Q1 (dokładna lokalizacja, test C później).
+Niezmienione, zgodne ze stanem: N3 (plany zostają po wylogowaniu), N7 (usunięcie natychmiastowe), Q6/N11 (preferencje), Q1 (dokładna lokalizacja, test C później – **nieaktualne od 2026-11-25: Q1 = C, ADR-0017, TAM-110**).
 
 ---
 
@@ -175,7 +172,7 @@ Do czasu odpowiedzi obowiązuje propozycja. Te same wiersze dopisano do `docs/op
 | U8 | Wylogowanie podczas generowania i brak sieci przy wylogowaniu | architekt | Wylogowanie niedostępne w trakcie generowania (EK-07 modalny); wylogowanie działa bez sieci (operacja lokalna) | EK-14, US-002 |
 | U9 | Czy informować użytkownika, że plany są tylko na urządzeniu (utrata telefonu/odinstalowanie = utrata planów, R13; brak kopii Androida, S4)? | właściciel | Tak: krótka informacja w stanie pustym EK-04 i w Ustawieniach/Prywatność | EK-04, EK-13 |
 | U10 | Dopuszczalny zakres daty przylotu w formularzu? (kontrakt API: od wczoraj do +2 lat) | właściciel | Jak w API; komunikat o zakresie; dodane do US-004 jako propozycja | EK-05 |
-| U11 | Wpływ Q1 (A vs C) na ekrany: czy mockup ma obejmować EK-10 (wariant A, obowiązujący) i wariant C bez EK-10? | właściciel, architekt | Mockup dla A jako obowiązującego, z adnotacją, że przy C EK-10 wypada, a EK-09 dostaje krótką informację | EK-09, EK-10 |
+| U11 | Wpływ Q1 (A vs C) na ekrany: czy mockup ma obejmować EK-10 (wariant A, obowiązujący) i wariant C bez EK-10? | właściciel, architekt | **Zamknięte 2026-11-25:** Q1 = C; EK-10 wycofany, EK-09 v0.4 bez lokalizacji w Tamitu (TAM-108) | EK-09, EK-10 |
 | U12 | Co użytkownik widzi, gdy lokalna baza konta jest niedostępna (np. utrata klucza szyfrowania po przywróceniu urządzenia)? | architekt | Komunikat „dane na tym urządzeniu są niedostępne"; opcje: wyloguj, usuń konto (usunięcie osieroconego pliku – ADR-0005) | EK-01 |
 | U13 | Czy ograniczać liczbę zapisanych lokalnie planów lub dodać wyszukiwanie/filtr listy? | właściciel | Brak limitu i brak wyszukiwania w MVP (5 generowań dziennie ogranicza przyrost); lista od najnowszego | EK-04 |
 | U14 | Przy etykiecie noclegu „nazwa obiektu lub dzielnica" trasa z „bazy noclegowej" (US-007) wyznaczana jest z tekstu: dokładność może być niska. Czy to akceptowalne? | właściciel | Tak; precyzyjny start zapewnia „moja lokalizacja"; informacja w EK-09 przy starcie z noclegu, że punkt jest przybliżony | EK-09, US-007 |
@@ -196,7 +193,7 @@ Ten dokument; US-001..011 (kryteria akceptacji po zmianach P3-12/P3-14a); `docs/
 3. **Minimalizacja danych w formularzu:** etykieta „Nazwa obiektu lub dzielnica" z podpowiedzią o nie wpisywaniu adresu prywatnego; zainteresowania wyłącznie z listy 11 (0–5), brak wolnego tekstu; budżet/tempo po 3 poziomy; liczba osób 1–10 (domyślnie 2); lot wymaga lotniska i godziny, auto – godziny.
 4. **Informacja o AI:** w widoku planu widoczne, że plan stworzyła AI i może zawierać błędy, godziny otwarcia do weryfikacji; pierwszy dzień pokazuje godzinę przylotu/przyjazdu.
 5. **Generowanie:** postęp, anulowanie z informacją o możliwym niezwróceniu limitu, powrót do formularza z zachowanymi danymi; limit 5/dobę z godziną odnowienia.
-6. **Lokalizacja:** prośba o uprawnienie wyłącznie po wyborze „moja lokalizacja", poprzedzona wyjaśnieniem; odmowa nie blokuje funkcji; brak jakiegokolwiek pokazywania mapy w aplikacji; mockup opisuje także wariant C (U11).
+6. **Lokalizacja (zmiana TAM-110, Q1 = C):** brak prośby o uprawnienie i brak EK-10; „Moja lokalizacja" = link bez punktu startowego z informacją, że o lokalizację może zapytać Google Maps; brak jakiegokolwiek pokazywania mapy w aplikacji (U11 zamknięte). Kolumna „odmowa lokalizacji" w macierzy stanów to wszędzie „n/d".
 7. **Wylogowanie i usunięcie konta:** komunikat wylogowania z informacją o planach na urządzeniu; ostrzeżenie o usunięciu konta z zakresem (w tym dowód zgód, logi 30 dni, konto Google poza Tamitu), ponowne uwierzytelnienie, brak sieci, dokończenie po restarcie.
 8. **Dwa języki:** wersje PL i EN najdłuższych tekstów (zgody, limit, usunięcie konta, komunikat wylogowania) mieszczą się bez ucinania; pokazane rozdzielenie języka interfejsu i języka planu.
 9. **Dostępność:** etykiety semantyczne, kontrast, rozmiary dotykowe, skalowanie czcionki, nie tylko kolor jako nośnik informacji (wg `.farm/review/checklist-quality.md`).
