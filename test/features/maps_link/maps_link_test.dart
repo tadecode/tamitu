@@ -54,7 +54,7 @@ void main() {
     });
 
     test('special characters and Polish letters are percent-encoded', () {
-      const tricky = 'Żółć & Gęś #1 | 100% (Łódź) ?x=y/z+ą';
+      const tricky = 'Żółć & "Gęś" #1 | 100% (Łódź) „Bar” ?x=y/z+ą';
       final uri = directionsUri(
         destination: tricky,
         mode: TravelMode.transit,

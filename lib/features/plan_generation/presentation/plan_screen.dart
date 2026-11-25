@@ -318,6 +318,8 @@ class _PlanItemTile extends StatelessWidget {
               child: Semantics(
                 button: true,
                 label: l10n.planRouteTo(item.name),
+                // excludeSemantics drops the button's own tap action (QA PR #178).
+                onTap: onRoute,
                 container: true,
                 excludeSemantics: true,
                 child: TextButton.icon(

@@ -176,6 +176,8 @@ class _RouteSheetState extends ConsumerState<RouteSheet> {
                   enabled: !_opening,
                   label: l10n.routeOpenMaps,
                   hint: l10n.routeOpensOtherApp,
+                  // excludeSemantics drops the button's own tap action (QA PR #178).
+                  onTap: _opening ? null : _open,
                   container: true,
                   excludeSemantics: true,
                   child: FilledButton.icon(

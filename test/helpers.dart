@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
@@ -63,6 +65,9 @@ class TestEnv {
   /// Result of the URL opener (false = the system could not open the link).
   bool openSucceeds = true;
 
+  /// When set, the URL opener waits for it (opening in progress).
+  Completer<bool>? pendingOpen;
+
   /// EK-09 travel mode saved at the "previous run", and modes saved since (UX11).
   TravelMode? initialTravelMode;
   final savedTravelModes = <TravelMode>[];
@@ -91,7 +96,7 @@ class TestEnv {
     aiBusyClockProvider.overrideWithValue(() => mono),
     urlOpenerProvider.overrideWithValue((uri) async {
       opened.add(uri);
-      return openSucceeds;
+      return pendingOpen?.future ?? openSucceeds;
     }),
     uiLanguageStoreProvider.overrideWithValue(
       _RecordingLanguageStore(savedLanguages),

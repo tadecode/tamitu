@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'dart:ui' show SemanticsActionEvent;
+
+import 'package:flutter/rendering.dart' show SemanticsAction, SemanticsNode;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:tamitu/features/maps_link/domain/maps_link.dart';
@@ -109,6 +113,16 @@ TravelMode _selectedMode(WidgetTester tester) => tester
     )
     .selected
     .single;
+
+/// Performs the TalkBack "double tap" on [node].
+void _semanticsTap(WidgetTester tester, SemanticsNode node) =>
+    tester.binding.performSemanticsAction(
+      SemanticsActionEvent(
+        type: SemanticsAction.tap,
+        viewId: tester.view.viewId,
+        nodeId: node.id,
+      ),
+    );
 
 Future<void> _tapOpen(WidgetTester tester) async {
   await tester.ensureVisible(find.byKey(const Key('routeOpenMaps')));
@@ -313,12 +327,42 @@ void main() {
 
     // EK-08 item: "Directions to {place}".
     expect(find.bySemanticsLabel('Trasa do Tasca & Filhos #2'), findsOneWidget);
-    await _openSheet(tester, 1);
+    // TalkBack can press "Directions" (QA PR #178): the semantics tap opens EK-09.
+    final route = tester.getSemantics(
+      find.byKey(const Key('planItemRoute')).at(1),
+    );
+    expect(route.getSemanticsData().hasAction(SemanticsAction.tap), isTrue);
+    _semanticsTap(tester, route);
+    await tester.pumpAndSettle();
+    expect(find.byType(RouteSheet), findsOneWidget);
 
     final open = tester.getSemantics(find.byKey(const Key('routeOpenMaps')));
     expect(open.label, 'Otwórz w Google Maps');
     expect(open.hint, 'otwiera inną aplikację');
     expect(open.flagsCollection.isButton, isTrue);
+    // TalkBack can press "Open in Google Maps" (QA PR #178); no action while opening.
+    expect(open.getSemanticsData().hasAction(SemanticsAction.tap), isTrue);
+    env.pendingOpen = Completer<bool>();
+    _semanticsTap(tester, open);
+    await tester.pump();
+    expect(env.opened, hasLength(1));
+    expect(
+      tester
+          .getSemantics(find.byKey(const Key('routeOpenMaps')))
+          .getSemanticsData()
+          .hasAction(SemanticsAction.tap),
+      isFalse,
+    );
+    env.pendingOpen!.complete(true);
+    env.pendingOpen = null;
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .getSemantics(find.byKey(const Key('routeOpenMaps')))
+          .getSemanticsData()
+          .hasAction(SemanticsAction.tap),
+      isTrue,
+    );
 
     final close = find.bySemanticsLabel('Zamknij arkusz');
     expect(close, findsOneWidget);
