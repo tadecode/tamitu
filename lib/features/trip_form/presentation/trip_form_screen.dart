@@ -260,7 +260,11 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
 
   void _focusGenerate() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _generateFocus.requestFocus();
+      // Only while the form is the visible route: after success EK-07 already moved
+      // on to EK-08 and the form must not take the focus from it (review PR #171 #2).
+      if (mounted && (ModalRoute.of(context)?.isCurrent ?? true)) {
+        _generateFocus.requestFocus();
+      }
     });
   }
 

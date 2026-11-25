@@ -30,3 +30,10 @@
   te poprawki: po „Przerwij” TalkBack powinien stać na „Generuj plan”.
 - Pytania otwarte – nowe: brak
 - Pytania otwarte – zamknięte: brak (Q4, Q5 i TAM101-2 zamknął UX w TAM-102)
+
+## Poprawki po recenzji PR #171 (2026-11-25)
+- Uwaga 1: dodałem testy odmowy w EK-06. Pierwsze pytanie o zgodę: powrót na EK-05 z zachowanymi danymi, bez wysyłki i komunikatu, fokus na „Generuj plan”, klawiatura zamknięta. Drugi test to ścieżka `consent_required` z EK-07 (EK-06 „updated”) i odmowa.
+- Uwaga 2: `_focusGenerate` ustawia fokus tylko wtedy, gdy formularz jest bieżącą trasą. Dodałem test sukcesu: po przejściu do EK-08 klawiatura zamknięta.
+- Uwaga 5: dodałem testy granicy 599 dp (jedna kolumna) i 600 dp (dwie) oraz etykiety EN „Landing time” w jednej kolumnie.
+- Uwagi 3 i 4 (TalkBack) wymagają ręcznej kontroli na telefonie, w kodzie bez zmian.
+- Testy: `flutter analyze` bez uwag, `flutter test` 308/308.
