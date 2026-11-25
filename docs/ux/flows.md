@@ -23,7 +23,7 @@ flowchart TD
   EK07 --> EK08["EK-08 Widok planu"]
   EK04 -->|plan| EK08
   EK08 -->|punkt| EK09["EK-09 Trasa (arkusz)"]
-  EK09 -->|moja lokalizacja| EK10["EK-10 Wyjaśnienie lokalizacji"]
+  EK09 -->|Otwórz w Google Maps| GM(["Google Maps (poza aplikacją)"])
   EK08 -->|Usuń plan| EK11["EK-11 Potwierdzenie usunięcia"]
   EK04 -->|ikona ustawień| EK12["EK-12 Ustawienia"]
   EK12 --> EK13["EK-13 Prywatność"]
@@ -117,27 +117,23 @@ flowchart TD
   C -->|błąd usunięcia| E["Komunikat w dialogu, plan pozostaje"]
 ```
 
-## P6. Trasa i lokalizacja (US-007; wariant A z Q1) – wzorce: arkusz dolny do wyboru, zgody i uprawnienia
+## P6. Trasa (US-007; wariant C z Q1, 2026-11-25) – wzorzec: arkusz dolny do wyboru
 
 ```mermaid
 flowchart TD
-  A["EK-08"] -->|Trasa przy punkcie| B["EK-09 arkusz: start (Nocleg* / Poprzedni punkt / Moja lokalizacja), tryb (auto / komunikacja / pieszo)"]
-  B -->|start z planu| M{"Sieć?"}
-  B -->|Moja lokalizacja| L{"Uprawnienie?"}
-  L -->|brak, można pytać| W["EK-10 wyjaśnienie: jednorazowo, bez zapisu i wysyłki do nas"]
-  W -->|Dalej| S(["System: prośba o dokładną lokalizację"])
-  W -->|Nie teraz| B
-  S -->|przyznano| R["Jednorazowy odczyt pozycji (wskaźnik + Anuluj)"] --> M
-  S -->|odmowa / tylko przybliżona| B5["EK-09: komunikat nieblokujący, start z planu"]
-  L -->|trwała odmowa| B6["EK-09: Moja lokalizacja nieaktywna + jak zmienić w ustawieniach systemu"]
-  L -->|przyznane| R
-  R -->|brak pozycji| B7["EK-09: komunikat, propozycja startu z planu"]
-  M -->|jest| G(["Google Maps / przeglądarka"])
-  M -->|brak| B8["Komunikat: otwarcie map wymaga internetu"]
+  A["EK-08"] -->|punkt / Trasa| B["EK-09 arkusz: start (Moja lokalizacja / Nocleg*), tryb (auto / komunikacja / pieszo – ostatnio użyty)"]
+  B -->|Otwórz w Google Maps| L{"Start?"}
+  L -->|Moja lokalizacja| U1(["Link bez origin: pozycję ustala Google Maps"])
+  L -->|Nocleg| U2(["Link z origin = nocleg (tekst)"])
+  U1 --> S{"System otworzył link?"}
+  U2 --> S
+  S -->|tak| G(["Google Maps: aplikacja albo przeglądarka"])
+  S -->|nie| E["EK-09 + snackbar: Nie udało się otworzyć map"]
+  G -.->|Mapy bez dostępu do lokalizacji| GP(["Prośba systemowa dla Map / wybór startu w Mapach – nie ekran Tamitu"])
 ```
 
-\* start „Nocleg" z informacją o przybliżonym punkcie [U14]. **Wariant C (U11):** EK-10 i gałąź uprawnień
-znikają; w EK-09 przy „Moja lokalizacja" komunikat „Google Maps może zapytać o Twoją lokalizację; Tamitu jej nie odczytuje".
+* start „Nocleg” z informacją o przybliżonym punkcie [U14]; bez noclegu w planie pozycja jest nieaktywna. Tamitu nie
+prosi o lokalizację i nie odczytuje pozycji (EK-10 wycofany). Brak sieci obsługuje Google Maps (ADR-0011 pkt 2).
 
 ## P7. Ustawienia, język, prywatność (US-003) – wzorce: lista i szczegóły, zgody
 
@@ -201,7 +197,7 @@ flowchart TD
 | P3 | EK-04, EK-05, EK-06, EK-07, EK-08, EK-16 | 2, 8, 4, 5, 6 |
 | P4 | EK-07, EK-05 | 7 |
 | P5 | EK-04, EK-08, EK-11 | 1, 7, 12 |
-| P6 | EK-08, EK-09, EK-10 | 11, 8, 6 |
+| P6 | EK-08, EK-09 | 11 |
 | P7 | EK-12, EK-13, EK-06 | 1, 8, 11 |
 | P8 | EK-12, EK-14, EK-02 | 7 |
 | P9 | EK-12, EK-15, EK-02 | 7, 4, 5, 6 |

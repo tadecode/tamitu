@@ -55,8 +55,7 @@ klucze **wspólne**; klucze ekranowe powstaną w `screens/` (krok 2).
 | EK-06 Zgoda na AI | CMP-01, CMP-02 (równorzędne), CMP-13 |
 | EK-07 Generowanie | CMP-17, CMP-02, CMP-15 |
 | EK-08 Widok planu | CMP-01, CMP-12, CMP-13, CMP-19, CMP-20, CMP-15, CMP-14 |
-| EK-09 Trasa | CMP-16, CMP-10, CMP-07, CMP-13, CMP-02 |
-| EK-10 Lokalizacja | CMP-15 (dialog nad arkuszem EK-09 – arkusze nie są zagnieżdżane), CMP-02 |
+| EK-09 Trasa | CMP-16, CMP-10, CMP-07, CMP-13, CMP-02, CMP-14 |
 | EK-11 Usunięcie planu | CMP-15, CMP-14 |
 | EK-12 Ustawienia | CMP-01, CMP-11, CMP-16/CMP-10 (język); ekran licencji – systemowy Fluttera |
 | EK-13 Prywatność | CMP-01, CMP-11, CMP-13, CMP-02 |
