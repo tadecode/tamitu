@@ -52,8 +52,41 @@ void main() {
     }
   });
 
-  test('no location permissions', () {
+  // ADR-0017 (variant C): Tamitu never asks for or reads the phone position; "My
+  // location" in EK-09 is a Google Maps link without `origin`.
+  test('no location permissions (ADR-0017)', () {
     expect(manifest, isNot(contains('LOCATION')));
+    for (final p in [
+      'android.permission.ACCESS_FINE_LOCATION',
+      'android.permission.ACCESS_COARSE_LOCATION',
+      'android.permission.ACCESS_BACKGROUND_LOCATION',
+    ]) {
+      expect(manifest, isNot(contains(p)), reason: p);
+    }
+  });
+
+  test('no location packages in the dependencies (ADR-0017 pkt 3)', () {
+    final lock = File('pubspec.lock').readAsStringSync();
+    final pubspec = File('pubspec.yaml').readAsStringSync();
+    for (final pkg in ['geolocator', 'location', 'permission_handler']) {
+      final entry = RegExp('^  $pkg(_[a-z_]+)?:', multiLine: true);
+      expect(lock, isNot(matches(entry)), reason: '$pkg in pubspec.lock');
+      expect(pubspec, isNot(matches(entry)), reason: '$pkg in pubspec.yaml');
+    }
+  });
+
+  test('url_launcher can see https link handlers (ADR-0017 pkt 2)', () {
+    final queries = RegExp(r'<queries>([\s\S]*?)</queries>')
+        .firstMatch(manifest)
+        ?.group(1);
+    expect(queries, isNotNull);
+    final viewHttps = RegExp(
+      r'<intent>\s*<action android:name="android.intent.action.VIEW"\s*/>\s*'
+      r'<data android:scheme="https"\s*/>\s*</intent>',
+    );
+    expect(queries, matches(viewHttps));
+    expect(queries, isNot(contains('<package')));
+    expect(manifest, isNot(contains('QUERY_ALL_PACKAGES')));
   });
 
   test('backup disabled and extraction rules set', () {
