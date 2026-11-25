@@ -2,6 +2,7 @@
 
 Stan: 2026-11-15, wersja 0.2, status: **zatwierdzone na bramce G2 (2026-11-15)**; ADR-0001..0008 mają status „zatwierdzony" i zawierają Aneks A z wymaganiami z przeglądu Security. Autor: architect.
 Decyzje: ADR-0001..0008 w `docs/adr/`.
+Zmiana 2026-11-25 (ADR-0017, TAM-107): trasa w Google Maps w wariancie C – Tamitu nie ma uprawnień lokalizacji i nie odczytuje pozycji; start „Moja lokalizacja” = link bez `origin`. Zastępuje opcję A z ADR-0007.
 
 Zmiany w wersji 0.2 (po G2): odpowiedzi właściciela Q1–Q12 (m.in. opcja A lokalizacji z testem C w fazie 3, minSdk 26, SQLCipher, doba kalendarzowa, dowód zgód usuwany z kontem); cztery konta usług (po jednym na funkcję); sprawdzanie istnienia użytkownika po tokenie; globalny handler wyjątków; reguła `ENFORCE_APP_CHECK`/`ALLOW_REAL_DATA`; ceny modeli oznaczone jako niezweryfikowane. Przepływy: `flows.md`. Koszty: `costs.md`. Dane: `docs/data/`. API: `docs/api/`. Uwagi i pytania: `uwagi-dla-orchestratora.md`.
 
@@ -43,7 +44,7 @@ flowchart LR
   FN --> LOG
   FN -. weryfikacja tokenu .-> AUTH
   BUD -- alert 100% --> FN
-  APP -- link https (origin, destination) --> GM[Google Maps<br/>aplikacja lub przeglądarka]
+  APP -- link https (destination, opcjonalnie origin z planu) --> GM[Google Maps<br/>aplikacja lub przeglądarka]
 ```
 
 Granice zaufania (zgodnie z `threat-model.md`): G-A urządzenie, G-B Auth, G-C aplikacja→pośrednik (wejście niezaufane), G-D pośrednik→model (odpowiedź niezaufana), G-E link Maps.
@@ -63,12 +64,12 @@ Podział „feature-first"; w każdej funkcji warstwy `presentation` (widgety, k
 | `features/trip_form` | formularz podróży, walidacja, oczyszczanie, wartości domyślne (N11) | US-004, US-006 | – |
 | `features/plan_generation` | wywołanie `generatePlan`, postęp, anulowanie, ponowienia, błędy i limity, zapis wyniku | US-005, US-006, US-011 | `cloud_functions`, `firebase_app_check` |
 | `features/plans` | lista, podgląd, usuwanie planów (offline) | US-008, US-009 | Drift |
-| `features/maps_link` | wybór startu i trybu, jednorazowa lokalizacja, budowa i otwarcie linku | US-007 | `geolocator`, `url_launcher` |
+| `features/maps_link` | wybór startu i trybu, budowa i otwarcie linku (bez odczytu pozycji, ADR-0017) | US-007 | `url_launcher` |
 | `features/account` | usunięcie konta (przepływ, znacznik „w toku", czyszczenie lokalne) | US-010 | `cloud_functions` |
 | `features/settings` | język, prywatność, link do polityki, usunięcie konta, informacja o AI | US-003, US-010 | – |
 | `data/local` | baza Drift + SQLCipher, menedżer plików baz per konto, klucz w secure storage, migracje | US-008 | Drift, secure storage |
 
-Zasady przekrojowe: współrzędne istnieją wyłącznie w `maps_link` (zmienna lokalna); numer lotu nie opuszcza `data/local`; żadnego bezpośredniego HTTP – tylko SDK Firebase; wszystkie napisy z l10n.
+Zasady przekrojowe: aplikacja nie ma uprawnień lokalizacji i nie przetwarza współrzędnych (ADR-0017); numer lotu nie opuszcza `data/local`; żadnego bezpośredniego HTTP – tylko SDK Firebase; wszystkie napisy z l10n.
 
 ## 4. Komponenty backendu (`backend/`)
 | Element | Odpowiedzialność |
@@ -88,7 +89,7 @@ Zasady przekrojowe: współrzędne istnieją wyłącznie w `maps_link` (zmienna 
 | Firestore | zgody, licznik, config | D3, D10 | każda baza; mały zakres danych |
 | Vertex AI (Gemini) | plan | D6 | interfejs `PlanGenerator`: inny model Gemini, Claude na Vertex, Mistral (ADR-0001) |
 | App Check / Play Integrity | atest aplikacji | – | tryb debug/monitorowanie; wyłączenie osłabia T3 |
-| Google Maps (link) | trasa | D7, D8 | link jest standardem URL; alternatywne aplikacje map (nie planowane) |
+| Google Maps (link) | trasa | D8 | link jest standardem URL; inne aplikacje map (`geo:`) odłożone po MVP (TAM-106) |
 | Google Play | dystrybucja | D13 | – |
 | Cloud Logging, Secret Manager, Pub/Sub, Billing Budgets | operacje | D11 | – |
 

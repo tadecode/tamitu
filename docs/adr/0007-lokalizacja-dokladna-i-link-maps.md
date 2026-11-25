@@ -1,6 +1,6 @@
 # ADR-0007: Lokalizacja dokładna, link Google Maps i minimalna wersja Androida
 
-- Status: zatwierdzony (bramka G2, 2026-11-15; zatwierdził właściciel produktu)
+- Status: zatwierdzony (bramka G2, 2026-11-15; zatwierdził właściciel produktu); **zastąpiony przez ADR-0017 w części „lokalizacja”** (2026-11-25; format linku i minSdk obowiązują)
 - Data: 2026-11-15
 - Autor (rola): architect
 - Zadanie: P2-06 (pyt. 4, S6, US-007, pyt. 7; T11, T12, T5, SEC-05, SEC-12, SEC-13; założenie A4)

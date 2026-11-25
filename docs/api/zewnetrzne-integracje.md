@@ -2,18 +2,18 @@
 
 Stan: 2026-11-15, wersja 0.2 (po G2), autor: architect. Kontrakt pośrednika: `posrednik-api.md`.
 
-## 1. Google Maps (link; ADR-0007)
+## 1. Google Maps (link; ADR-0007, lokalizacja wg ADR-0017)
 Brak API i klucza. Adres otwierany przez `url_launcher`:
 
 ```
-https://www.google.com/maps/dir/?api=1&origin=<origin>&destination=<destination>&travelmode=<mode>
+https://www.google.com/maps/dir/?api=1&destination=<destination>&travelmode=<mode>[&origin=<origin>]
 ```
 | Parametr | Źródło | Zasady |
 |---|---|---|
-| `destination` | `"{name}, {locality}, {trip.destination}"` z planu | kodowanie procentowe; tylko tekst z planu (nie URL od modelu) |
-| `origin` | (a) `"{lodging}, {trip.destination}"`; (b) tekst poprzedniego punktu dnia; (c) `lat,lng` z jednorazowego odczytu (opcja A) | (c) tylko w pamięci, bez zapisu; (opcja C ADR-0007: parametr pomijany) |
+| `destination` | `"{name}, {locality}, {trip.destination}"` z planu | kodowanie procentowe; tylko tekst z planu (nie URL od modelu); zawsze z nazwą i miejscowością, nigdy same współrzędne (TAM-24) |
+| `origin` | start „Moja lokalizacja”: **pominięty** (Mapy ustawiają „Twoja lokalizacja”); „Nocleg”: `"{lodging}, {trip.destination}"`; „Poprzedni punkt”: `"{name}, {locality}, {trip.destination}"` poprzedniego punktu | tylko tekst z planu; nigdy współrzędne; bez pustego `origin=` (ADR-0017) |
 | `travelmode` | `driving` (auto), `transit` (komunikacja), `walking` (pieszo) | wybór użytkownika, niezapisywany |
-Wariant `origin` (c) obowiązuje (Q1 = A); wariant C (bez `origin`) jest testowany w fazie 3 i wejdzie tylko nowym ADR. Otwieranie: wyłącznie `LaunchMode.externalApplication`; test kodowania procentowego (`&`, `#`, `|`, `%`, nawiasy). Ograniczenie: długość URL < 2 048 znaków (obcinanie opisu nie dotyczy, bo w URL tylko nazwy). Testy: parametry `origin`, `destination`, `travelmode` (US-007); brak współrzędnych w jakimkolwiek zapisie.
+Obowiązuje wariant C (ADR-0017, Q1 = C, 2026-11-25): aplikacja nie odczytuje pozycji. Budowa przez `Uri.https(...)`. Otwieranie: wyłącznie `LaunchMode.externalApplication`; test kodowania procentowego (`&`, `#`, `|`, `%`, nawiasy). Ograniczenie: długość URL < 2 048 znaków (obcinanie opisu nie dotyczy, bo w URL tylko nazwy). Testy: brak `origin` przy „Moja lokalizacja”, `origin` jako tekst przy noclegu i poprzednim punkcie, `destination`, każdy `travelmode` (US-007). Google otrzymuje w linku tylko cel, tryb i ewentualnie tekst startu (D8), bez pozycji telefonu.
 
 ## 2. Firebase Auth / Google Sign-In (ADR-0004)
 - Klient: `google_sign_in` → token Google → `FirebaseAuth.signInWithCredential(GoogleAuthProvider.credential(idToken))`.
@@ -39,6 +39,6 @@ Budżet GCP → temat Pub/Sub → `budgetGuard`. Komunikat zawiera kwoty i nazw�
 ## 6. Kontrakt aplikacja ↔ system Android
 | Obszar | Zasada |
 |---|---|
-| Manifest | `INTERNET`, `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION` (opcja A); brak innych uprawnień; `allowBackup=false`; `dataExtractionRules`; `usesCleartextTraffic=false`; `<queries>` dla `https` VIEW |
-| Test CI | porównanie listy uprawnień zmergowanego manifestu z listą dozwoloną |
+| Manifest | tylko `INTERNET` (ADR-0017: brak uprawnień lokalizacji); brak innych uprawnień; `allowBackup=false`; `dataExtractionRules`; `usesCleartextTraffic=false`; `<queries>` dla `https` VIEW |
+| Test CI | porównanie listy uprawnień zmergowanego manifestu z listą dozwoloną (`{INTERNET}`); brak `LOCATION` w manifeście; `<queries>` zawiera `VIEW` + `https`; brak `geolocator` w `pubspec.lock` |
 | Sieć | tylko przez SDK Firebase (TLS); brak własnego klienta HTTP |
