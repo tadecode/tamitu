@@ -9,12 +9,12 @@ Stan: 2026-11-15. **Wszystkie pytania S1–S12 odpowiedziane** przez właścicie
 | S3 | Dowód zgód | odpowiedziane | Minimalny zapis serwerowy (UID, wersja, wartość, data) | [PRAWNIK] okres po usunięciu konta |
 | S4 | Kopia zapasowa Androida | odpowiedziane | `allowBackup` wyłączone | Szyfrowanie bazy – decyzja architekta (ADR) |
 | S5 | Wariant API modelu AI | odpowiedziane | Korporacyjny, region UE, DPA, bez trenowania (np. Vertex AI) | **Warunek przed realnymi danymi:** potwierdzenie w ADR; do tego czasu dane testowe |
-| S6 | Dokładność lokalizacji | odpowiedziane | **Dokładna** (zmiana względem propozycji) | Data Safety i uzasadnienie uprawnienia (SEC-13) |
+| S6 | Dokładność lokalizacji | odpowiedziane, **nieaktualne** | ~~Dokładna~~ → 2026-11-25: wariant C (ADR-0017) – Tamitu nie przetwarza lokalizacji | Nic po stronie lokalizacji; SEC-13 bez lokalizacji |
 | S7 | Retencja logów | odpowiedziane | 30 dni, bez treści, UID jako skrót | Opis w polityce |
 | S8 | Skrzynka kontaktowa RODO | odpowiedziane | tamitu@tadecode.pl | [PRAWNIK] okres przechowywania korespondencji |
 | S9 | Dostęp i eksport | odpowiedziane (z N7) | Bez eksportu w aplikacji; dostęp na wniosek e-mailem | – |
 | S10 | Regulamin | odpowiedziane | Tak, krótki, przed wydaniem publicznym | [PRAWNIK] |
-| S11 | DPIA | odpowiedziane | MVP: raczej nie; ocena przy rozszerzeniach | [PRAWNIK] (uwzględnić lokalizację dokładną i preferencje) |
+| S11 | DPIA | odpowiedziane | MVP: raczej nie; ocena przy rozszerzeniach | [PRAWNIK] (uwzględnić preferencje; lokalizacji brak po ADR-0017) |
 | S12 | Podstawa prawna logów/licznika, wiek | odpowiedziane | Lit. f; tylko dorośli | [PRAWNIK] |
 
 ## Nowe pytania Security (wynikające z odpowiedzi)

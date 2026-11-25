@@ -105,6 +105,8 @@ Dodatkowo: kolejność „zgoda AI -> `aiEnabled`/`ALLOW_REAL_DATA` -> limit" je
 | 6-4 | Etykiety wartości wyliczeniowych tylko w ARB, identyfikatory angielskie – bez danych osobowych | N | – |
 
 ## 7. ADR-0007 – Lokalizacja i link Maps (oraz Q1)
+> **Aktualizacja 2026-11-25 (TAM-109):** właściciel wybrał opcję C (Q1 = C) po pozytywnym teście na telefonie (TAM-24); obowiązuje ADR-0017. Poniższa ocena jest historyczna; skutki dla rejestru (D7 wycofany, D8), modelu zagrożeń (T11, T12, SEC-12, SEC-13) i checklisty wprowadzono w TAM-109.
+
 **Zgodność opcji A** (decyzja domyślna wg S6/US-007): zgodna z T11/T12 przy spełnieniu specyfikacji (jednorazowy `getCurrentPosition`, zakaz `getLastKnownPosition`/strumieni, bez stanu i logów, brak tła, test manifestu). Link bez API/klucza (T2). Uwagi:
 
 | # | Uwaga | Waga | Propozycja |
@@ -138,7 +140,7 @@ Wpływ na dokumenty security zależnie od wyboru zapisany w rejestrze (D7), mode
 |---|---|---|---|
 | 8-1 | Wersje przypięte i lockfile (`pubspec.lock`, `package-lock.json`) – ADR mówi o przypięciu Fluttera; potrzebne jawnie także lockfile i `npm ci` w CI (T16) | Z | Dopisać w zadaniach P3-01/P3-02 |
 | 8-2 | Zależność od `sqlcipher_flutter_libs` „lub odpowiednik" – pakiety szyfrujące są wrażliwe na utrzymanie; sprawdzić aktualność i licencję przed użyciem | Z | Kryteria wyboru w P3-06 (aktualność, aktywne wydania, brak znanych luk) |
-| 8-3 | `geolocator` tylko w opcji A (Q1); przy C usunąć z listy | N | zależy od Q1 |
+| 8-3 | `geolocator` tylko w opcji A (Q1); przy C usunąć z listy | N | Rozstrzygnięte: C (ADR-0017) – bez `geolocator` |
 | 8-4 | Backend: Node.js LTS i Vertex SDK – zależności backendu w audycie (SEC-08), minimalne uprawnienia konta usług, brak `console.log` (lint) | N | OK |
 | 8-5 | Zakaz „własnego klienta HTTP" – kluczowy dla T10; test CI na brak zależności `http`/`dio` oraz brak `usesCleartextTraffic` | N | SEC-05 |
 
