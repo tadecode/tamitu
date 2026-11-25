@@ -12,9 +12,11 @@ import 'package:tamitu/features/consent/data/fake_consent_api.dart';
 import 'package:tamitu/features/consent/data/prefs_pending_policy_store.dart';
 import 'package:tamitu/features/consent/data/sqlite_consent_local_store.dart';
 import 'package:tamitu/features/consent/domain/consent_record.dart';
+import 'package:tamitu/features/plans/data/sqlite_plan_repository.dart';
 import 'package:tamitu/features/session/session_controller.dart';
 
 import '../../helpers.dart';
+import '../plans/sqlite_plan_repository_test.dart' show planFor, tripInput;
 
 /// What survives a process restart: the database directory + key (Keystore), the
 /// `shared_preferences` entry and the server. Everything else is rebuilt per "process".
@@ -27,10 +29,14 @@ class Device {
   final server = FakeConsentApi(now: () => DateTime.utc(2026, 11, 17, 10));
   final _open = <AccountDatabases>[];
 
+  /// Database handles of the last started process (plans, TAM-19).
+  late AccountDatabases lastDbs;
+
   /// One app process: fresh database handles, service and session controller.
   ProviderContainer start({AuthUser? session}) {
     final dbs = AccountDatabases(directory: () async => dir, keys: keys);
     _open.add(dbs);
+    lastDbs = dbs;
     final consents = ConsentService(
       local: SqliteConsentLocalStore(dbs),
       pending: prefs,
@@ -183,6 +189,50 @@ void main() {
     expect((s as SessionNeedsPolicy).dataReset, isTrue);
     p2.dispose();
   });
+
+  test(
+    'lost database key (ADR-0011 pkt 9): plans gone, AI consent "not given", '
+    'EK-03 data-reset variant',
+    () async {
+      final p1 = device.start();
+      await settle();
+      await p1
+          .read(sessionProvider.notifier)
+          .signInWithGoogle(consentId: 'c-1', lang: 'pl');
+      await settle();
+      final consents = p1.read(consentServiceProvider);
+      await consents.recordAiDecision(
+        uid: 'u1',
+        consentId: 'ai-1',
+        granted: true,
+        lang: 'pl',
+      );
+      expect(await consents.aiConsentState('u1'), AiConsentState.granted);
+      final input = tripInput();
+      await SqlitePlanRepository(
+        device.lastDbs,
+        newId: () => 't-1',
+      ).save('u1', input, planFor(input));
+      p1.dispose();
+      await device.killAll();
+      device.keys.value =
+          null; // Keystore lost the key (ADR-0005 Aneks A pkt 2)
+
+      final p2 = device.start(session: const AuthUser('u1'));
+      await settle();
+      final s = p2.read(sessionProvider);
+      expect((s as SessionNeedsPolicy).dataReset, isTrue);
+      // At the first generation EK-06 asks again (new ai_processing record).
+      expect(
+        await p2.read(consentServiceProvider).aiConsentState('u1'),
+        AiConsentState.notGiven,
+      );
+      final plans = SqlitePlanRepository(device.lastDbs, newId: () => 't-2');
+      expect(await plans.list('u1'), isEmpty);
+      expect(await plans.load('u1', 't-1'), isNull);
+      p2.dispose();
+    },
+  );
 }
 
 abstract final class PendingPolicyAcceptanceFixture {

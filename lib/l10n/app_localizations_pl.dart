@@ -657,4 +657,76 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get planBackToList => 'Wróć do listy';
+
+  @override
+  String get commonCancel => 'Anuluj';
+
+  @override
+  String get commonClose => 'Zamknij';
+
+  @override
+  String get planListTitle => 'Twoje podróże';
+
+  @override
+  String get planListEmptyTitle => 'Nie masz jeszcze planów';
+
+  @override
+  String get planListEmptyBody =>
+      'Podaj cel, nocleg i termin – AI ułoży plan dzień po dniu.';
+
+  @override
+  String get planListNewTrip => 'Nowa podróż';
+
+  @override
+  String get planListDeviceOnlyNotice =>
+      'Plany są zapisane tylko na tym urządzeniu. Po odinstalowaniu aplikacji lub zmianie telefonu nie będą dostępne.';
+
+  @override
+  String planListDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count dni',
+      one: '1 dzień',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get planListArrivalFlight => 'lot';
+
+  @override
+  String get planListArrivalCar => 'auto';
+
+  @override
+  String planListCreatedOn(String date) {
+    return 'Utworzono $date';
+  }
+
+  @override
+  String get planListLoadErrorTitle => 'Nie udało się wczytać planów';
+
+  @override
+  String get planListLoadErrorBody =>
+      'Spróbuj ponownie. Jeśli problem się powtarza, uruchom aplikację jeszcze raz.';
+
+  @override
+  String planDeletedSnack(String destination) {
+    return 'Plan „$destination” usunięty';
+  }
+
+  @override
+  String get planDeleteTitle => 'Usunąć plan?';
+
+  @override
+  String planDeleteBody(String destination) {
+    return 'Plan „$destination” zostanie trwale usunięty z tego urządzenia. Tego nie da się cofnąć.';
+  }
+
+  @override
+  String get planDeleteConfirm => 'Usuń';
+
+  @override
+  String get planDeleteError =>
+      'Nie udało się usunąć planu. Plan nie został zmieniony.';
 }

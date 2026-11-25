@@ -113,6 +113,7 @@ Future<void> pumpApp(
   String locale = 'pl',
   Brightness brightness = Brightness.light,
   double textScale = 1,
+  bool settle = true,
 }) async {
   tester.platformDispatcher.localesTestValue = [Locale(locale)];
   tester.platformDispatcher.platformBrightnessTestValue = brightness;
@@ -124,7 +125,7 @@ Future<void> pumpApp(
   await tester.pumpWidget(
     ProviderScope(overrides: env.overrides(), child: const TamituApp()),
   );
-  await tester.pumpAndSettle();
+  if (settle) await tester.pumpAndSettle();
 }
 
 /// Both languages × both themes, as required for screen tests.

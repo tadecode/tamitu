@@ -1141,6 +1141,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Back to list'**
   String get planBackToList;
+
+  /// No description provided for @commonCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get commonCancel;
+
+  /// No description provided for @commonClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get commonClose;
+
+  /// No description provided for @planListTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your trips'**
+  String get planListTitle;
+
+  /// No description provided for @planListEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No trips yet'**
+  String get planListEmptyTitle;
+
+  /// No description provided for @planListEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your destination, stay and dates – AI will plan it day by day.'**
+  String get planListEmptyBody;
+
+  /// No description provided for @planListNewTrip.
+  ///
+  /// In en, this message translates to:
+  /// **'New trip'**
+  String get planListNewTrip;
+
+  /// No description provided for @planListDeviceOnlyNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Plans are stored only on this device. They won\'t be available after uninstalling the app or changing your phone.'**
+  String get planListDeviceOnlyNotice;
+
+  /// No description provided for @planListDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 day} other{{count} days}}'**
+  String planListDays(int count);
+
+  /// No description provided for @planListArrivalFlight.
+  ///
+  /// In en, this message translates to:
+  /// **'flight'**
+  String get planListArrivalFlight;
+
+  /// No description provided for @planListArrivalCar.
+  ///
+  /// In en, this message translates to:
+  /// **'car'**
+  String get planListArrivalCar;
+
+  /// No description provided for @planListCreatedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Created {date}'**
+  String planListCreatedOn(String date);
+
+  /// No description provided for @planListLoadErrorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load your trips'**
+  String get planListLoadErrorTitle;
+
+  /// No description provided for @planListLoadErrorBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Please try again. If the problem continues, restart the app.'**
+  String get planListLoadErrorBody;
+
+  /// No description provided for @planDeletedSnack.
+  ///
+  /// In en, this message translates to:
+  /// **'Trip “{destination}” deleted'**
+  String planDeletedSnack(String destination);
+
+  /// No description provided for @planDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this trip?'**
+  String get planDeleteTitle;
+
+  /// No description provided for @planDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'“{destination}” will be permanently deleted from this device. This can\'t be undone.'**
+  String planDeleteBody(String destination);
+
+  /// No description provided for @planDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get planDeleteConfirm;
+
+  /// No description provided for @planDeleteError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t delete the trip. Nothing was changed.'**
+  String get planDeleteError;
 }
 
 class _AppLocalizationsDelegate

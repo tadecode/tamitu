@@ -11,10 +11,8 @@ import '../../trip_form/presentation/trip_form_screen.dart'
 import '../domain/generated_plan.dart';
 import '../domain/trip_input.dart';
 
-/// What EK-08 shows: the form data and the generated plan, in memory only.
-///
-/// Saving plans on the phone (`trips`, `plan_days`, `plan_items`) is P3-06 (TAM-19);
-/// until then the plan lives only while this screen is open and EK-04 does not list it.
+/// What EK-08 shows: the form data and the plan. Saved plans are loaded from the phone
+/// (`SavedPlanScreen`, TAM-19); a plan that could not be saved is shown from memory.
 class PlanViewData {
   const PlanViewData({
     required this.input,
@@ -25,23 +23,24 @@ class PlanViewData {
   final TripInput input;
   final GeneratedPlan plan;
 
-  /// Opened right after EK-07 (the "plan saved" snackbar belongs here once TAM-19
-  /// saves the plan).
+  /// Opened right after EK-07 ("plan saved" snackbar with the quota).
   final bool fresh;
 }
 
 /// EK-08 Plan view (US-005, US-006, US-008, US-009).
 ///
-/// Placeholders for later tasks (see the TAM-101 log, "Dla orkiestratora"):
-/// - TAM-19 (P3-06): menu "Delete trip" (EK-11) and the `planSavedSnack` after EK-07 –
-///   both need the plan stored on the phone, so neither is shown yet;
-/// - TAM-20 (P3-07): "Directions" on every item (EK-09 / Google Maps link).
+/// Placeholder for a later task: TAM-20 (P3-07) "Directions" on every item (EK-09 /
+/// Google Maps link).
 class PlanScreen extends StatelessWidget {
-  const PlanScreen({super.key, required this.data});
+  const PlanScreen({super.key, required this.data, this.onDelete});
 
-  /// Null when the route was opened without a plan (e.g. restored after the process
-  /// was killed): CMP-18 error with "Back to list".
+  /// Null when the plan cannot be shown (missing, unreadable, or the route was restored
+  /// without it): CMP-18 error with "Back to list".
   final PlanViewData? data;
+
+  /// "Delete trip" in the `more-vertical` menu (EK-11). Null for a plan that is not
+  /// saved on the phone: there is nothing to delete, so there is no menu.
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -126,7 +125,21 @@ class PlanScreen extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           title: Semantics(header: true, child: Text(d.input.destination)),
-          // TAM-19 (P3-06): `more-vertical` menu with "Delete trip" (EK-11).
+          actions: [
+            if (onDelete != null)
+              PopupMenuButton<void>(
+                key: const Key('planMenu'),
+                icon: const AppIcon(AppIcons.more),
+                tooltip: MaterialLocalizations.of(context).showMenuTooltip,
+                itemBuilder: (_) => [
+                  PopupMenuItem<void>(
+                    key: const Key('planMenuDelete'),
+                    onTap: onDelete,
+                    child: Text(l10n.planDelete),
+                  ),
+                ],
+              ),
+          ],
         ),
         body: SafeArea(child: ContentColumn(child: scaffoldBody)),
       ),

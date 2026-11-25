@@ -13,6 +13,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../consent/application/consent_service.dart';
 import '../../generation/application/ai_busy_controller.dart';
 import '../../generation/presentation/ai_busy_view.dart';
+import '../../plans/application/plans_providers.dart';
 import '../../session/session_controller.dart';
 import '../application/generation_result.dart';
 import '../domain/generated_plan.dart';
@@ -84,7 +85,7 @@ class _GenerationScreenState extends ConsumerState<GenerationScreen> {
     try {
       final plan = await _call();
       if (_finished || !mounted) return;
-      _openPlan(plan);
+      unawaited(_openPlan(plan));
     } on AppFailure catch (f) {
       if (_finished || !mounted) return;
       if (f.kind == FailureKind.aiBusy) {
@@ -93,7 +94,7 @@ class _GenerationScreenState extends ConsumerState<GenerationScreen> {
           _busy = AiBusyController(
             failure: f,
             retry: _retry,
-            onSuccess: () => _openPlan(_retryPlan!),
+            onSuccess: () => unawaited(_openPlan(_retryPlan!)),
             onFailure: (failure) => unawaited(_handleFailure(failure)),
             clock: ref.read(aiBusyClockProvider),
           )..addListener(_onBusyChange);
@@ -125,13 +126,27 @@ class _GenerationScreenState extends ConsumerState<GenerationScreen> {
     if (mounted) setState(() {});
   }
 
-  void _openPlan(GeneratedPlan plan) {
+  /// Saves the plan on the phone (US-008: automatically, one transaction) and opens
+  /// EK-08. EK-08 replaces the form (back from EK-08 -> EK-04, "Wejście i wyjście").
+  Future<void> _openPlan(GeneratedPlan plan) async {
     if (_finished || !mounted) return;
     _finished = true;
-    // EK-08 replaces the form (back from EK-08 -> start screen, EK-08 "Wejście i wyjście").
+    final data = PlanViewData(input: widget.input, plan: plan, fresh: true);
+    String? id;
+    try {
+      id = await ref
+          .read(planRepositoryProvider)
+          .save(widget.uid, widget.input, plan);
+      ref.invalidate(savedPlansProvider(widget.uid));
+    } catch (_) {
+      // Could not write the database: the plan is still shown from memory, without
+      // the "saved" snackbar and the delete menu (TAM-19 log, open question M-TAM19-1).
+      id = null;
+    }
+    if (!mounted) return;
     context.go(
-      Routes.plan,
-      extra: PlanViewData(input: widget.input, plan: plan, fresh: true),
+      id == null ? Routes.plan : Routes.savedPlan(id),
+      extra: id == null ? PlanViewData(input: widget.input, plan: plan) : data,
     );
   }
 
