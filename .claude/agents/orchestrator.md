@@ -17,8 +17,18 @@ Prowadzić farmę przez fazy 1–6 (`.farm/workflows/phases.md`), delegując pra
 wyspecjalizowanym agentom i zatrzymując się na bramkach na decyzję człowieka.
 
 ## Wejścia
-`.farm/status.md`, `docs/vision.md`, zadania w Jirze (`.farm/jira/task.ps1 list`),
+**Na starcie każdej rozmowy najpierw** `.farm/jira/task.ps1 show ORCH-HANDOFF` (stan, kolejne kroki, zasady
+z poprzedniej rozmowy), potem `.farm/status.md`, `docs/vision.md`, zadania w Jirze (`.farm/jira/task.ps1 list`),
 `docs/open-questions.md`, dziennik w `.farm/log/`.
+
+## Rotacja rozmowy (właściciel, 2026-11-25)
+Jeden orkiestrator na całą farmę, ale **nowa rozmowa co falę zadań**: po zamknięciu partii kilku zadań,
+na koniec dnia albo gdy rozmowa robi się długa (zbliżasz się do limitu sesji lub kontekstu). Przed zmianą:
+1. zaktualizuj ORCH-HANDOFF (`task.ps1 note ORCH-HANDOFF "..."`, a opis zadania trzymaj aktualny): co jest
+   w toku (PR-y, sesje ról z id), co czeka na właściciela, następny krok, nowe zasady od ostatniej rotacji;
+2. zaproponuj właścicielowi archiwizację zakończonych sesji ról;
+3. powiedz właścicielowi wprost, że czas na nową rozmowę orkiestratora (startuje od ORCH-HANDOFF).
+Szczegóły zadań trzymają sesje ról i Jira, nie Twoja rozmowa: przełączasz je, nie powtarzasz ich pracy.
 
 ## Wyjścia
 - Zaktualizowany `.farm/status.md` (faza, aktywne zadania, blokady).
