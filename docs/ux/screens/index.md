@@ -13,7 +13,7 @@ Krok 2 zadania P3-14b (ux, 2026-11-16), wariant marki A „Lazur". Każdy ekran:
 | [EK-07](ek-07.md) | Generowanie planu | US-005, 011 | nie | zatwierdzony (MVP) |
 | [EK-07 `ai_busy`](ek-07-ai-busy.md) | Generowanie – stan „asystent AI przeciążony” (TAM-98) | US-005, 011 | nie | **uzgodniony v0.2** (2026-11-24: teksty i UX-TAM98-1 zatwierdzone przez właściciela); `ux-ready` po merge'u |
 | [EK-08](ek-08.md) | Widok planu | US-005, 006, 008, 009 | nie | zatwierdzony (MVP) |
-| [EK-09](ek-09.md) | Wybór trasy | US-007 | tak (tylko tekst o Google Maps) | **do zatwierdzenia przez właściciela** (v0.3, TAM-108: wariant C z Q1, bez lokalizacji w Tamitu; tryb zapamiętany – UX11) |
+| [EK-09](ek-09.md) | Wybór trasy | US-007 | tak (tylko tekst o Google Maps) | **zatwierdzony przez właściciela 2026-11-25 (v0.4)** (TAM-108: wariant C z Q1 / ADR-0017, bez lokalizacji w Tamitu; trzy starty – UX-TAM108-1; tryb zapamiętany – UX11) |
 | [EK-11](ek-11.md) | Potwierdzenie usunięcia planu | US-009 | nie | zatwierdzony (MVP) |
 | [EK-12](ek-12.md) | Ustawienia | US-002, 003, 010 | tak (wejścia) | **do ponownego zatwierdzenia** (v0.2, przegląd architekta P3-14c) |
 | [EK-13](ek-13.md) | Prywatność | US-003 | **tak** | **do ponownego zatwierdzenia** (v0.2, przegląd architekta P3-14c) |
@@ -29,6 +29,6 @@ Krok 2 zadania P3-14b (ux, 2026-11-16), wariant marki A „Lazur". Każdy ekran:
 
 **Przegląd architekta (P3-14c, `docs/architecture/przeglad-ekranow-p3-14c.md`; ADR-0010, ADR-0011 zatwierdzone):** poprawione EK-01 (utrata klucza wg ADR-0005 Aneks A pkt 2 zamiast stanu blokującego U12; stany przerwanego usuwania konta; wersja polityki jako stała aplikacji), EK-02 i `patterns.md` pkt 6 (brak sieci jako wynik próby), EK-03 (data jako stała, wariant „dane wyczyszczone”), EK-06 i EK-13 (wycofanie zgody offline – stan „oczekuje na połączenie”), EK-09 (bez blokowania Maps), EK-12 (licencje open source), EK-16 (nowe mapowania). Zmienione ekrany wymagają **ponownego zatwierdzenia przez właściciela**. Rozbieżności z security: UX17 (data zgody), UX18 (EK-09 vs P-7).
 
-**Ponowne zatwierdzenie właściciela 2026-11-16:** „zatwierdzam ekrany EK-01, 02, 03, 06 i 16” – v0.2 po przeglądzie P3-14c (EK-06 z zastrzeżeniem: tekst ostateczny `ai-consent-v2` po [PRAWNIK] i SEC-15). EK-09, EK-12, EK-13 czekają na zmiany P3-14f (U7, UX4, UX11). EK-09: zmiana UX11 naniesiona w v0.3 (TAM-108, 2026-11-25).
+**Ponowne zatwierdzenie właściciela 2026-11-16:** „zatwierdzam ekrany EK-01, 02, 03, 06 i 16” – v0.2 po przeglądzie P3-14c (EK-06 z zastrzeżeniem: tekst ostateczny `ai-consent-v2` po [PRAWNIK] i SEC-15). EK-09, EK-12, EK-13 czekają na zmiany P3-14f (U7, UX4, UX11). EK-09: zmiana UX11 naniesiona w v0.3, ekran zatwierdzony w v0.4 (TAM-108, 2026-11-25).
 
 Kolejne kroki (`.farm/workflows/phases.md` krok 1a): architekt sprawdza tabele „Dane na ekranie" i sekcje „Uzgodnienie z architektem" względem `docs/api/` i `docs/data/`; security przegląda ekrany oznaczone **tak**; ux nanosi poprawki; orkiestrator oznacza ekrany `ux-ready` w backlogu.
