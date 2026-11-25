@@ -332,4 +332,22 @@ void main() {
       expect(find.byKey(const Key('welcomeHero')), findsNothing);
     });
   });
+
+  testWidgets(
+    'TAM-111: TalkBack can press "Sign in with Google" once the box is checked',
+    (t) async {
+      final env = TestEnv();
+      await pumpApp(t, env, locale: 'en');
+      final handle = t.ensureSemantics();
+      expect(hasSemanticsTap(t, signInButton()), isFalse);
+      await check(t);
+      expect(hasSemanticsTap(t, signInButton()), isTrue);
+      await t.ensureVisible(signInButton());
+      await t.pumpAndSettle();
+      semanticsTap(t, signInButton());
+      await t.pumpAndSettle();
+      expect(find.byType(HomeScreen), findsOneWidget);
+      handle.dispose();
+    },
+  );
 }

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
@@ -180,3 +181,17 @@ Widget hostScreen(
     home: screen,
   ),
 );
+
+/// True when the semantics node of [f] offers TalkBack a tap (TAM-111).
+bool hasSemanticsTap(WidgetTester tester, Finder f) =>
+    tester.getSemantics(f).getSemanticsData().hasAction(SemanticsAction.tap);
+
+/// Double-tap in TalkBack: performs the semantics tap action on [f]'s node.
+void semanticsTap(WidgetTester tester, Finder f) =>
+    tester.binding.performSemanticsAction(
+      SemanticsActionEvent(
+        type: SemanticsAction.tap,
+        viewId: tester.view.viewId,
+        nodeId: tester.getSemantics(f).id,
+      ),
+    );

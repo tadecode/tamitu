@@ -235,4 +235,28 @@ void main() {
     await t.tapOnText(find.textRange.ofSubstring('Privacy Policy'));
     expect(env.opened, [AppConstants.privacyPolicyUrls['en']]);
   });
+
+  testWidgets(
+    'TAM-111: TalkBack can open the policy link and press both buttons',
+    (t) async {
+      final env = TestEnv();
+      final results = await openEk06(t, env, locale: 'en');
+      final handle = t.ensureSemantics();
+      final link = find.bySemanticsLabel(
+        RegExp(r'^Details in the Privacy Policy\., opens in browser'),
+      );
+      expect(hasSemanticsTap(t, link), isTrue);
+      semanticsTap(t, link);
+      await t.pumpAndSettle();
+      expect(env.opened, [AppConstants.privacyPolicyUrls['en']]);
+      expect(hasSemanticsTap(t, agree()), isTrue);
+      expect(hasSemanticsTap(t, disagree()), isTrue);
+      await t.ensureVisible(disagree());
+      await t.pumpAndSettle();
+      semanticsTap(t, disagree());
+      await t.pumpAndSettle();
+      expect(results, [false]);
+      handle.dispose();
+    },
+  );
 }
