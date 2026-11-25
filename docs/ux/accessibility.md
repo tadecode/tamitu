@@ -53,7 +53,7 @@ Wybór: ikona `tick-02` (chip, segment), wypełnione koło (radio), wskaźnik (z
 ## 5. Skalowanie tekstu
 - Wszystkie rozmiary w sp; aplikacja działa przy skali systemowej do **200%** bez utraty treści i funkcji.
 - Zachowania przy dużej skali (sprawdzone w makietach przełącznikiem „Tekst 150% / 200%"):
-  - pola dwukolumnowe (data | godzina, dni | osoby) → jedna kolumna od 150%;
+  - pola dwukolumnowe (data | godzina) → na telefonie (okno < 600 dp) zawsze jedna kolumna; na szerszych oknach jedna kolumna od 150% (TAM-102: etykiety nie mogą być ucinane, także przy powiększonym rozmiarze wyświetlania);
   - segmenty 3-opcyjne → lista jednokrotnego wyboru (CMP-10) od 150%;
   - przyciski przyklejone do dołu (EK-02, EK-06) → przewijają się z treścią przy 200%;
   - dialogi: treść przewijana, przyciski pionowo;

@@ -359,12 +359,18 @@ body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:colu
   });
 })();
 </script>
+<style>
+/* EK-05, TAM-102 (Q4): telefon = okno compact (< 600 dp), więc data i godzina zawsze w jednej kolumnie,
+   także przy tekście 100%. Dwie kolumny tylko na oknach ≥ 600 dp (spec, sekcja „Układ”). */
+.phone .row2 { flex-direction:column; gap:0; }
+</style>
 </head>
 <body data-theme="light" data-lang="pl" data-scale="100">
 <header class="pg-head"><h1>EK-05 Formularz podróży</h1><span class="meta">US-004, US-006, US-011 · spec: <a href="../screens/ek-05.md">screens/ek-05.md</a></span></header>
 <main class="pg-main">
 <nav class="pg-nav"></nav>
-<p class="pg-note">Komponenty: CMP-01, CMP-04, CMP-05, CMP-06, CMP-07, CMP-08, CMP-13, CMP-02. Telefony pokazują fragmenty przewijanego formularza (treść przewija się w ramce). Dane wymyślone.</p>
+<p class="pg-note">Komponenty: CMP-01, CMP-04, CMP-05, CMP-06, CMP-07, CMP-08, CMP-13, CMP-02. Telefony pokazują fragmenty przewijanego formularza (treść przewija się w ramce). Dane wymyślone.
+TAM-102 (2026-11-25): na telefonie data i godzina stoją jedno pod drugim przy każdej skali tekstu (etykieta „Godzina przylotu” nie mieści się w połowie szerokości); po powrocie z EK-07 i po zamknięciu wybieraka klawiatura jest zamknięta.</p>
 <div class="states">
 
 <figure class="state"><div class="phone">
@@ -489,7 +495,7 @@ body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:colu
   </div>
   <div class="snack"><span><t-x pl="Generowanie przerwane. Nic nie zapisano." en="Plan creation stopped. Nothing was saved."></t-x></span></div>
   <div class="navbar"></div>
-</div><figcaption><b><t-x pl="Brak sieci, limit, błąd, zgoda, anulowanie" en="Offline, limit, error, consent, cancel"></t-x></b> – komunikaty nad przyciskiem (w aplikacji naraz tylko jeden); dane zawsze zachowane.</figcaption></figure>
+</div><figcaption><b><t-x pl="Brak sieci, limit, błąd, zgoda, anulowanie" en="Offline, limit, error, consent, cancel"></t-x></b> – komunikaty nad przyciskiem (w aplikacji naraz tylko jeden); dane zawsze zachowane. Po powrocie z EK-07 klawiatura jest zamknięta, żadne pole tekstowe nie ma fokusu, snackbar przy dolnej krawędzi, fokus TalkBack na „Generuj plan” (TAM-102).</figcaption></figure>
 
 </div>
 </main>
