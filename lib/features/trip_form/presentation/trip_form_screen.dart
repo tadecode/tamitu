@@ -757,7 +757,7 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
     // phone, whatever the text scale) and from 150 % text scale; two columns only on
     // medium/expanded windows. Labels like "Godzina przylotu" never get truncated.
     final narrow =
-        MediaQuery.sizeOf(context).width < LayoutLimits.mediumWindowMinWidth ||
+        LayoutLimits.isCompactWidth(MediaQuery.sizeOf(context).width) ||
         MediaQuery.textScalerOf(context).scale(10) >= 15;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

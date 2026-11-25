@@ -44,9 +44,16 @@ Future<void> _openForm(
   double width = 360,
   double textScale = 1,
   String locale = 'pl',
+  double? devicePixelRatio,
 }) async {
   await pumpApp(tester, env, locale: locale, textScale: textScale);
-  tester.view.physicalSize = Size(width * 3, 2400);
+  if (devicePixelRatio != null) {
+    // A real phone: 1080 px wide, density as Android reports it (float).
+    tester.view.devicePixelRatio = devicePixelRatio;
+    tester.view.physicalSize = const Size(1080, 2400);
+  } else {
+    tester.view.physicalSize = Size(width * 3, 2400);
+  }
   await tester.pumpAndSettle();
   final newTrip = find.byKey(const Key('homeNewTrip'));
   await tester.ensureVisible(newTrip);
@@ -195,6 +202,38 @@ void main() {
       await _openForm(tester, env, width: 600);
       await _show(tester, _time);
       expect(twoColumns(tester), isTrue);
+    });
+
+    // QA PR #171 B1: `wm density 288` on a 1080 px screen. Android reports
+    // screenWidthDp = 600, but the float density (288/160 = 1.8000000715) gives
+    // Flutter 599.99998 dp.
+    testWidgets('1080 px at density 288 (600 dp on Android): two columns', (
+      tester,
+    ) async {
+      final env = await _ready();
+      await _openForm(tester, env, devicePixelRatio: 1.8000000715255737);
+      expect(
+        tester.view.physicalSize.width / tester.view.devicePixelRatio,
+        lessThan(600),
+      );
+      await _show(tester, _time);
+      expect(twoColumns(tester), isTrue);
+    });
+
+    testWidgets('1080 px at 599 dp: one column', (tester) async {
+      final env = await _ready();
+      await _openForm(tester, env, devicePixelRatio: 1080 / 599);
+      await _show(tester, _time);
+      expect(twoColumns(tester), isFalse);
+    });
+
+    testWidgets('1080 px at density 289 (598 dp on Android): one column', (
+      tester,
+    ) async {
+      final env = await _ready();
+      await _openForm(tester, env, devicePixelRatio: 289 / 160);
+      await _show(tester, _time);
+      expect(twoColumns(tester), isFalse);
     });
 
     testWidgets('phone 360 dp at 200 % text: one column, full width', (

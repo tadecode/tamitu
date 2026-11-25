@@ -37,3 +37,8 @@
 - Uwaga 5: dodałem testy granicy 599 dp (jedna kolumna) i 600 dp (dwie) oraz etykiety EN „Landing time” w jednej kolumnie.
 - Uwagi 3 i 4 (TalkBack) wymagają ręcznej kontroli na telefonie, w kodzie bez zmian.
 - Testy: `flutter analyze` bez uwag, `flutter test` 308/308.
+
+## Poprawka po QA PR #171: B1 (2026-11-25)
+- Próg 600 dp porównuje teraz szerokość zaokrągloną tak jak Android `screenWidthDp` (`LayoutLimits.isCompactWidth`: `width.round() < 600`). Okno 600 dp przy gęstości 288 (dpr 1.8000000715 → 599,99998 dp) ma dwie kolumny. Próg 600 dp występuje w kodzie tylko w EK-05 (CMP-06 to pola daty i godziny w tym formularzu).
+- Testy: 1080 px przy dpr 1.8000000715255737 → dwie kolumny (bez poprawki pada), 1080 px przy 599 dp i przy gęstości 289 (598 dp) → jedna kolumna.
+- `flutter analyze` bez uwag, `flutter test` 311/311.

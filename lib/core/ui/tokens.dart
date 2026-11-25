@@ -23,6 +23,12 @@ abstract final class LayoutLimits {
 
   /// Window width where compact ends and medium starts (layout.md, M3 window classes).
   static const mediumWindowMinWidth = 600.0;
+
+  /// Compact window (< 600 dp). The width is rounded like Android's `screenWidthDp`:
+  /// the density is a float (288 dpi -> 1.8000000715), so a 600 dp window reaches
+  /// Flutter as 599.99998 dp (QA PR #171 B1).
+  static bool isCompactWidth(double width) =>
+      width.round() < mediumWindowMinWidth;
   static const stateTextMaxWidth = 320.0;
   static const minTouchTarget = 48.0;
 
