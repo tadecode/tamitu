@@ -28,7 +28,7 @@ Status „odpowiedziane" = decyzja właściciela zapisana; dokumenty faz muszą 
 | S3 | Dowód zgód | security | odpowiedziane | Minimalny zapis serwerowy (UID, wersja, wartość, data); okres po usunięciu konta: [PRAWNIK] | zgodne |
 | S4 | Kopia zapasowa Androida | security | odpowiedziane | Wyłączyć allowBackup; szyfrowanie bazy do decyzji architekta | zgodne |
 | S5 | Wariant API modelu AI | security | odpowiedziane | Korporacyjny, region UE, DPA, bez trenowania (np. Vertex AI); warunki do potwierdzenia w ADR; do tego czasu brak prawdziwych danych do AI | zgodne; nadal warunek wstępny |
-| S6 | Dokładność lokalizacji | security | odpowiedziane | **Dokładna** (domyślnie) | **ZMIANA**: security zakładał przybliżoną; uprawnienie precyzyjnej lokalizacji, rejestr D7, US-007 |
+| S6 | Dokładność lokalizacji | security | odpowiedziane | **Dokładna** (domyślnie) | **ZMIANA**: security zakładał przybliżoną; uprawnienie precyzyjnej lokalizacji, rejestr D7, US-007. **Zastąpione 2026-11-25 przez Q1 = C** (ADR-0017): Tamitu bez uprawnień lokalizacji, „Moja lokalizacja” = link bez `origin`; US-007 zaktualizowane (TAM-110) |
 | S7 | Retencja logów | security | odpowiedziane | 30 dni, bez treści, UID jako skrót | zgodne |
 | S8 | Skrzynka kontaktowa RODO | security | odpowiedziane | tamitu@tadecode.pl | uzupełnić politykę/checklistę |
 | S10 | Regulamin | security | odpowiedziane | Tak, krótki, przed wydaniem publicznym [PRAWNIK] | zgodne |
