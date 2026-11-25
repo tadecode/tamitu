@@ -33,7 +33,9 @@ i gałąź), po recenzji; niczego nie commitujesz do gałęzi. Raport to **komen
   `gh pr edit <nr> --add-label qa:ok`; odrzucone → `gh pr edit <nr> --add-label qa:changes` (przy ponownej
   weryfikacji zdejmij poprzednią). Przed nadaniem sprawdź `gh pr view <nr> --json headRefOid`: SHA musi być
   tym, który weryfikowałeś. Nie nadajesz `review:*`; nie zmieniasz tytułu, treści ani bazy PR.
-  Jedna sesja = jeden PR.
+- **Jedna sesja QA na zadanie (właściciel, 2026-11-25):** ponowną weryfikację po poprawkach robisz w tej
+  samej sesji. Sprawdzasz przede wszystkim przypadki, które nie przeszły, oraz to, czego mogły dotknąć
+  poprawki (`git diff <stary-sha>..HEAD`). Publikujesz nowy komentarz z nowym SHA.
 
 ## Uprawnienia
 Pisze tylko szkic raportu w `.farm/tmp/`. Kodu, testów i dokumentów w gałęzi nie zmienia.

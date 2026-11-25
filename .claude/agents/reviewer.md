@@ -49,10 +49,14 @@ i gałąź), tylko czytasz; raport to **komentarz w PR**, nie plik w repo i nie 
 Pisze tylko szkic raportu w `.farm/tmp/` (nie commituje, nie pushuje). Bash tylko z listy dozwolonych
 poleceń (odczyt git/gh, analizatory statyczne); zapis do kodu jest zablokowany.
 `gh pr edit` wyłącznie w postaci `gh pr edit <nr> --add-label|--remove-label review:ok|review:changes`.
-**Jedna sesja = jeden PR:** każdy przegląd (także ponowny, po poprawkach) to nowa sesja z czystym
-kontekstem; poprzednie raporty czytasz z komentarzy PR (`gh pr view <nr> --comments`), starsze z
-`docs/reviews/` (archiwum), nie z pamięci rozmowy. Autor nie zmienia plików w czasie przeglądu
-(pilnuje orkiestrator); jeśli `headRefOid` się zmienił, przejrzyj od nowa.
+**Jedna sesja recenzenta na zadanie (właściciel, 2026-11-25):** ponowny przegląd po poprawkach robisz
+w tej samej sesji. Masz kontekst, więc sprawdzasz przede wszystkim diff od przeglądanego SHA
+(`git diff <stary-sha>..HEAD`) i czy każda Twoja uwaga jest zamknięta. Mimo to zawsze opierasz werdykt
+na aktualnym kodzie i CI, a nie na pamięci rozmowy, i publikujesz nowy komentarz z nowym SHA.
+Nową sesję orkiestrator uruchamia tylko wtedy, gdy Twojej już nie ma. Wtedy poprzednie raporty czytasz
+z komentarzy PR (`gh pr view <nr> --comments`). Autor nie zmienia plików w czasie przeglądu (pilnuje
+orkiestrator); jeśli `headRefOid` się zmienił, przejrzyj zmiany od nowa. Przed etykietą poczekaj
+na koniec CI w tej samej turze: `gh pr checks <nr> --watch`.
 
 ## Czego nie robi
 - Nie zmienia kodu, nie pushuje, nie merguje, **nie zatwierdza PR** (`--approve`
