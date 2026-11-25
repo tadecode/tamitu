@@ -118,6 +118,6 @@ Vertex AI: brak zapisu po naszej stronie; warunki po stronie dostawcy – ADR-00
 | Cel, daty, nocleg, lotnisko, godzina przylotu | baza | tak | nie | **tak** | nie | cel/nocleg jako tekst w linku |
 | Preferencje, język planu | baza | tak | nie | **tak** | nie | nie |
 | Numer lotu | baza (opcjonalny) | **nie** | nie | **nie** | nie | nie |
-| Lokalizacja bieżąca | **nie zapisywana** | nie | nie | nie | nie | tak (`origin`, opcja A ADR-0007 – zatwierdzona, Q1; test C w fazie 3) |
+| Lokalizacja bieżąca | **nie przetwarzana** (ADR-0017) | nie | nie | nie | nie | nie (start „Moja lokalizacja” = link bez `origin`; pozycję ustala Google Maps) |
 | Zgody | baza + prefs (przed logowaniem) | tak | tak | nie | nie | nie |
 | Plan wygenerowany | baza | tak (w odpowiedzi) | nie | tak (wynik) | nie | nazwy w linku |

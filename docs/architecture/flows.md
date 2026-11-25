@@ -1,6 +1,6 @@
 # Przepływy – Tamitu (MVP)
 
-Stan: 2026-11-15 (po G2, ADR zatwierdzone; uwzględnione Aneksy A). Powiązane: `overview.md`, ADR-0002, 0004, 0005, 0007, `docs/api/posrednik-api.md`.
+Stan: 2026-11-15 (po G2, ADR zatwierdzone; uwzględnione Aneksy A). Powiązane: `overview.md`, ADR-0002, 0004, 0005, 0007 (lokalizacja zastąpiona przez ADR-0017), `docs/api/posrednik-api.md`.
 
 ## 1. Pierwsze uruchomienie i logowanie (US-001, US-003)
 
@@ -81,33 +81,26 @@ Ponowienia na serwerze po 429 (do 3 wywołań, najwyżej 2 płatne, odczekanie 2
 Anulowanie: aplikacja przerywa oczekiwanie i nic nie zapisuje lokalnie; slot limitu pozostaje zużyty, jeśli wywołanie modelu już ruszyło (ADR-0002, Q12 zatwierdzone). Dane formularza zostają w pamięci ekranu do powrotu.
 Wycofanie zgody AI (ADR-0002, Aneks A pkt 4): aplikacja zapisuje `recordConsent(granted=false)` przed pokazaniem stanu „wycofano"; bez sieci – komunikat, generowanie zablokowane lokalnie do synchronizacji.
 
-## 3. Link Google Maps (US-007)
+## 3. Link Google Maps (US-007; ADR-0017, wariant C)
 
 ```mermaid
 sequenceDiagram
   actor U as Użytkownik
   participant A as Aplikacja (maps_link)
-  participant OS as Android (uprawnienia)
-  participant GM as Google Maps
+  participant GM as Google Maps (aplikacja lub przeglądarka)
 
   U->>A: Dotyka punktu planu
-  A->>U: Wybór startu (nocleg / poprzedni punkt / moja lokalizacja) i trybu (auto, komunikacja, pieszo)
+  A->>U: Wybór startu (moja lokalizacja / nocleg / poprzedni punkt) i trybu (auto, komunikacja, pieszo)
   alt start = moja lokalizacja
-    A->>U: Wyjaśnienie celu (PL/EN)
-    A->>OS: Prośba o uprawnienie (dokładna + przybliżona), pierwszy plan
-    alt przyznano
-      OS-->>A: Zgoda
-      A->>OS: Jednorazowy odczyt pozycji (bez cache, bez last known)
-      OS-->>A: lat,lng (tylko zmienna lokalna)
-    else odmowa lub tylko przybliżona
-      A->>U: Informacja; trasa z punktu startowego planu
-    end
+    A->>A: Budowa URL maps/dir/?api=1&destination&travelmode (bez origin)
+  else start = nocleg lub poprzedni punkt
+    A->>A: Budowa URL z origin = tekst z planu
   end
-  A->>A: Budowa URL maps/dir/?api=1&origin&destination&travelmode (bez zapisu)
-  A->>GM: Otwarcie linku (aplikacja Maps lub przeglądarka)
-  Note over A: Współrzędne odrzucone po zbudowaniu linku, nie w logach, planie, stanie
+  A->>GM: Otwarcie linku (LaunchMode.externalApplication)
+  Note over GM: Bez origin Mapy ustawiają start „Twoja lokalizacja”; o zgodę na lokalizację pytają Mapy, nie Tamitu
+  Note over A: Tamitu nie ma uprawnień lokalizacji i nie odczytuje pozycji; link nie jest zapisywany
 ```
-Uwaga: obowiązuje wariant A (Q1). Wariant C z ADR-0007 (bez `origin`, bez uprawnienia) pomija blok „moja lokalizacja" w całości; jest testowany na urządzeniu w fazie 3 (P3-07) i wejdzie wyłącznie nowym ADR. Link otwierany w trybie zewnętrznej aplikacji.
+Obowiązuje wariant C (ADR-0017, decyzja właściciela 2026-11-25, Q1 = C; zastępuje wariant A z ADR-0007). `destination` zawsze jako tekst „nazwa, miejscowość, cel podróży”, nigdy same współrzędne. Gdy Mapy nie mają zgody lub lokalizacja jest wyłączona, Mapy same proszą o zgodę albo pokazują pusty start do wybrania (test TAM-24).
 
 ## 4. Usunięcie konta i danych (US-010)
 

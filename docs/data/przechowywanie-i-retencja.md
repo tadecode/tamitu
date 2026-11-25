@@ -10,7 +10,7 @@ Stan: 2026-11-18, wersja 0.3 (O4-b: retencja licznika D10 skrócona do ok. 3 dni
 | Zgody (D3) | baza lokalna konta + Firestore (UE) | do usunięcia konta; dowód zgód usuwany z kontem (Q9; [PRAWNIK] do potwierdzenia) | `deleteAccount` (rekurencyjnie `users/{uid}`); lokalnie z plikiem bazy |
 | Dane podróży, plany, preferencje, język (D4, D5, D9, D15, D16) | tylko baza lokalna konta (szyfrowana) | do usunięcia planu/konta/odinstalowania | usunięcie planu (kaskada) lub pliku bazy |
 | Dane do AI (D6) | pamięć pośrednika w trakcie żądania; Vertex AI wg warunków dostawcy | po naszej stronie 0 | – (warunki dostawcy: SEC-15) |
-| Lokalizacja (D7) | nie zapisywana | 0 | – |
+| Lokalizacja | nie przetwarzana przez aplikację (ADR-0017; D7 do usunięcia z rejestru – security) | – | – |
 | Nazwy w linku Maps (D8) | generowane na urządzeniu | 0 (link nie zapisywany ze współrzędnymi) | – |
 | Licznik użycia (D10) | Firestore `usage/{uid}` | bieżąca doba; TTL do ok. 3 dni od ostatniego użycia + do ok. 24 h opóźnienia TTL (polityka TTL na polu `expireAt` = `max(resetAt(now) + 2 d, now + 2 d)`, `resetAt` = koniec doby Europe/Warsaw; decyzja O4 i O4-b – skrócenie z 30 dni zatwierdzone przez właściciela 2026-11-18; `model-danych.md` pkt 3) | `deleteAccount`; TTL |
 | Logi (D11) | Cloud Logging, kubełek UE | 30 dni, bez treści, UID jako HMAC | wygasają automatycznie (do 30 dni po usunięciu konta – opisać w polityce) |
