@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-    <!-- Only permission allowed at this stage (ADR-0008/0007); no location permissions. -->
+    <!-- Only permission allowed (ADR-0008); no location permissions (ADR-0017, variant C). -->
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Added by Firebase / Play services / Credential Manager libraries; removed from the
          merged manifest (ADR-0005 pkt 2; ADR-0011 pkt 2: no ACCESS_NETWORK_STATE). P3-04. -->
@@ -56,6 +56,13 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <!-- url_launcher on Android 11+: see apps that open https links (Google Maps
+             directions, EK-09; privacy policy, Google Play). ADR-0017 pkt 2: no package
+             names and no query-all-packages permission. -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
         </intent>
     </queries>
 </manifest>

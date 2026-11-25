@@ -729,4 +729,59 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get planDeleteError =>
       'Nie udało się usunąć planu. Plan nie został zmieniony.';
+
+  @override
+  String planRouteTo(String place) {
+    return 'Trasa do $place';
+  }
+
+  @override
+  String get commonCloseSheet => 'Zamknij arkusz';
+
+  @override
+  String routeTitle(String place) {
+    return 'Trasa do: $place';
+  }
+
+  @override
+  String get routeFrom => 'Skąd';
+
+  @override
+  String get routeFromMyLocation => 'Moja lokalizacja';
+
+  @override
+  String get routeFromMyLocationHint =>
+      'Bieżącą pozycję ustali Google Maps. Może poprosić o dostęp do lokalizacji.';
+
+  @override
+  String get routeFromPrevious => 'Poprzedni punkt dnia';
+
+  @override
+  String get routeFromLodging => 'Nocleg';
+
+  @override
+  String routeFromLodgingHint(String lodging) {
+    return '$lodging · punkt przybliżony';
+  }
+
+  @override
+  String get routeMode => 'Czym';
+
+  @override
+  String get routeModeDriving => 'Auto';
+
+  @override
+  String get routeModeTransit => 'Komunikacja';
+
+  @override
+  String get routeModeWalking => 'Pieszo';
+
+  @override
+  String get routeOpenMaps => 'Otwórz w Google Maps';
+
+  @override
+  String get routeOpensOtherApp => 'otwiera inną aplikację';
+
+  @override
+  String get routeOpenError => 'Nie udało się otworzyć map. Spróbuj ponownie.';
 }

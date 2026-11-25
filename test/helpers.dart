@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
@@ -13,6 +15,8 @@ import 'package:tamitu/features/consent/application/consent_service.dart';
 import 'package:tamitu/features/consent/data/fake_consent_api.dart';
 import 'package:tamitu/features/consent/data/prefs_pending_policy_store.dart';
 import 'package:tamitu/features/consent/domain/consent_record.dart';
+import 'package:tamitu/features/maps_link/application/travel_mode.dart';
+import 'package:tamitu/features/maps_link/domain/maps_link.dart';
 import 'package:tamitu/features/plan_generation/data/fake_plan_api.dart';
 import 'package:tamitu/l10n/app_localizations.dart';
 
@@ -58,6 +62,16 @@ class TestEnv {
   final opened = <Uri>[];
   final savedLanguages = <String?>[];
 
+  /// Result of the URL opener (false = the system could not open the link).
+  bool openSucceeds = true;
+
+  /// When set, the URL opener waits for it (opening in progress).
+  Completer<bool>? pendingOpen;
+
+  /// EK-09 travel mode saved at the "previous run", and modes saved since (UX11).
+  TravelMode? initialTravelMode;
+  final savedTravelModes = <TravelMode>[];
+
   /// Local, synced acceptance of the policy built into the app.
   Future<void> acceptCurrentPolicy(String uid) => local.upsert(
     uid,
@@ -82,12 +96,16 @@ class TestEnv {
     aiBusyClockProvider.overrideWithValue(() => mono),
     urlOpenerProvider.overrideWithValue((uri) async {
       opened.add(uri);
-      return true;
+      return pendingOpen?.future ?? openSucceeds;
     }),
     uiLanguageStoreProvider.overrideWithValue(
       _RecordingLanguageStore(savedLanguages),
     ),
     initialUiLanguageProvider.overrideWithValue(language),
+    travelModeStoreProvider.overrideWithValue(
+      _RecordingTravelModeStore(savedTravelModes),
+    ),
+    initialTravelModeProvider.overrideWithValue(initialTravelMode),
   ];
 
   ProviderContainer container() {
@@ -95,6 +113,15 @@ class TestEnv {
     addTearDown(c.dispose);
     return c;
   }
+}
+
+class _RecordingTravelModeStore implements TravelModeStore {
+  _RecordingTravelModeStore(this.saved);
+
+  final List<TravelMode> saved;
+
+  @override
+  Future<void> write(TravelMode mode) async => saved.add(mode);
 }
 
 class _RecordingLanguageStore implements UiLanguageStore {

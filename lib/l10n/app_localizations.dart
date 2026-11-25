@@ -1249,6 +1249,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t delete the trip. Nothing was changed.'**
   String get planDeleteError;
+
+  /// No description provided for @planRouteTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Directions to {place}'**
+  String planRouteTo(String place);
+
+  /// No description provided for @commonCloseSheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Close sheet'**
+  String get commonCloseSheet;
+
+  /// No description provided for @routeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Directions to: {place}'**
+  String routeTitle(String place);
+
+  /// No description provided for @routeFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'From'**
+  String get routeFrom;
+
+  /// No description provided for @routeFromMyLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'My location'**
+  String get routeFromMyLocation;
+
+  /// No description provided for @routeFromMyLocationHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Maps will find where you are. It may ask for access to your location.'**
+  String get routeFromMyLocationHint;
+
+  /// No description provided for @routeFromPrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous place'**
+  String get routeFromPrevious;
+
+  /// No description provided for @routeFromLodging.
+  ///
+  /// In en, this message translates to:
+  /// **'Your stay'**
+  String get routeFromLodging;
+
+  /// No description provided for @routeFromLodgingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'{lodging} · approximate point'**
+  String routeFromLodgingHint(String lodging);
+
+  /// No description provided for @routeMode.
+  ///
+  /// In en, this message translates to:
+  /// **'How'**
+  String get routeMode;
+
+  /// No description provided for @routeModeDriving.
+  ///
+  /// In en, this message translates to:
+  /// **'Car'**
+  String get routeModeDriving;
+
+  /// No description provided for @routeModeTransit.
+  ///
+  /// In en, this message translates to:
+  /// **'Transit'**
+  String get routeModeTransit;
+
+  /// No description provided for @routeModeWalking.
+  ///
+  /// In en, this message translates to:
+  /// **'Walk'**
+  String get routeModeWalking;
+
+  /// No description provided for @routeOpenMaps.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in Google Maps'**
+  String get routeOpenMaps;
+
+  /// No description provided for @routeOpensOtherApp.
+  ///
+  /// In en, this message translates to:
+  /// **'opens another app'**
+  String get routeOpensOtherApp;
+
+  /// No description provided for @routeOpenError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open maps. Please try again.'**
+  String get routeOpenError;
 }
 
 class _AppLocalizationsDelegate

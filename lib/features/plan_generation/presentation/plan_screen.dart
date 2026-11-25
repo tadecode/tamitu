@@ -6,6 +6,7 @@ import '../../../core/ui/app_icon.dart';
 import '../../../core/ui/components.dart';
 import '../../../core/ui/tokens.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../maps_link/presentation/route_sheet.dart';
 import '../../trip_form/presentation/trip_form_screen.dart'
     show formatLocalDate, formatLocalTime;
 import '../domain/generated_plan.dart';
@@ -27,10 +28,8 @@ class PlanViewData {
   final bool fresh;
 }
 
-/// EK-08 Plan view (US-005, US-006, US-008, US-009).
-///
-/// Placeholder for a later task: TAM-20 (P3-07) "Directions" on every item (EK-09 /
-/// Google Maps link).
+/// EK-08 Plan view (US-005, US-006, US-007, US-008, US-009). "Directions" on every item
+/// opens EK-09 (Google Maps link, TAM-20).
 class PlanScreen extends StatelessWidget {
   const PlanScreen({super.key, required this.data, this.onDelete});
 
@@ -171,8 +170,21 @@ class PlanScreen extends StatelessWidget {
             ),
           ),
         ),
-      for (final item in day.items)
-        _PlanItemTile(item: item, locale: planLocale),
+      for (final (i, item) in day.items.indexed)
+        _PlanItemTile(
+          item: item,
+          locale: planLocale,
+          onRoute: () => showRouteSheet(
+            context,
+            RouteTarget(
+              item: item,
+              previous: i > 0 ? day.items[i - 1] : null,
+              lodging: d.input.lodging,
+              tripDestination: d.input.destination,
+              planLocale: planLocale,
+            ),
+          ),
+        ),
     ];
   }
 }
@@ -249,49 +261,80 @@ class _Summary extends StatelessWidget {
 
 /// CMP-20 plan item: approx. time (`tertiary`), name, locality, description – content in
 /// the plan language (TalkBack pronunciation, EK-08 "Dostępność").
+///
+/// Tapping the item or "Directions" opens EK-09 (CMP-20: one main target).
 class _PlanItemTile extends StatelessWidget {
-  const _PlanItemTile({required this.item, required this.locale});
+  const _PlanItemTile({
+    required this.item,
+    required this.locale,
+    required this.onRoute,
+  });
 
   final PlanItem item;
   final Locale locale;
+  final VoidCallback onRoute;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: Space.s3),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            l10n.planItemTime(item.startTime),
-            style: theme.textTheme.labelLarge?.copyWith(
-              color: theme.colorScheme.tertiary,
+    return InkWell(
+      onTap: onRoute,
+      // "Directions" carries the action for TalkBack (no duplicate node).
+      excludeFromSemantics: true,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: Space.s3),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.planItemTime(item.startTime),
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: theme.colorScheme.tertiary,
+              ),
             ),
-          ),
-          const SizedBox(height: Space.s1),
-          PlanText(
-            item.name,
-            key: const Key('planItemName'),
-            locale: locale,
-            style: theme.textTheme.titleMedium,
-          ),
-          PlanText(
-            item.locality,
-            locale: locale,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+            const SizedBox(height: Space.s1),
+            PlanText(
+              item.name,
+              key: const Key('planItemName'),
+              locale: locale,
+              style: theme.textTheme.titleMedium,
             ),
-          ),
-          const SizedBox(height: Space.s1),
-          PlanText(
-            item.description,
-            locale: locale,
-            style: theme.textTheme.bodyMedium,
-          ),
-          // TAM-20 (P3-07): "Directions" (CMP-02, 48 dp) -> EK-09 / Maps link.
-        ],
+            PlanText(
+              item.locality,
+              locale: locale,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: Space.s1),
+            PlanText(
+              item.description,
+              locale: locale,
+              style: theme.textTheme.bodyMedium,
+            ),
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: Semantics(
+                button: true,
+                label: l10n.planRouteTo(item.name),
+                // excludeSemantics drops the button's own tap action (QA PR #178).
+                onTap: onRoute,
+                container: true,
+                excludeSemantics: true,
+                child: TextButton.icon(
+                  key: const Key('planItemRoute'),
+                  style: const ButtonStyle(
+                    minimumSize: WidgetStatePropertyAll(Size(48, 48)),
+                  ),
+                  onPressed: onRoute,
+                  icon: const AppIcon(AppIcons.route, size: 18),
+                  label: Text(l10n.planRoute),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

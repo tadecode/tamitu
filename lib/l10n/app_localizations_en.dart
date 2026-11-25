@@ -716,4 +716,59 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get planDeleteError =>
       'Couldn\'t delete the trip. Nothing was changed.';
+
+  @override
+  String planRouteTo(String place) {
+    return 'Directions to $place';
+  }
+
+  @override
+  String get commonCloseSheet => 'Close sheet';
+
+  @override
+  String routeTitle(String place) {
+    return 'Directions to: $place';
+  }
+
+  @override
+  String get routeFrom => 'From';
+
+  @override
+  String get routeFromMyLocation => 'My location';
+
+  @override
+  String get routeFromMyLocationHint =>
+      'Google Maps will find where you are. It may ask for access to your location.';
+
+  @override
+  String get routeFromPrevious => 'Previous place';
+
+  @override
+  String get routeFromLodging => 'Your stay';
+
+  @override
+  String routeFromLodgingHint(String lodging) {
+    return '$lodging · approximate point';
+  }
+
+  @override
+  String get routeMode => 'How';
+
+  @override
+  String get routeModeDriving => 'Car';
+
+  @override
+  String get routeModeTransit => 'Transit';
+
+  @override
+  String get routeModeWalking => 'Walk';
+
+  @override
+  String get routeOpenMaps => 'Open in Google Maps';
+
+  @override
+  String get routeOpensOtherApp => 'opens another app';
+
+  @override
+  String get routeOpenError => 'Couldn\'t open maps. Please try again.';
 }

@@ -18,6 +18,8 @@ import '../features/consent/data/fake_consent_api.dart';
 import '../features/consent/data/prefs_pending_policy_store.dart';
 import '../features/consent/data/sqlite_consent_local_store.dart';
 import '../features/consent/domain/consent_ports.dart';
+import '../features/maps_link/application/travel_mode.dart';
+import '../features/maps_link/domain/maps_link.dart';
 import '../features/plan_generation/data/callable_plan_api.dart';
 import '../features/plan_generation/data/fake_plan_api.dart';
 import '../features/plan_generation/domain/plan_api.dart';
@@ -122,6 +124,12 @@ Future<List<Override>> bootstrapOverrides() async {
   } catch (_) {
     language = null;
   }
+  TravelMode? travelMode;
+  try {
+    travelMode = TravelMode.fromParam(await prefs.getString(_travelModeKey));
+  } catch (_) {
+    travelMode = null;
+  }
   return [
     authGatewayProvider.overrideWithValue(auth),
     consentServiceProvider.overrideWithValue(consents),
@@ -132,7 +140,22 @@ Future<List<Override>> bootstrapOverrides() async {
     requestIdProvider.overrideWithValue(uuid.v4),
     uiLanguageStoreProvider.overrideWithValue(_PrefsUiLanguageStore(prefs)),
     initialUiLanguageProvider.overrideWithValue(language),
+    travelModeStoreProvider.overrideWithValue(_PrefsTravelModeStore(prefs)),
+    initialTravelModeProvider.overrideWithValue(travelMode),
   ];
+}
+
+/// EK-09 last travel mode (UX11); the route start is never stored.
+const _travelModeKey = 'routeTravelMode';
+
+class _PrefsTravelModeStore implements TravelModeStore {
+  _PrefsTravelModeStore(this._prefs);
+
+  final SharedPreferencesAsync _prefs;
+
+  @override
+  Future<void> write(TravelMode mode) =>
+      _prefs.setString(_travelModeKey, mode.param);
 }
 
 const _uiLanguageKey = 'uiLanguage';
