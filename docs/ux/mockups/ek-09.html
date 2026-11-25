@@ -219,6 +219,9 @@ body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:colu
 /* CMP-17 postęp, szkielet */
 .lin { height:4px; border-radius:4px; background:var(--sc-highest); overflow:hidden; position:relative; }
 .lin::before { content:""; position:absolute; top:0; bottom:0; left:20%; width:40%; border-radius:4px; background:var(--primary); }
+/* CMP-17 liniowy określony – odliczanie (TAM-98): szerokość = pozostały czas (--v, 0–100%) */
+.lin.det::before { left:0; width:var(--v,100%); transition:width 1s linear; }
+.tnum { font-variant-numeric:tabular-nums; }
 .circ { width:48px; height:48px; border-radius:50%; border:4px solid var(--primary); border-right-color:var(--sc-highest); display:inline-block; }
 .skel { background:var(--sc-highest); border-radius:var(--r-s); }
 .skel-card { background:var(--sc-low); border-radius:var(--r-m); padding:16px; margin:0 0 8px; }
@@ -344,7 +347,7 @@ body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:colu
     if (nav) {
       var here = location.pathname.split('/').pop();
       var names = ['01 Start', '02 Ekran startowy', '03 Ponowna akceptacja', '04 Lista planów', '05 Formularz', '06 Zgoda na AI', '07 Generowanie',
-        '08 Widok planu', '09 Trasa', '10 Lokalizacja', '11 Usunięcie planu', '12 Ustawienia', '13 Prywatność', '14 Wylogowanie', '15 Usunięcie konta', '16 Komunikaty'];
+        '08 Widok planu', '09 Trasa', '11 Usunięcie planu', '12 Ustawienia', '13 Prywatność', '14 Wylogowanie', '15 Usunięcie konta', '16 Komunikaty'];
       nav.innerHTML = names.map(function (n) {
         var f = 'ek-' + n.slice(0, 2) + '.html';
         return f === here ? '<b>EK-' + n + '</b>' : '<a href="' + f + '">EK-' + n + '</a>';
@@ -361,10 +364,10 @@ body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:colu
 </script>
 </head>
 <body data-theme="light" data-lang="pl" data-scale="100">
-<header class="pg-head"><h1>EK-09 Wybór trasy do punktu</h1><span class="meta">US-007 · spec: <a href="../screens/ek-09.md">screens/ek-09.md</a> · <span class="pg-anno">przegląd security</span></span></header>
+<header class="pg-head"><h1>EK-09 Wybór trasy do punktu</h1><span class="meta">US-007 · spec: <a href="../screens/ek-09.md">screens/ek-09.md</a> · v0.3 (TAM-108) · <span class="pg-anno">do zatwierdzenia przez właściciela</span></span></header>
 <main class="pg-main">
 <nav class="pg-nav"></nav>
-<p class="pg-note">Arkusz dolny nad EK-08. Komponenty: CMP-16, CMP-10, CMP-07, CMP-13, CMP-02, CMP-14. Wariant A (Q1). Ostatni telefon: wariant C (U11).</p>
+<p class="pg-note">Arkusz dolny nad EK-08. Komponenty: CMP-16, CMP-10, CMP-07, CMP-13, CMP-02, CMP-14. Wariant C (decyzja Q1, 2026-11-25): Tamitu nie prosi o lokalizację i jej nie odczytuje. „Moja lokalizacja” = link do Google Maps bez punktu startowego; pozycję ustala Google Maps (o dostęp może zapytać Mapy – to okno Map, nie Tamitu). Tryb: ostatnio użyty (UX11), przy pierwszym użyciu Komunikacja.</p>
 <div class="states">
 
 <figure class="state"><div class="phone">
@@ -377,8 +380,8 @@ body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:colu
     <p class="body-m muted" style="margin:0 16px 8px">Lizbona</p>
     <div class="inner">
       <p class="title-s" style="margin:8px 0 0"><t-x pl="Skąd" en="From"></t-x></p>
-      <div class="radio-row"><span class="radio on"></span><div><p class="body-l"><t-x pl="Nocleg" en="Your stay"></t-x></p><p class="body-m muted"><span lang="pl">Pensjonat Przykładowy, Alfama</span> · <t-x pl="punkt przybliżony" en="approximate point"></t-x></p></div></div>
-      <div class="radio-row"><span class="radio"></span><div><p class="body-l"><t-x pl="Moja lokalizacja" en="My location"></t-x></p><p class="body-m muted"><t-x pl="Jednorazowo, tylko do tej trasy" en="One-time, just for this route"></t-x></p></div></div>
+      <div class="radio-row"><span class="radio on"></span><div><p class="body-l"><t-x pl="Moja lokalizacja" en="My location"></t-x></p><p class="body-m muted"><t-x pl="Bieżącą pozycję ustali Google Maps. Może poprosić o dostęp do lokalizacji." en="Google Maps will find where you are. It may ask for access to your location."></t-x></p></div></div>
+      <div class="radio-row"><span class="radio"></span><div><p class="body-l"><t-x pl="Nocleg" en="Your stay"></t-x></p><p class="body-m muted"><span lang="pl">Pensjonat Przykładowy, Alfama</span> · <t-x pl="punkt przybliżony" en="approximate point"></t-x></p></div></div>
       <p class="title-s" style="margin:8px 0"><t-x pl="Czym" en="How"></t-x></p>
       <div class="seg"><div><i-c n="car"></i-c><t-x pl="Auto" en="Car"></t-x></div><div class="on"><i-c n="check"></i-c><t-x pl="Komunikacja" en="Transit"></t-x></div><div><i-c n="walk"></i-c><t-x pl="Pieszo" en="Walk"></t-x></div></div>
       <div class="gap-24"></div>
@@ -386,7 +389,7 @@ body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:colu
     </div>
   </div></div>
   <div class="navbar"></div>
-</div><figcaption><b><t-x pl="Domyślny (pierwszy punkt dnia)" en="Default (first place)"></t-x></b> – start: nocleg (przybliżony, U14); tryb domyślny: komunikacja (UX11).</figcaption></figure>
+</div><figcaption><b><t-x pl="Domyślny" en="Default"></t-x></b> – start „Moja lokalizacja” (link bez punktu startowego); tryb przy pierwszym użyciu: Komunikacja. Tamitu niczego nie odczytuje.</figcaption></figure>
 
 <figure class="state"><div class="phone">
   <div class="sysbar"><span>9:41</span><span>100%</span></div>
@@ -398,18 +401,16 @@ body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:colu
     <p class="body-m muted" style="margin:0 16px 8px">Lizbona</p>
     <div class="inner">
       <p class="title-s" style="margin:8px 0 0"><t-x pl="Skąd" en="From"></t-x></p>
-      <div class="radio-row"><span class="radio"></span><div><p class="body-l"><t-x pl="Poprzedni punkt dnia" en="Previous place"></t-x></p><p class="body-m muted" lang="pl">Przejażdżka zabytkowym tramwajem</p></div></div>
-      <div class="radio-row"><span class="radio"></span><div><p class="body-l"><t-x pl="Nocleg" en="Your stay"></t-x></p><p class="body-m muted"><span lang="pl">Pensjonat Przykładowy, Alfama</span> · <t-x pl="punkt przybliżony" en="approximate point"></t-x></p></div></div>
-      <div class="radio-row"><span class="radio on"></span><div><p class="body-l"><t-x pl="Moja lokalizacja" en="My location"></t-x></p><p class="body-m muted"><t-x pl="Jednorazowo, tylko do tej trasy" en="One-time, just for this route"></t-x></p></div></div>
+      <div class="radio-row"><span class="radio"></span><div><p class="body-l"><t-x pl="Moja lokalizacja" en="My location"></t-x></p><p class="body-m muted"><t-x pl="Bieżącą pozycję ustali Google Maps. Może poprosić o dostęp do lokalizacji." en="Google Maps will find where you are. It may ask for access to your location."></t-x></p></div></div>
+      <div class="radio-row"><span class="radio on"></span><div><p class="body-l"><t-x pl="Nocleg" en="Your stay"></t-x></p><p class="body-m muted"><span lang="pl">Pensjonat Przykładowy, Alfama</span> · <t-x pl="punkt przybliżony" en="approximate point"></t-x></p></div></div>
       <p class="title-s" style="margin:8px 0"><t-x pl="Czym" en="How"></t-x></p>
       <div class="seg"><div><i-c n="car"></i-c><t-x pl="Auto" en="Car"></t-x></div><div><i-c n="transit"></i-c><t-x pl="Komunikacja" en="Transit"></t-x></div><div class="on"><i-c n="check"></i-c><t-x pl="Pieszo" en="Walk"></t-x></div></div>
       <div class="gap-24"></div>
-      <span class="btn filled block"><span class="spinner"></span><t-x pl="Ustalamy pozycję…" en="Finding your location…"></t-x></span>
-      <span class="btn text block"><t-x pl="Anuluj" en="Cancel"></t-x></span>
+      <span class="btn filled block"><i-c n="openinnew"></i-c><t-x pl="Otwórz w Google Maps" en="Open in Google Maps"></t-x></span>
     </div>
   </div></div>
   <div class="navbar"></div>
-</div><figcaption><b><t-x pl="Ładowanie pozycji" en="Locating"></t-x></b> – uprawnienie przyznane; jednorazowy odczyt (limit 10 s); „Anuluj” przerywa i odrzuca spóźniony wynik. Bez wstępnego sprawdzania sieci (ADR-0011 pkt 2).</figcaption></figure>
+</div><figcaption><b><t-x pl="Start: nocleg" en="Start: your stay"></t-x></b> – nocleg jako tekst w linku (punkt przybliżony, U14); „Pieszo” zapamiętane z poprzedniego użycia (UX11). Mapy pokażą podgląd trasy zamiast nawigacji.</figcaption></figure>
 
 <figure class="state"><div class="phone">
   <div class="sysbar"><span>9:41</span><span>100%</span></div>
@@ -420,18 +421,18 @@ body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:colu
     <p class="st"><t-x pl="Trasa do:" en="Directions to:"></t-x> <span lang="pl">Zamek na wzgórzu</span></p>
     <p class="body-m muted" style="margin:0 16px 8px">Lizbona</p>
     <div class="inner">
-      <div class="notice"><i-c n="info"></i-c><div class="body"><p><t-x pl="Bez dostępu do dokładnej lokalizacji. Trasę wyznaczymy z punktu z planu." en="No access to precise location. We'll route from a place in your plan."></t-x></p></div></div>
+      <div class="notice"><i-c n="info"></i-c><div class="body"><p><t-x pl="Ten plan nie ma noclegu. Trasa zacznie się od Twojej bieżącej pozycji." en="This plan has no accommodation. The route will start from where you are."></t-x></p></div></div>
       <p class="title-s" style="margin:0"><t-x pl="Skąd" en="From"></t-x></p>
-      <div class="radio-row"><span class="radio on"></span><div><p class="body-l"><t-x pl="Nocleg" en="Your stay"></t-x></p><p class="body-m muted"><span lang="pl">Pensjonat Przykładowy, Alfama</span> · <t-x pl="punkt przybliżony" en="approximate point"></t-x></p></div></div>
-      <div class="radio-row disabled"><span class="radio"></span><div><p class="body-l"><t-x pl="Moja lokalizacja" en="My location"></t-x></p></div></div>
-      <p class="body-m muted" style="margin:-8px 0 8px 36px"><t-x pl="Dostęp do lokalizacji jest wyłączony. Możesz go włączyć w ustawieniach telefonu: Aplikacje → Tamitu → Uprawnienia." en="Location access is turned off. You can turn it on in phone settings: Apps → Tamitu → Permissions."></t-x></p>
+      <div class="radio-row"><span class="radio on"></span><div><p class="body-l"><t-x pl="Moja lokalizacja" en="My location"></t-x></p><p class="body-m muted"><t-x pl="Bieżącą pozycję ustali Google Maps. Może poprosić o dostęp do lokalizacji." en="Google Maps will find where you are. It may ask for access to your location."></t-x></p></div></div>
+      <div class="radio-row disabled"><span class="radio"></span><div><p class="body-l"><t-x pl="Nocleg" en="Your stay"></t-x></p><p class="body-m muted"><t-x pl="Brak noclegu w planie" en="No accommodation in this plan"></t-x></p></div></div>
+      <p class="title-s" style="margin:8px 0"><t-x pl="Czym" en="How"></t-x></p>
       <div class="seg"><div><i-c n="car"></i-c><t-x pl="Auto" en="Car"></t-x></div><div class="on"><i-c n="check"></i-c><t-x pl="Komunikacja" en="Transit"></t-x></div><div><i-c n="walk"></i-c><t-x pl="Pieszo" en="Walk"></t-x></div></div>
       <div class="gap-24"></div>
       <span class="btn filled block"><i-c n="openinnew"></i-c><t-x pl="Otwórz w Google Maps" en="Open in Google Maps"></t-x></span>
     </div>
   </div></div>
   <div class="navbar"></div>
-</div><figcaption><b><t-x pl="Odmowa (trwała)" en="Denied (permanently)"></t-x></b> – aplikacja działa dalej; informacja nieblokująca + jak zmienić w systemie.</figcaption></figure>
+</div><figcaption><b><t-x pl="Brak noclegu" en="No accommodation"></t-x></b> – „Nocleg” nieaktywny z opisem tekstem (nie tylko wyszarzenie); komunikat CMP-13 informacyjny, nieblokujący.</figcaption></figure>
 
 <figure class="state"><div class="phone">
   <div class="sysbar"><span>9:41</span><span>100%</span></div>
@@ -443,36 +444,16 @@ body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:colu
     <p class="body-m muted" style="margin:0 16px 8px">Lizbona</p>
     <div class="inner">
       <p class="title-s" style="margin:8px 0 0"><t-x pl="Skąd" en="From"></t-x></p>
-      <div class="radio-row"><span class="radio on"></span><div><p class="body-l"><t-x pl="Nocleg" en="Your stay"></t-x></p><p class="body-m muted"><span lang="pl">Pensjonat Przykładowy, Alfama</span> · <t-x pl="punkt przybliżony" en="approximate point"></t-x></p></div></div>
-      <div class="radio-row"><span class="radio"></span><div><p class="body-l"><t-x pl="Moja lokalizacja" en="My location"></t-x></p><p class="body-m muted"><t-x pl="Jednorazowo, tylko do tej trasy" en="One-time, just for this route"></t-x></p></div></div>
-      <div class="seg"><div><i-c n="car"></i-c><t-x pl="Auto" en="Car"></t-x></div><div class="on"><i-c n="check"></i-c><t-x pl="Komunikacja" en="Transit"></t-x></div><div><i-c n="walk"></i-c><t-x pl="Pieszo" en="Walk"></t-x></div></div>
-      <div class="gap-24"></div>
-      <span class="btn filled block"><i-c n="openinnew"></i-c><t-x pl="Otwórz w Google Maps" en="Open in Google Maps"></t-x></span>
-    </div>
-  </div></div>
-  <div class="snack" style="z-index:6"><span><t-x pl="Nie udało się otworzyć map. Spróbuj ponownie." en="Couldn't open maps. Please try again."></t-x></span></div>
-  <div class="navbar"></div>
-</div><figcaption><b><t-x pl="Błąd uruchomienia map" en="Maps launch error"></t-x></b> – aplikacja nie wykrywa sieci i nie blokuje otwarcia (ADR-0011 pkt 2); brak sieci obsługuje Google Maps. Brak pozycji: „Nie udało się ustalić pozycji…”.</figcaption></figure>
-
-<figure class="state"><div class="phone">
-  <div class="sysbar"><span>9:41</span><span>100%</span></div>
-  <div class="appbar"><span class="icbtn"><i-c n="back"></i-c></span><span class="title">Lizbona</span><span class="icbtn"><i-c n="more"></i-c></span></div>
-  <div class="scroll pad"></div>
-  <div class="scrim sheet-host"><div class="sheet">
-    <div class="handle"></div>
-    <p class="st"><t-x pl="Trasa do:" en="Directions to:"></t-x> <span lang="pl">Zamek na wzgórzu</span></p>
-    <p class="body-m muted" style="margin:0 16px 8px">Lizbona</p>
-    <div class="inner">
-      <p class="title-s" style="margin:8px 0 0"><t-x pl="Skąd" en="From"></t-x></p>
+      <div class="radio-row"><span class="radio on"></span><div><p class="body-l"><t-x pl="Moja lokalizacja" en="My location"></t-x></p><p class="body-m muted"><t-x pl="Bieżącą pozycję ustali Google Maps. Może poprosić o dostęp do lokalizacji." en="Google Maps will find where you are. It may ask for access to your location."></t-x></p></div></div>
       <div class="radio-row"><span class="radio"></span><div><p class="body-l"><t-x pl="Nocleg" en="Your stay"></t-x></p><p class="body-m muted"><span lang="pl">Pensjonat Przykładowy, Alfama</span> · <t-x pl="punkt przybliżony" en="approximate point"></t-x></p></div></div>
-      <div class="radio-row"><span class="radio on"></span><div><p class="body-l"><t-x pl="Moja lokalizacja" en="My location"></t-x></p><p class="body-m muted"><t-x pl="Google Maps może zapytać o Twoją lokalizację; Tamitu jej nie odczytuje" en="Google Maps may ask for your location; Tamitu doesn't read it"></t-x></p></div></div>
       <div class="seg"><div><i-c n="car"></i-c><t-x pl="Auto" en="Car"></t-x></div><div class="on"><i-c n="check"></i-c><t-x pl="Komunikacja" en="Transit"></t-x></div><div><i-c n="walk"></i-c><t-x pl="Pieszo" en="Walk"></t-x></div></div>
       <div class="gap-24"></div>
       <span class="btn filled block"><i-c n="openinnew"></i-c><t-x pl="Otwórz w Google Maps" en="Open in Google Maps"></t-x></span>
     </div>
   </div></div>
+  <div class="snack" style="z-index:6"><span><t-x pl="Nie udało się otworzyć map. Spróbuj ponownie." en="Couldn&#39;t open maps. Please try again."></t-x></span></div>
   <div class="navbar"></div>
-</div><figcaption><b><t-x pl="Wariant C (U11)" en="Option C (U11)"></t-x></b> – bez uprawnień i bez EK-10; tylko gdy test C zostanie przyjęty nowym ADR.</figcaption></figure>
+</div><figcaption><b><t-x pl="Błąd otwarcia map" en="Maps launch error"></t-x></b> – system nie otworzył linku; arkusz zostaje, wybory bez zmian. Tamitu nie sprawdza sieci (ADR-0011 pkt 2) – brak sieci obsługuje Google Maps.</figcaption></figure>
 
 </div>
 </main>

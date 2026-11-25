@@ -63,10 +63,10 @@
 
 ## 8. Zgody i uprawnienia
 
-- **Kiedy:** akceptacja polityki (EK-02, EK-03), zgoda na AI (EK-06, EK-13), uprawnienie lokalizacji (EK-10).
-- **Składniki:** polityka – CMP-09 (niezaznaczony) + CMP-02 wypełniony nieaktywny do zaznaczenia; zgoda na AI – pełny ekran z treścią zgody i **dwoma równorzędnymi przyciskami** (CMP-02, ten sam styl), bez checkboxa; lokalizacja – wyjaśnienie (CMP-16 lub ekran, krok 2) przed prośbą systemową; stan zgód – CMP-11 informacyjne + CMP-02 „Wycofaj zgodę" / „Wyraź zgodę".
+- **Kiedy:** akceptacja polityki (EK-02, EK-03), zgoda na AI (EK-06, EK-13). Uprawnień systemowych Tamitu w MVP nie używa (lokalizacja: decyzja Q1 = C, 2026-11-25 – o dostęp pyta Google Maps).
+- **Składniki:** polityka – CMP-09 (niezaznaczony) + CMP-02 wypełniony nieaktywny do zaznaczenia; zgoda na AI – pełny ekran z treścią zgody i **dwoma równorzędnymi przyciskami** (CMP-02, ten sam styl), bez checkboxa; uprawnienie systemowe (gdyby było potrzebne po MVP) – wyjaśnienie przed prośbą systemową; stan zgód – CMP-11 informacyjne + CMP-02 „Wycofaj zgodę" / „Wyraź zgodę".
 - **Zasady (RODO, privacy-checklist):**
-  - **kontekst przed prośbą systemową** (lokalizacja tylko po wyborze „Moja lokalizacja");
+  - **kontekst przed prośbą systemową** (dotyczy każdego przyszłego uprawnienia systemowego);
   - **brak domyślnie zaznaczonych zgód**; brak zapamiętywania zaznaczenia między wersjami;
   - odmowa tak łatwa jak zgoda (równorzędne przyciski, ta sama waga, kolejność: zgoda nie zawsze „bardziej widoczna");
   - wycofanie zgody tak łatwe jak wyrażenie (EK-13, jeden przycisk);

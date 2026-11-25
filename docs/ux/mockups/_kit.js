@@ -86,7 +86,7 @@
     if (nav) {
       var here = location.pathname.split('/').pop();
       var names = ['01 Start', '02 Ekran startowy', '03 Ponowna akceptacja', '04 Lista planów', '05 Formularz', '06 Zgoda na AI', '07 Generowanie',
-        '08 Widok planu', '09 Trasa', '10 Lokalizacja', '11 Usunięcie planu', '12 Ustawienia', '13 Prywatność', '14 Wylogowanie', '15 Usunięcie konta', '16 Komunikaty'];
+        '08 Widok planu', '09 Trasa', '11 Usunięcie planu', '12 Ustawienia', '13 Prywatność', '14 Wylogowanie', '15 Usunięcie konta', '16 Komunikaty'];
       nav.innerHTML = names.map(function (n) {
         var f = 'ek-' + n.slice(0, 2) + '.html';
         return f === here ? '<b>EK-' + n + '</b>' : '<a href="' + f + '">EK-' + n + '</a>';
