@@ -127,35 +127,38 @@ void main() {
     expect(await store.takeDataReset('new'), isFalse);
   });
 
-  test('schema v1: consents_local with received_at, schema_meta = 1', () async {
-    final db = (await dbs().open('u1')).db;
-    final cols = await db
-        .customSelect('PRAGMA table_info(consents_local)')
-        .get();
-    expect(
-      cols.map((c) => c.read<String>('name')),
-      containsAll([
-        'id',
-        'type',
-        'granted',
-        'policy_version',
-        'lang',
-        'client_at',
-        'received_at',
-        'synced',
-      ]),
-    );
-    final meta = await db
-        .customSelect('SELECT version FROM schema_meta')
-        .getSingle();
-    expect(meta.read<int>('version'), AccountDatabase.currentSchemaVersion);
-    final uv = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(uv.data.values.first, AccountDatabase.currentSchemaVersion);
-    expect(
-      AccountDatabase.migrations.length,
-      AccountDatabase.currentSchemaVersion,
-    );
-  });
+  test(
+    'schema: consents_local with received_at, schema_meta = current',
+    () async {
+      final db = (await dbs().open('u1')).db;
+      final cols = await db
+          .customSelect('PRAGMA table_info(consents_local)')
+          .get();
+      expect(
+        cols.map((c) => c.read<String>('name')),
+        containsAll([
+          'id',
+          'type',
+          'granted',
+          'policy_version',
+          'lang',
+          'client_at',
+          'received_at',
+          'synced',
+        ]),
+      );
+      final meta = await db
+          .customSelect('SELECT version FROM schema_meta')
+          .getSingle();
+      expect(meta.read<int>('version'), AccountDatabase.currentSchemaVersion);
+      final uv = await db.customSelect('PRAGMA user_version').getSingle();
+      expect(uv.data.values.first, AccountDatabase.currentSchemaVersion);
+      expect(
+        AccountDatabase.migrations.length,
+        AccountDatabase.currentSchemaVersion,
+      );
+    },
+  );
 
   test('upsert by id replaces (sync marks the same record)', () async {
     final store = SqliteConsentLocalStore(dbs());

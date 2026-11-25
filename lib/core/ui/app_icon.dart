@@ -22,6 +22,11 @@ enum AppIcons {
   route,
   add,
   remove,
+  trips,
+  deviceOnly,
+  flight,
+  car,
+  delete,
 }
 
 const _data = <AppIcons, List<List<dynamic>>>{
@@ -42,6 +47,11 @@ const _data = <AppIcons, List<List<dynamic>>>{
   AppIcons.route: HugeIcons.strokeRoundedRoute01,
   AppIcons.add: HugeIcons.strokeRoundedPlusSign,
   AppIcons.remove: HugeIcons.strokeRoundedMinusSign,
+  AppIcons.trips: HugeIcons.strokeRoundedLuggage01,
+  AppIcons.deviceOnly: HugeIcons.strokeRoundedSmartPhone01,
+  AppIcons.flight: HugeIcons.strokeRoundedAirplaneLanding01,
+  AppIcons.car: HugeIcons.strokeRoundedCar01,
+  AppIcons.delete: HugeIcons.strokeRoundedDelete02,
 };
 
 /// Draws an icon from the app set. Colour is inherited from [IconTheme] (role colours),

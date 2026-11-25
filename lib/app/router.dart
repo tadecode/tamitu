@@ -6,6 +6,7 @@ import '../features/consent/presentation/ai_consent_screen.dart';
 import '../features/consent/presentation/reconsent_screen.dart';
 import '../features/consent/presentation/welcome_screen.dart';
 import '../features/plan_generation/presentation/plan_screen.dart';
+import '../features/plans/presentation/saved_plan_screen.dart';
 import '../features/session/session_controller.dart';
 import '../features/session/session_gate_screen.dart';
 import '../features/trip_form/presentation/trip_form_screen.dart';
@@ -24,9 +25,16 @@ abstract final class Routes {
   /// EK-05 (pushed from the start screen). EK-07 is pushed on top of it by the form.
   static const tripForm = '/home/trip';
 
-  /// EK-08; `extra` = `PlanViewData`. Child of home, so back returns to the start screen
-  /// and the form does not stay on the stack (EK-08 "Wejście i wyjście").
+  /// EK-08 of a plan that could not be saved (shown from memory); `extra` =
+  /// `PlanViewData`. Child of home, so back returns to EK-04 and the form does not stay
+  /// on the stack (EK-08 "Wejście i wyjście").
   static const plan = '/home/plan';
+
+  /// EK-08 of a saved plan (TAM-19). Optional `extra` = `PlanViewData` of the plan just
+  /// saved by EK-07; without it the plan is read from the phone (also after the process
+  /// was restored).
+  static String savedPlan(String id) =>
+      '/home/plans/${Uri.encodeComponent(id)}';
 }
 
 /// Session gate redirects (EK-01). Pure, so it is unit-tested directly.
@@ -88,6 +96,19 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) {
               final extra = state.extra;
               return PlanScreen(data: extra is PlanViewData ? extra : null);
+            },
+          ),
+          GoRoute(
+            path: 'plans/:id',
+            builder: (context, state) {
+              final status = ref.read(sessionProvider);
+              if (status is! SessionReady) return const SessionGateScreen();
+              final extra = state.extra;
+              return SavedPlanScreen(
+                uid: status.uid,
+                planId: state.pathParameters['id']!,
+                initial: extra is PlanViewData ? extra : null,
+              );
             },
           ),
         ],

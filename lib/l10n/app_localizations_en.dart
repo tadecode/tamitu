@@ -644,4 +644,76 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get planBackToList => 'Back to list';
+
+  @override
+  String get commonCancel => 'Cancel';
+
+  @override
+  String get commonClose => 'Close';
+
+  @override
+  String get planListTitle => 'Your trips';
+
+  @override
+  String get planListEmptyTitle => 'No trips yet';
+
+  @override
+  String get planListEmptyBody =>
+      'Enter your destination, stay and dates – AI will plan it day by day.';
+
+  @override
+  String get planListNewTrip => 'New trip';
+
+  @override
+  String get planListDeviceOnlyNotice =>
+      'Plans are stored only on this device. They won\'t be available after uninstalling the app or changing your phone.';
+
+  @override
+  String planListDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days',
+      one: '1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get planListArrivalFlight => 'flight';
+
+  @override
+  String get planListArrivalCar => 'car';
+
+  @override
+  String planListCreatedOn(String date) {
+    return 'Created $date';
+  }
+
+  @override
+  String get planListLoadErrorTitle => 'Couldn\'t load your trips';
+
+  @override
+  String get planListLoadErrorBody =>
+      'Please try again. If the problem continues, restart the app.';
+
+  @override
+  String planDeletedSnack(String destination) {
+    return 'Trip “$destination” deleted';
+  }
+
+  @override
+  String get planDeleteTitle => 'Delete this trip?';
+
+  @override
+  String planDeleteBody(String destination) {
+    return '“$destination” will be permanently deleted from this device. This can\'t be undone.';
+  }
+
+  @override
+  String get planDeleteConfirm => 'Delete';
+
+  @override
+  String get planDeleteError =>
+      'Couldn\'t delete the trip. Nothing was changed.';
 }

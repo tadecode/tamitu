@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:tamitu/app/home_screen.dart';
 import 'package:tamitu/core/config/app_constants.dart';
 import 'package:tamitu/core/errors/app_failure.dart';
 import 'package:tamitu/core/ui/update_app_view.dart';
@@ -16,6 +17,7 @@ import 'package:tamitu/features/plan_generation/domain/generated_plan.dart';
 import 'package:tamitu/features/plan_generation/domain/trip_input.dart';
 import 'package:tamitu/features/plan_generation/presentation/generation_screen.dart';
 import 'package:tamitu/features/plan_generation/presentation/plan_screen.dart';
+import 'package:tamitu/features/plans/presentation/saved_plan_screen.dart';
 import 'package:tamitu/features/trip_form/presentation/trip_form_screen.dart';
 
 import '../../helpers.dart';
@@ -139,8 +141,44 @@ void main() {
       expect(input.planLanguage, locale);
       // Day 1 of the sample plan has no items.
       expect(find.byKey(const Key('planDayOnlyArrival')), findsOneWidget);
+
+      // TAM-19: saved automatically (US-008), snackbar with the quota (U4), menu.
+      final saved = env.savedPlans.plansOf('u1').single;
+      expect(saved.input.destination, 'Lizbona');
+      expect(saved.plan.days, hasLength(2));
+      expect(find.byType(SavedPlanScreen), findsOneWidget);
+      expect(find.byKey(const Key('planMenu')), findsOneWidget);
+      expect(
+        find.text(
+          locale == 'en'
+              ? 'Plan saved. You can create 4 more of 5 today.'
+              : 'Plan zapisany. Dziś możesz utworzyć jeszcze 4 z 5.',
+        ),
+        findsOneWidget,
+      );
+      // Back goes to EK-04 (not the form), where the new plan is listed.
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.byType(HomeScreen), findsOneWidget);
+      expect(find.byKey(Key('planCard-${saved.id}')), findsOneWidget);
     });
   }
+
+  testWidgets('save fails: plan shown from memory, no snackbar, no menu', (
+    tester,
+  ) async {
+    final env = await _ready();
+    env.savedPlans.failSave = 1;
+    await _openForm(tester, env);
+    await _fillCarTrip(tester);
+    await _tapGenerate(tester);
+    await tester.pumpAndSettle();
+    expect(find.byType(PlanScreen), findsOneWidget);
+    expect(find.byType(SavedPlanScreen), findsNothing);
+    expect(find.byKey(const Key('planMenu')), findsNothing);
+    expect(find.textContaining('Plan zapisany'), findsNothing);
+    expect(env.savedPlans.plansOf('u1'), isEmpty);
+  });
 
   testWidgets('ai_unavailable returns to the form with the EK-16 message', (
     tester,

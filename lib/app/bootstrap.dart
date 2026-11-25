@@ -21,6 +21,7 @@ import '../features/consent/domain/consent_ports.dart';
 import '../features/plan_generation/data/callable_plan_api.dart';
 import '../features/plan_generation/data/fake_plan_api.dart';
 import '../features/plan_generation/domain/plan_api.dart';
+import '../features/plans/data/sqlite_plan_repository.dart';
 import 'environment.dart';
 import 'firebase_emulators.dart';
 import 'providers.dart';
@@ -103,13 +104,13 @@ Future<List<Override>> bootstrapOverrides() async {
     );
   }
   const uuid = Uuid();
+  // One instance for consents and plans: each account database is opened once.
+  final databases = AccountDatabases(
+    directory: getApplicationSupportDirectory,
+    keys: SecureStorageDbKeyStore(),
+  );
   final consents = ConsentService(
-    local: SqliteConsentLocalStore(
-      AccountDatabases(
-        directory: getApplicationSupportDirectory,
-        keys: SecureStorageDbKeyStore(),
-      ),
-    ),
+    local: SqliteConsentLocalStore(databases),
     pending: PrefsPendingPolicyStore(prefs),
     api: api,
     newId: uuid.v4,
@@ -125,6 +126,9 @@ Future<List<Override>> bootstrapOverrides() async {
     authGatewayProvider.overrideWithValue(auth),
     consentServiceProvider.overrideWithValue(consents),
     planApiProvider.overrideWithValue(plans),
+    planRepositoryProvider.overrideWithValue(
+      SqlitePlanRepository(databases, newId: uuid.v4),
+    ),
     requestIdProvider.overrideWithValue(uuid.v4),
     uiLanguageStoreProvider.overrideWithValue(_PrefsUiLanguageStore(prefs)),
     initialUiLanguageProvider.overrideWithValue(language),

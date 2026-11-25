@@ -7,6 +7,7 @@ import '../features/consent/application/consent_service.dart';
 import '../features/generation/application/ai_busy_controller.dart'
     show MonotonicClock;
 import '../features/plan_generation/domain/plan_api.dart';
+import '../features/plans/domain/saved_plan.dart';
 
 /// Ports wired in `bootstrap.dart` (Firebase or fakes) and overridden in tests.
 final authGatewayProvider = Provider<AuthGateway>(
@@ -21,6 +22,12 @@ final consentServiceProvider = Provider<ConsentService>(
 /// `generatePlan` port (P3-05, TAM-101).
 final planApiProvider = Provider<PlanApi>(
   (ref) => throw UnimplementedError('planApiProvider must be overridden'),
+);
+
+/// Plans saved on the phone (P3-06, TAM-19).
+final planRepositoryProvider = Provider<PlanRepository>(
+  (ref) =>
+      throw UnimplementedError('planRepositoryProvider must be overridden'),
 );
 
 /// New `requestId` (UUID v4) for every `generatePlan` attempt.
