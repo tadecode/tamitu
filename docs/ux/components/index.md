@@ -14,7 +14,7 @@
 Klucze ARB muszą być poprawnymi identyfikatorami Dart (gen_l10n, ADR-0006), więc **lowerCamelCase bez
 kropek**: `<obszar><Element><Wariant>`, np. `commonRetry`, `planListEmptyTitle`, `tripFormLodgingHelper`.
 Obszary: `common` (wspólne), `appBar`, `planList` (EK-04), `tripForm` (EK-05), `consent` (EK-02/03/06/13),
-`generation` (EK-07), `plan` (EK-08), `route` (EK-09/10), `settings-02` (EK-12..15), `error` (EK-16).
+`generation` (EK-07), `plan` (EK-08), `route` (EK-09), `settings-02` (EK-12..15), `error` (EK-16).
 Nazwy ostateczne uzgadnia ux z mobile-dev (pytanie UX8). W specyfikacjach komponentów podane są tylko
 klucze **wspólne**; klucze ekranowe powstaną w `screens/` (krok 2).
 
@@ -34,7 +34,7 @@ klucze **wspólne**; klucze ekranowe powstaną w `screens/` (krok 2).
 | CMP-10 | [Lista jednokrotnego wyboru](radio-list.md) | Radio button / `RadioListTile` | EK-09, EK-12 (język) |
 | CMP-11 | [Element listy](list-item.md) | List item / `ListTile` | EK-12, EK-13 |
 | CMP-12 | [Karta](card.md) | Card (filled) / `Card.filled` | EK-04 (plan), EK-08 (podsumowanie) |
-| CMP-13 | [Komunikat w treści](notice.md) | Banner (wariant w treści) / `Card` + ikona, tekst, akcje | EK-04, EK-05, EK-08, EK-09, EK-13 |
+| CMP-13 | [Komunikat w treści](notice.md) | Banner (wariant w treści) / `Card` + ikona, tekst, akcje | EK-04, EK-05, EK-08, EK-13 |
 | CMP-14 | [Snackbar](snackbar.md) | Snackbar / `SnackBar` | potwierdzenia, „Cofnij" |
 | CMP-15 | [Dialog](dialog.md) | Basic dialog / `AlertDialog` | EK-11, EK-14, anulowanie EK-07 |
 | CMP-16 | [Arkusz dolny](bottom-sheet.md) | Modal bottom sheet / `showModalBottomSheet` | EK-09, wybór języka |
@@ -55,7 +55,7 @@ klucze **wspólne**; klucze ekranowe powstaną w `screens/` (krok 2).
 | EK-06 Zgoda na AI | CMP-01, CMP-02 (równorzędne), CMP-13 |
 | EK-07 Generowanie | CMP-17, CMP-02, CMP-15 |
 | EK-08 Widok planu | CMP-01, CMP-12, CMP-13, CMP-19, CMP-20, CMP-15, CMP-14 |
-| EK-09 Trasa | CMP-16, CMP-10, CMP-07, CMP-13, CMP-02, CMP-14 |
+| EK-09 Trasa | CMP-16, CMP-10, CMP-07, CMP-02, CMP-14 |
 | EK-11 Usunięcie planu | CMP-15, CMP-14 |
 | EK-12 Ustawienia | CMP-01, CMP-11, CMP-16/CMP-10 (język); ekran licencji – systemowy Fluttera |
 | EK-13 Prywatność | CMP-01, CMP-11, CMP-13, CMP-02 |

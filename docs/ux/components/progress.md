@@ -51,4 +51,4 @@ wskaźnika 300 ms (krótkie operacje nie migoczą).
 | `generationMayTakeTime` | To może potrwać do 2 minut | This may take up to 2 minutes |
 
 ## Użycie
-EK-01, EK-04, EK-07, EK-08, EK-09, EK-15; wzorzec ładowanie.
+EK-01, EK-04, EK-07, EK-08, EK-15; wzorzec ładowanie.

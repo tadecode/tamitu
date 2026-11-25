@@ -364,10 +364,10 @@ body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:colu
 </script>
 </head>
 <body data-theme="light" data-lang="pl" data-scale="100">
-<header class="pg-head"><h1>EK-09 Wybór trasy do punktu</h1><span class="meta">US-007 · spec: <a href="../screens/ek-09.md">screens/ek-09.md</a> · v0.3 (TAM-108) · <span class="pg-anno">do zatwierdzenia przez właściciela</span></span></header>
+<header class="pg-head"><h1>EK-09 Wybór trasy do punktu</h1><span class="meta">US-007 · spec: <a href="../screens/ek-09.md">screens/ek-09.md</a> · v0.4 · <span class="pg-anno">zatwierdzony przez właściciela 2026-11-25</span></span></header>
 <main class="pg-main">
 <nav class="pg-nav"></nav>
-<p class="pg-note">Arkusz dolny nad EK-08. Komponenty: CMP-16, CMP-10, CMP-07, CMP-13, CMP-02, CMP-14. Wariant C (decyzja Q1, 2026-11-25): Tamitu nie prosi o lokalizację i jej nie odczytuje. „Moja lokalizacja” = link do Google Maps bez punktu startowego; pozycję ustala Google Maps (o dostęp może zapytać Mapy – to okno Map, nie Tamitu). Tryb: ostatnio użyty (UX11), przy pierwszym użyciu Komunikacja.</p>
+<p class="pg-note">Arkusz dolny nad EK-08. Komponenty: CMP-16, CMP-10, CMP-07, CMP-02, CMP-14. Wariant C (Q1, ADR-0017): Tamitu nie prosi o lokalizację i jej nie odczytuje. „Moja lokalizacja” = link do Google Maps bez punktu startowego, zawsze zaznaczona przy otwarciu (start nie jest zapamiętywany) – jedno dotknięcie przycisku otwiera Mapy. „Poprzedni punkt dnia” ukryty przy pierwszym punkcie dnia, „Nocleg” ukryty, gdy plan go nie ma (UX-TAM108-1). Tryb: ostatnio użyty (UX11), przy pierwszym użyciu Komunikacja.</p>
 <div class="states">
 
 <figure class="state"><div class="phone">
@@ -376,11 +376,12 @@ body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:colu
   <div class="scroll pad"></div>
   <div class="scrim sheet-host"><div class="sheet">
     <div class="handle" aria-label="Zamknij arkusz"></div>
-    <p class="st"><t-x pl="Trasa do:" en="Directions to:"></t-x> <span lang="pl">Zamek na wzgórzu</span></p>
+    <p class="st"><t-x pl="Trasa do:" en="Directions to:"></t-x> <span lang="pl">Obiad w lokalnej tasce</span></p>
     <p class="body-m muted" style="margin:0 16px 8px">Lizbona</p>
     <div class="inner">
       <p class="title-s" style="margin:8px 0 0"><t-x pl="Skąd" en="From"></t-x></p>
       <div class="radio-row"><span class="radio on"></span><div><p class="body-l"><t-x pl="Moja lokalizacja" en="My location"></t-x></p><p class="body-m muted"><t-x pl="Bieżącą pozycję ustali Google Maps. Może poprosić o dostęp do lokalizacji." en="Google Maps will find where you are. It may ask for access to your location."></t-x></p></div></div>
+      <div class="radio-row"><span class="radio"></span><div><p class="body-l"><t-x pl="Poprzedni punkt dnia" en="Previous place"></t-x></p><p class="body-m muted" lang="pl">Przejażdżka zabytkowym tramwajem</p></div></div>
       <div class="radio-row"><span class="radio"></span><div><p class="body-l"><t-x pl="Nocleg" en="Your stay"></t-x></p><p class="body-m muted"><span lang="pl">Pensjonat Przykładowy, Alfama</span> · <t-x pl="punkt przybliżony" en="approximate point"></t-x></p></div></div>
       <p class="title-s" style="margin:8px 0"><t-x pl="Czym" en="How"></t-x></p>
       <div class="seg"><div><i-c n="car"></i-c><t-x pl="Auto" en="Car"></t-x></div><div class="on"><i-c n="check"></i-c><t-x pl="Komunikacja" en="Transit"></t-x></div><div><i-c n="walk"></i-c><t-x pl="Pieszo" en="Walk"></t-x></div></div>
@@ -389,7 +390,7 @@ body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:colu
     </div>
   </div></div>
   <div class="navbar"></div>
-</div><figcaption><b><t-x pl="Domyślny" en="Default"></t-x></b> – start „Moja lokalizacja” (link bez punktu startowego); tryb przy pierwszym użyciu: Komunikacja. Tamitu niczego nie odczytuje.</figcaption></figure>
+</div><figcaption><b><t-x pl="Domyślny (kolejny punkt dnia)" en="Default (later place)"></t-x></b> – trzy starty, zaznaczona „Moja lokalizacja” (link bez punktu startowego); tryb przy pierwszym użyciu: Komunikacja. Jedno dotknięcie otwiera Mapy.</figcaption></figure>
 
 <figure class="state"><div class="phone">
   <div class="sysbar"><span>9:41</span><span>100%</span></div>
@@ -397,7 +398,7 @@ body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:colu
   <div class="scroll pad"></div>
   <div class="scrim sheet-host"><div class="sheet">
     <div class="handle"></div>
-    <p class="st"><t-x pl="Trasa do:" en="Directions to:"></t-x> <span lang="pl">Obiad w lokalnej tasce</span></p>
+    <p class="st"><t-x pl="Trasa do:" en="Directions to:"></t-x> <span lang="pl">Zamek na wzgórzu</span></p>
     <p class="body-m muted" style="margin:0 16px 8px">Lizbona</p>
     <div class="inner">
       <p class="title-s" style="margin:8px 0 0"><t-x pl="Skąd" en="From"></t-x></p>
@@ -410,29 +411,7 @@ body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:colu
     </div>
   </div></div>
   <div class="navbar"></div>
-</div><figcaption><b><t-x pl="Start: nocleg" en="Start: your stay"></t-x></b> – nocleg jako tekst w linku (punkt przybliżony, U14); „Pieszo” zapamiętane z poprzedniego użycia (UX11). Mapy pokażą podgląd trasy zamiast nawigacji.</figcaption></figure>
-
-<figure class="state"><div class="phone">
-  <div class="sysbar"><span>9:41</span><span>100%</span></div>
-  <div class="appbar"><span class="icbtn"><i-c n="back"></i-c></span><span class="title">Lizbona</span><span class="icbtn"><i-c n="more"></i-c></span></div>
-  <div class="scroll pad"></div>
-  <div class="scrim sheet-host"><div class="sheet">
-    <div class="handle"></div>
-    <p class="st"><t-x pl="Trasa do:" en="Directions to:"></t-x> <span lang="pl">Zamek na wzgórzu</span></p>
-    <p class="body-m muted" style="margin:0 16px 8px">Lizbona</p>
-    <div class="inner">
-      <div class="notice"><i-c n="info"></i-c><div class="body"><p><t-x pl="Ten plan nie ma noclegu. Trasa zacznie się od Twojej bieżącej pozycji." en="This plan has no accommodation. The route will start from where you are."></t-x></p></div></div>
-      <p class="title-s" style="margin:0"><t-x pl="Skąd" en="From"></t-x></p>
-      <div class="radio-row"><span class="radio on"></span><div><p class="body-l"><t-x pl="Moja lokalizacja" en="My location"></t-x></p><p class="body-m muted"><t-x pl="Bieżącą pozycję ustali Google Maps. Może poprosić o dostęp do lokalizacji." en="Google Maps will find where you are. It may ask for access to your location."></t-x></p></div></div>
-      <div class="radio-row disabled"><span class="radio"></span><div><p class="body-l"><t-x pl="Nocleg" en="Your stay"></t-x></p><p class="body-m muted"><t-x pl="Brak noclegu w planie" en="No accommodation in this plan"></t-x></p></div></div>
-      <p class="title-s" style="margin:8px 0"><t-x pl="Czym" en="How"></t-x></p>
-      <div class="seg"><div><i-c n="car"></i-c><t-x pl="Auto" en="Car"></t-x></div><div class="on"><i-c n="check"></i-c><t-x pl="Komunikacja" en="Transit"></t-x></div><div><i-c n="walk"></i-c><t-x pl="Pieszo" en="Walk"></t-x></div></div>
-      <div class="gap-24"></div>
-      <span class="btn filled block"><i-c n="openinnew"></i-c><t-x pl="Otwórz w Google Maps" en="Open in Google Maps"></t-x></span>
-    </div>
-  </div></div>
-  <div class="navbar"></div>
-</div><figcaption><b><t-x pl="Brak noclegu" en="No accommodation"></t-x></b> – „Nocleg” nieaktywny z opisem tekstem (nie tylko wyszarzenie); komunikat CMP-13 informacyjny, nieblokujący.</figcaption></figure>
+</div><figcaption><b><t-x pl="Pierwszy punkt dnia, wybrany nocleg" en="First place of the day, start: your stay"></t-x></b> – bez „Poprzedniego punktu dnia”; użytkownik wybrał „Nocleg” (tekst w linku, punkt przybliżony, U14); „Pieszo” zapamiętane z poprzedniego użycia (UX11). Mapy pokażą podgląd trasy zamiast nawigacji.</figcaption></figure>
 
 <figure class="state"><div class="phone">
   <div class="sysbar"><span>9:41</span><span>100%</span></div>
@@ -445,6 +424,27 @@ body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:colu
     <div class="inner">
       <p class="title-s" style="margin:8px 0 0"><t-x pl="Skąd" en="From"></t-x></p>
       <div class="radio-row"><span class="radio on"></span><div><p class="body-l"><t-x pl="Moja lokalizacja" en="My location"></t-x></p><p class="body-m muted"><t-x pl="Bieżącą pozycję ustali Google Maps. Może poprosić o dostęp do lokalizacji." en="Google Maps will find where you are. It may ask for access to your location."></t-x></p></div></div>
+      <p class="title-s" style="margin:8px 0"><t-x pl="Czym" en="How"></t-x></p>
+      <div class="seg"><div><i-c n="car"></i-c><t-x pl="Auto" en="Car"></t-x></div><div class="on"><i-c n="check"></i-c><t-x pl="Komunikacja" en="Transit"></t-x></div><div><i-c n="walk"></i-c><t-x pl="Pieszo" en="Walk"></t-x></div></div>
+      <div class="gap-24"></div>
+      <span class="btn filled block"><i-c n="openinnew"></i-c><t-x pl="Otwórz w Google Maps" en="Open in Google Maps"></t-x></span>
+    </div>
+  </div></div>
+  <div class="navbar"></div>
+</div><figcaption><b><t-x pl="Pierwszy punkt dnia, plan bez noclegu" en="First place, no accommodation"></t-x></b> – „Nocleg” i „Poprzedni punkt dnia” ukryte; zostaje jedna zaznaczona pozycja z opisem, więc wiadomo, skąd ruszy trasa.</figcaption></figure>
+
+<figure class="state"><div class="phone">
+  <div class="sysbar"><span>9:41</span><span>100%</span></div>
+  <div class="appbar"><span class="icbtn"><i-c n="back"></i-c></span><span class="title">Lizbona</span><span class="icbtn"><i-c n="more"></i-c></span></div>
+  <div class="scroll pad"></div>
+  <div class="scrim sheet-host"><div class="sheet">
+    <div class="handle"></div>
+    <p class="st"><t-x pl="Trasa do:" en="Directions to:"></t-x> <span lang="pl">Obiad w lokalnej tasce</span></p>
+    <p class="body-m muted" style="margin:0 16px 8px">Lizbona</p>
+    <div class="inner">
+      <p class="title-s" style="margin:8px 0 0"><t-x pl="Skąd" en="From"></t-x></p>
+      <div class="radio-row"><span class="radio"></span><div><p class="body-l"><t-x pl="Moja lokalizacja" en="My location"></t-x></p><p class="body-m muted"><t-x pl="Bieżącą pozycję ustali Google Maps. Może poprosić o dostęp do lokalizacji." en="Google Maps will find where you are. It may ask for access to your location."></t-x></p></div></div>
+      <div class="radio-row"><span class="radio on"></span><div><p class="body-l"><t-x pl="Poprzedni punkt dnia" en="Previous place"></t-x></p><p class="body-m muted" lang="pl">Przejażdżka zabytkowym tramwajem</p></div></div>
       <div class="radio-row"><span class="radio"></span><div><p class="body-l"><t-x pl="Nocleg" en="Your stay"></t-x></p><p class="body-m muted"><span lang="pl">Pensjonat Przykładowy, Alfama</span> · <t-x pl="punkt przybliżony" en="approximate point"></t-x></p></div></div>
       <div class="seg"><div><i-c n="car"></i-c><t-x pl="Auto" en="Car"></t-x></div><div class="on"><i-c n="check"></i-c><t-x pl="Komunikacja" en="Transit"></t-x></div><div><i-c n="walk"></i-c><t-x pl="Pieszo" en="Walk"></t-x></div></div>
       <div class="gap-24"></div>
@@ -453,7 +453,7 @@ body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:colu
   </div></div>
   <div class="snack" style="z-index:6"><span><t-x pl="Nie udało się otworzyć map. Spróbuj ponownie." en="Couldn&#39;t open maps. Please try again."></t-x></span></div>
   <div class="navbar"></div>
-</div><figcaption><b><t-x pl="Błąd otwarcia map" en="Maps launch error"></t-x></b> – system nie otworzył linku; arkusz zostaje, wybory bez zmian. Tamitu nie sprawdza sieci (ADR-0011 pkt 2) – brak sieci obsługuje Google Maps.</figcaption></figure>
+</div><figcaption><b><t-x pl="Błąd otwarcia map" en="Maps launch error"></t-x></b> – start „Poprzedni punkt dnia” (nazwa i miejscowość w linku); system nie otworzył linku, arkusz zostaje, wybory bez zmian. Tamitu nie sprawdza sieci (ADR-0011 pkt 2).</figcaption></figure>
 
 </div>
 </main>

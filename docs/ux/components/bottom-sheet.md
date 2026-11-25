@@ -12,7 +12,7 @@ Nie służy do: treści głównej, długich tekstów, formularzy z wieloma polam
 ## Warianty
 | Wariant | Kiedy użyć | Uwagi |
 |---|---|---|
-| Wybór z działaniem | EK-09 | tytuł (nazwa punktu), CMP-10 (start), CMP-07 (tryb), CMP-13 (informacje), CMP-02 wypełniony na dole |
+| Wybór z działaniem | EK-09 | tytuł (nazwa punktu), CMP-10 (start), CMP-07 (tryb), CMP-02 wypełniony na dole |
 | Prosty wybór | język | tytuł + CMP-10; wybór zamyka arkusz |
 
 ## Stany

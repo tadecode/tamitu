@@ -121,10 +121,10 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-  A["EK-08"] -->|punkt / Trasa| B["EK-09 arkusz: start (Moja lokalizacja / Nocleg*), tryb (auto / komunikacja / pieszo – ostatnio użyty)"]
+  A["EK-08"] -->|punkt / Trasa| B["EK-09 arkusz: start (Moja lokalizacja – domyślnie / Poprzedni punkt dnia / Nocleg*), tryb (auto / komunikacja / pieszo – ostatnio użyty)"]
   B -->|Otwórz w Google Maps| L{"Start?"}
   L -->|Moja lokalizacja| U1(["Link bez origin: pozycję ustala Google Maps"])
-  L -->|Nocleg| U2(["Link z origin = nocleg (tekst)"])
+  L -->|Poprzedni punkt / Nocleg| U2(["Link z origin = tekst z planu"])
   U1 --> S{"System otworzył link?"}
   U2 --> S
   S -->|tak| G(["Google Maps: aplikacja albo przeglądarka"])
@@ -132,7 +132,7 @@ flowchart TD
   G -.->|Mapy bez dostępu do lokalizacji| GP(["Prośba systemowa dla Map / wybór startu w Mapach – nie ekran Tamitu"])
 ```
 
-* start „Nocleg” z informacją o przybliżonym punkcie [U14]; bez noclegu w planie pozycja jest nieaktywna. Tamitu nie
+* start „Nocleg” z informacją o przybliżonym punkcie [U14]; bez noclegu w planie pozycja jest ukryta; „Poprzedni punkt dnia” ukryty przy pierwszym punkcie dnia (UX-TAM108-1). Przy domyślnym starcie wystarczy jedno dotknięcie. Tamitu nie
 prosi o lokalizację i nie odczytuje pozycji (EK-10 wycofany). Brak sieci obsługuje Google Maps (ADR-0011 pkt 2).
 
 ## P7. Ustawienia, język, prywatność (US-003) – wzorce: lista i szczegóły, zgody

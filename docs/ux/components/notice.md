@@ -6,8 +6,8 @@
 
 ## Cel
 Trwała, kontekstowa informacja na ekranie, która **nie znika sama**: informacja o AI (EK-08), „plany tylko
-na tym urządzeniu" (EK-04, EK-13), brak sieci przy funkcji wymagającej sieci (EK-05, EK-09), przybliżony
-punkt startu (EK-09), ostrzeżenie o nieodwracalności (EK-15).
+na tym urządzeniu" (EK-04, EK-13), brak sieci przy funkcji wymagającej sieci (EK-05), przybliżony
+punkt startu (dawniej EK-09; od v0.4 jako opis pozycji w CMP-10), ostrzeżenie o nieodwracalności (EK-15).
 Nie służy do: potwierdzeń chwilowych (CMP-14), błędów całego ekranu (CMP-18), błędów pól (CMP-04).
 
 ## Warianty
@@ -56,4 +56,4 @@ Komunikat o braku sieci pojawia się po nieudanej próbie akcji sieciowej i znik
 Teksty komunikatów o AI i o planach na urządzeniu – do potwierdzenia przez security (wzorce z privacy-checklist).
 
 ## Użycie
-EK-04, EK-05, EK-08, EK-09, EK-13, EK-15, EK-16; wzorce brak sieci, zgody, błąd.
+EK-04, EK-05, EK-08, EK-13, EK-15, EK-16; wzorce brak sieci, zgody, błąd.
