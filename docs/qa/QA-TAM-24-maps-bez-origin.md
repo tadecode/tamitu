@@ -3,7 +3,9 @@
 - Rola: qa · Data: 2026-11-25 · Zadanie: [TAM-24](https://tadecode.atlassian.net/browse/TAM-24)
 - Pytanie: Q1 (`docs/open-questions.md`), ADR-0007 (Aneks A pkt 2), ekrany EK-09 i EK-10, US-007
 - **Rekomendacja: wariant C dla MVP** (link bez `origin` przy starcie „Moja lokalizacja”). Tamitu nie potrzebuje
-  wtedy żadnego uprawnienia lokalizacji ani ekranu EK-10. Decyzja należy do właściciela; zmiana wymaga ADR zastępującego.
+  wtedy żadnego uprawnienia lokalizacji ani ekranu EK-10.
+- **Decyzja właściciela (2026-11-25): wariant C dla MVP** – link Google Maps bez `origin`, bez uprawnień lokalizacji
+  w Tamitu. Q1 odpowiedziane. Zmiana ADR-0007 wymaga ADR zastępującego (architect).
 
 ## Po co ten test
 
@@ -83,10 +85,36 @@ zachowanie Map, nie błąd.
 ### 5. Przeglądarka zamiast aplikacji Map
 
 Link otwarty jawnie w Chrome (`-p com.android.chrome`) i tak trafił do aplikacji Mapy (Chrome przekazuje linki
-`google.com/maps` do zainstalowanej aplikacji). Wynik jak w scenariuszu 1. **Przypadku „telefon bez aplikacji Map”
-nie sprawdzono**, bo wymagałby wyłączenia Map w telefonie (trwała zmiana). Ryzyko jest niskie: Mapy są
-preinstalowane na urządzeniach z usługami Google, a strona `google.com/maps` sama prosi przeglądarkę o lokalizację.
-Do sprawdzenia przy teście wydania na emulatorze bez Map, jeśli właściciel uzna to za potrzebne.
+`google.com/maps` do zainstalowanej aplikacji). Wynik jak w scenariuszu 1.
+
+### 6. Aplikacja Google Maps wyłączona (dopisane 2026-11-25, na prośbę orkiestratora)
+
+Mapy wyłączono na czas testu (`pm disable-user --user 0 com.google.android.apps.maps`), a potem włączono
+(`pm enable`). Stan sprawdzono przez `pm list packages -e`. Link ten sam co w scenariuszu 1 (Wawel, bez `origin`).
+Stan strony w Chrome odczytano przez DevTools Chrome (`adb forward` do `chrome_devtools_remote`). Wypisywano tylko
+tytuł strony, cel i rodzaj pola startu, bez wartości. Karty otwarte przez test zamknięto po teście.
+
+| Krok | `driving` | `transit` | `walking` |
+|---|---|---|---|
+| Otwarcie linku | systemowe okno „Otwórz za pomocą”: Chrome, Bing, FREE ADBLOCKER BROWSER, Przeglądarka (systemowa); opcja „Nie pytaj ponownie” | jak `driving` | jak `driving` |
+| Wybór „Chrome” (jednorazowo, bez „Nie pytaj ponownie”) | Google Maps web: „Wyznacz trasę – Z: Twoja lokalizacja do: Wawel 5”, cel „Zamek Królewski na Wawelu…”, trasa wyznaczona | jak `driving`; tryb komunikacji zachowany w adresie strony (`!3e3`) | jak `driving`; tryb pieszy zachowany (`!3e2`) |
+| Prośba przeglądarki o lokalizację | nie pojawiła się | nie pojawiła się | nie pojawiła się |
+
+Wnioski:
+- Bez aplikacji Map link nadal działa: otwiera się Google Maps w przeglądarce. Start „Twoja lokalizacja”, cel
+  i tryb są zachowane, a trasa jest wyznaczona. Tamitu nie musi nic robić (`url_launcher` przekazuje link systemowi).
+- Gdy zainstalowanych jest kilka przeglądarek, Android najpierw pokazuje okno wyboru aplikacji. Na telefonie
+  z jedną przeglądarką lub z ustawioną domyślną strona otworzy się od razu.
+- Prośba przeglądarki o lokalizację się nie pojawiła. Na tym telefonie Chrome ma już uprawnienie systemowe do
+  lokalizacji, a strona Google prawdopodobnie ma też wcześniejszą zgodę. **Pierwszej prośby („google.com chce
+  użyć lokalizacji”) nie sprawdzono**, bo wymagałoby to zmiany ustawień witryny w Chrome. Gdy przeglądarka nie
+  dostanie zgody, Google Maps web pokaże puste pole startu do uzupełnienia (jak w aplikacji, scenariusze 3 i 4).
+- **Inne aplikacje mapowe nie były proponowane.** W telefonie jest komoot i deklaruje obsługę linków
+  `google.com/maps`, ale nie pojawił się w oknie wyboru dla linku `maps/dir`; pokazane były tylko przeglądarki.
+  Niczego nie instalowano. Obsługa innych aplikacji mapowych wymagałaby osobnego linku (`geo:`), patrz „Co dalej”.
+- Uwaga techniczna: w czasie testu telefon dwa razy na chwilę rozłączył się z USB. W jednym przebiegu Mapy przez
+  około minutę pozostały wyłączone, zanim przywrócono je ręcznie przez `pm enable`. Stan końcowy sprawdzono: Mapy
+  włączone.
 
 ## Czego wymaga każdy wariant od Tamitu
 
@@ -113,14 +141,19 @@ pieszo”). Działa w każdym trybie. Gdy brak zgody lub lokalizacji, Mapy obsł
 musi prosić o wrażliwe uprawnienie, więc znikają EK-10, `geolocator`, D7, SEC-12 i część SEC-13. Zgadza się to też
 z rekomendacją security. Warunek: start w linku i cel jako tekst „nazwa, miejscowość”, nie same współrzędne.
 
-Zastrzeżenia: test na jednym telefonie (Android 13, Mapy 26.47); nie sprawdzono telefonu bez aplikacji Map ani
-przycisku „Włącz” w oknie lokalizacji.
+Zastrzeżenia: test na jednym telefonie (Android 13, Mapy 26.47). Nie sprawdzono przycisku „Włącz” w oknie
+lokalizacji ani pierwszej prośby przeglądarki o lokalizację (scenariusz 6). Telefon bez aplikacji Map sprawdzono
+w scenariuszu 6: działa przez przeglądarkę.
 
-## Co dalej (do decyzji właściciela)
+## Co dalej
 
-1. Właściciel: decyzja Q1 – przejście z A na C.
-2. Po zgodzie, architect: ADR zastępujący część „lokalizacja” ADR-0007 (opcja C; zostają: format linku, `destination` jako
+1. ~~Właściciel: decyzja Q1~~ – **zdecydowane 2026-11-25: wariant C dla MVP.**
+2. architect: ADR zastępujący część „lokalizacja” ADR-0007 (opcja C; zostają: format linku, `destination` jako
    tekst, `externalApplication`, `<queries>`, minSdk). Wynik testu jako aneks do ADR-0007 (Aneks A pkt 2).
 3. analyst: US-007 i S6 (scope.md) – „Moja lokalizacja” bez uprawnienia w Tamitu.
 4. ux: EK-09 – stan „Wariant C” jako domyślny, usunięcie stanów odczytu pozycji i odmowy; EK-10 do archiwum; U11 do zamknięcia.
-5. security: rejestr danych – D7 wypada; privacy-checklist (uprawnienie, Data Safety).
+5. security: rejestr danych – D7 wypada; privacy-checklist i deklaracja w Google Play (Data Safety: brak lokalizacji
+   po stronie Tamitu, brak uprawnienia do uzasadnienia).
+6. Pomysł na później (po MVP): obsługa innych aplikacji mapowych przez link `geo:` z systemowym wyborem aplikacji.
+   Ograniczenie: `geo:` przekazuje tylko cel, bez trybu (auto, komunikacja, pieszo) i bez trasy, więc byłaby to opcja
+   dodatkowa obok linku Google Maps, nie zamiennik.

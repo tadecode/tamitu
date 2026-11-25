@@ -110,7 +110,7 @@ Szczegóły: `docs/architecture/przeglad-ekranow-p3-14c.md`. Odpowiedzi na U3, U
 
 | # | Pytanie | Propozycja | ADR |
 |---|---|---|---|
-| Q1 | Lokalizacja: zostawić dokładną z uprawnieniem (opcja A, zgodnie z S6) czy link Maps bez `origin` (opcja C: Google Maps sam użyje bieżącej pozycji, zero uprawnień; wymaga testu na urządzeniu)? | C prostsza i bezpieczniejsza, ale zmienia S6/US-007; do decyzji wdrażamy A | 0007 |
+| Q1 | Lokalizacja: zostawić dokładną z uprawnieniem (opcja A, zgodnie z S6) czy link Maps bez `origin` (opcja C: Google Maps sam użyje bieżącej pozycji, zero uprawnień; wymaga testu na urządzeniu)? | **Odpowiedziane:** 2026-11-25 właściciel: wariant C (link bez origin, bez uprawnień lokalizacji) dla MVP (test: `docs/qa/QA-TAM-24-maps-bez-origin.md`) | 0007 |
 | Q2 | Testy a App Check: wewnętrzna ścieżka Google Play (konto Play organizacji) czy sideload APK z wyłączonym App Check? | Ścieżka Play; do tego czasu App Check wyłączony na dev | 0002 |
 | Q3 | Budżety: dev 20 PLN, prod 100 PLN/mies., alerty 50/90/100%, auto-wyłączenie AI przy 100%; limit globalny 50 generowań/dobę | akceptacja lub inne kwoty | 0003 |
 | Q4 | Klasa modelu: start od Flash, ewentualnie Flash-Lite; ceny z `costs.md` (niezweryfikowane) jako podstawa? | akceptacja; ostateczny model po ewaluacji w fazie 3 | 0001 |
@@ -126,7 +126,7 @@ Szczegóły: `docs/architecture/przeglad-ekranow-p3-14c.md`. Odpowiedzi na U3, U
 ### Odpowiedzi właściciela na Q1–Q12 (2026-11-15)
 | # | Odpowiedź | Skutek |
 |---|---|---|
-| Q1 | **A, test C później**: wdrażamy dokładną lokalizację (uprawnienia FINE+COARSE); wariant C (link bez `origin`) sprawdzany na urządzeniu w fazie 3 i ewentualnie upraszczamy | P3-07; security rekomendował C |
+| Q1 | **A, test C później**: wdrażamy dokładną lokalizację (uprawnienia FINE+COARSE); wariant C (link bez `origin`) sprawdzany na urządzeniu w fazie 3 i ewentualnie upraszczamy | P3-07; security rekomendował C. **Aktualizacja 2026-11-25 właściciel: wariant C (link bez origin, bez uprawnień lokalizacji) dla MVP** (TAM-24); ADR zastępujący ADR-0007 w części lokalizacji |
 | Q2 | Ścieżka testowa Google Play (konto Play organizacji); do tego czasu sideload tylko dev, dane testowe, App Check wyłączony | zgodne |
 | Q3 | dev 20 PLN, prod 100 PLN/mies., alerty 50/90/100%, auto-wyłączenie AI, limit globalny 50/dobę | zgodne |
 | Q4 | Start od Flash, ostateczny wybór po ewaluacji w fazie 3; ceny do weryfikacji przed fazą 3 | zgodne |
