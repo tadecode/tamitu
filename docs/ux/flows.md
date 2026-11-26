@@ -84,6 +84,12 @@ flowchart TD
   C -->|zgadzam się, zapis OK| G
   Z -->|jest| G["EK-07 Generowanie: wskaźnik nieokreślony + Anuluj"]
   G -->|sukces| P["Plan zapisany automatycznie → EK-08 z informacją o AI; pozostało X z 5 [U4]"]
+  G -->|sukces, ale zapis w telefonie nieudany| PN["EK-08 stan Plan nie jest zapisany: ostrzeżenie + Spróbuj zapisać ponownie, bez menu (TAM-104)"]
+  PN -->|zapis udany| P
+  PN -->|zapis znów nieudany| PN
+  PN -->|wstecz| PD{"Dialog: Wyjść bez zapisania planu?"}
+  PD -->|Anuluj| PN
+  PD -->|Wyjdź bez zapisu: plan przepada| EK04L["EK-04"]
   G -->|błąd / AI niedostępne / zła odpowiedź| E1["EK-05 + komunikat błędu (EK-16), dane zachowane, limit zwrócony"]
   G -->|ai_busy: AI chwilowo przeciążone| BZ["EK-07 stan przeciążenia: odliczanie 60 s, Spróbuj teraz, Wróć do formularza (ek-07-ai-busy)"]
   BZ -->|koniec odliczania na pierwszym planie albo Spróbuj teraz| G2["EK-07 ponawianie (jedno automatyczne)"]
@@ -92,6 +98,7 @@ flowchart TD
   BM -->|Spróbuj teraz| G2
   BM -->|Wróć / wstecz| B
   G2 -->|sukces| P
+  G2 -->|sukces, zapis nieudany| PN
   G2 -->|inny błąd| E1
   G -->|limit wyczerpany| E2["EK-05 + komunikat limitu z godziną odnowienia"]
   G -->|Anuluj / wstecz| P4["P4"]

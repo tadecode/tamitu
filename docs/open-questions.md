@@ -265,3 +265,9 @@ Analiza: `docs/requirements/idea-kredyty-sloneczka.md`. Pytania nie blokują MVP
 | # | Pytanie | Zadaje | Status | Propozycja domyślna | Skutek |
 |---|---|---|---|---|---|
 | UX-TAM108-1 | EK-09 v0.3: decyzja Q1 = C wymienia dwa starty (Moja lokalizacja, nocleg). Czy usuwamy start „Poprzedni punkt dnia” (był w v0.2 i w US-007) i czy domyślnym startem ma być „Moja lokalizacja”? | ux → owner | **odpowiedziane 2026-11-25 (właściciel): trzy starty** – „Moja lokalizacja” domyślnie (bez `origin`), „Poprzedni punkt dnia” (ukryty przy pierwszym punkcie dnia), „Nocleg” (ukryty bez noclegu); tryb zapamiętany, start nie; EK-09 v0.4 zatwierdzony | Tak: dwa starty; domyślnie „Moja lokalizacja” (Mapy od razu oferują nawigację); start nie jest zapamiętywany, tryb tak (UX11). „Poprzedni punkt dnia” można dodać po MVP | EK-09, US-007 (analyst), TAM-20 |
+
+## Plan nie zapisał się w telefonie (TAM-104), ux, 2026-11-26
+
+| # | Pytanie | Zadaje | Status | Propozycja domyślna | Skutek |
+|---|---|---|---|---|---|
+| UX-TAM104-1 | Gdy plan się wygenerował, ale nie zapisał w telefonie (EK-08 v0.2), użytkownik może tylko ponawiać zapis. Jeśli wyjdzie albo Android zamknie aplikację w tle (np. gdy użytkownik zwalnia miejsce w Ustawieniach), plan przepada. Czy dodać w tym stanie akcję „Kopiuj plan jako tekst” (schowek albo systemowe „Udostępnij”), żeby plan dało się zachować poza Tamitu? | ux → owner | **odpowiedziane 2026-11-26 (właściciel): nie w MVP** – w stanie „Plan nie jest zapisany” nie dodajemy „Kopiuj plan jako tekst”; EK-08 v0.2 bez zmian | **Nie w MVP.** Udostępnianie i kopiowanie planów jest poza zakresem (`scope.md`, US-009), a tekst planu zawiera nocleg, przylot i numer lotu, które opuściłyby aplikację (przegląd security). Błąd zapisu powinien być rzadki; po MVP wrócić razem z ogólnym udostępnianiem planów | Tak: nowa akcja w EK-08 (2. przycisk w ostrzeżeniu), przegląd security, zmiana zakresu (analyst), więcej pracy mobile-dev. Nie: EK-08 v0.2 bez zmian |
