@@ -162,6 +162,10 @@ class AppButton extends StatelessWidget {
       button: true,
       enabled: enabled,
       label: spoken,
+      // excludeSemantics drops the button's own tap action (QA PR #178, TAM-111);
+      // no action while disabled or loading.
+      onTap: enabled ? onPressed : null,
+      container: true,
       excludeSemantics: true,
       child: button,
     );
@@ -289,6 +293,9 @@ class _ConsentCheckboxState extends State<ConsentCheckbox> {
               child: Semantics(
                 link: true,
                 label: '${w.linkButtonText}, $linkHint',
+                // excludeSemantics drops the button's own tap action (TAM-111).
+                onTap: onOpenLink,
+                container: true,
                 excludeSemantics: true,
                 child: TextButton.icon(
                   onPressed: onOpenLink,

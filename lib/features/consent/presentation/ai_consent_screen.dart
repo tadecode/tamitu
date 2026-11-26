@@ -161,6 +161,9 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
                   link: true,
                   label:
                       '$before${l10n.aiConsentPolicyLink}$after, ${l10n.commonOpensInBrowser}',
+                  // excludeSemantics drops the inline link's tap action (TAM-111).
+                  onTap: _openPolicy,
+                  container: true,
                   excludeSemantics: true,
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(

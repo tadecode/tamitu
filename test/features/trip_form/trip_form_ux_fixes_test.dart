@@ -498,4 +498,23 @@ void main() {
       });
     }
   });
+
+  testWidgets('TAM-111: TalkBack can press "Create plan"', (tester) async {
+    final env = await _ready();
+    env.plans.gate = Completer<void>();
+    await _openForm(tester, env);
+    await _fillCarTrip(tester);
+    final handle = tester.ensureSemantics();
+    final generate = find.byKey(const Key('tripFormGenerate'));
+    await _show(tester, generate);
+    expect(hasSemanticsTap(tester, generate), isTrue);
+    semanticsTap(tester, generate);
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 300));
+    }
+    expect(find.byType(GenerationScreen), findsOneWidget);
+    handle.dispose();
+    env.plans.gate!.complete();
+    await tester.pumpAndSettle();
+  });
 }

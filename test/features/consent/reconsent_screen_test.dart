@@ -168,4 +168,24 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('TAM-111: TalkBack can open the policy link and press accept', (
+    t,
+  ) async {
+    final env = signedInWithoutAcceptance();
+    await pumpApp(t, env, locale: 'en');
+    final handle = t.ensureSemantics();
+    final link = find.bySemanticsLabel(RegExp(r', opens in browser$'));
+    // EK-03 link above the consent row (the row has no separate link button here).
+    expect(link, findsOneWidget);
+    expect(hasSemanticsTap(t, link), isTrue);
+    semanticsTap(t, link);
+    await t.pumpAndSettle();
+    expect(env.opened, [AppConstants.privacyPolicyUrls['en']]);
+    expect(hasSemanticsTap(t, acceptButton()), isFalse);
+    await t.tap(find.byType(Checkbox));
+    await t.pumpAndSettle();
+    expect(hasSemanticsTap(t, acceptButton()), isTrue);
+    handle.dispose();
+  });
 }

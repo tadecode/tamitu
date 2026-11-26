@@ -127,6 +127,9 @@ class _ReconsentScreenState extends ConsumerState<ReconsentScreen> {
                 child: Semantics(
                   link: true,
                   label: '${l10n.reconsentLink}, ${l10n.commonOpensInBrowser}',
+                  // excludeSemantics drops the button's own tap action (TAM-111).
+                  onTap: _openPolicy,
+                  container: true,
                   excludeSemantics: true,
                   child: TextButton.icon(
                     onPressed: _openPolicy,
