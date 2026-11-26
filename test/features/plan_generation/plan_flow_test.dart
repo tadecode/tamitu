@@ -17,7 +17,9 @@ import 'package:tamitu/features/plan_generation/domain/generated_plan.dart';
 import 'package:tamitu/features/plan_generation/domain/trip_input.dart';
 import 'package:tamitu/features/plan_generation/presentation/generation_screen.dart';
 import 'package:tamitu/features/plan_generation/presentation/plan_screen.dart';
+import 'package:tamitu/features/plans/domain/saved_plan.dart';
 import 'package:tamitu/features/plans/presentation/saved_plan_screen.dart';
+import 'package:tamitu/features/plans/presentation/unsaved_plan_screen.dart';
 import 'package:tamitu/features/trip_form/presentation/trip_form_screen.dart';
 
 import '../../helpers.dart';
@@ -164,21 +166,41 @@ void main() {
     });
   }
 
-  testWidgets('save fails: plan shown from memory, no snackbar, no menu', (
-    tester,
-  ) async {
-    final env = await _ready();
-    env.savedPlans.failSave = 1;
-    await _openForm(tester, env);
-    await _fillCarTrip(tester);
-    await _tapGenerate(tester);
-    await tester.pumpAndSettle();
-    expect(find.byType(PlanScreen), findsOneWidget);
-    expect(find.byType(SavedPlanScreen), findsNothing);
-    expect(find.byKey(const Key('planMenu')), findsNothing);
-    expect(find.textContaining('Plan zapisany'), findsNothing);
-    expect(env.savedPlans.plansOf('u1'), isEmpty);
-  });
+  for (final failure in PlanStorageFailure.values) {
+    testWidgets('save fails (${failure.name}): EK-08 "not saved" from memory, '
+        'no snackbar, no menu (TAM-113)', (tester) async {
+      final env = await _ready();
+      env.savedPlans
+        ..failSave = 1
+        ..saveFailure = failure;
+      await _openForm(tester, env);
+      await _fillCarTrip(tester);
+      await _tapGenerate(tester);
+      await tester.pumpAndSettle();
+      expect(find.byType(UnsavedPlanScreen), findsOneWidget);
+      expect(find.byType(PlanScreen), findsOneWidget);
+      expect(find.byType(SavedPlanScreen), findsNothing);
+      expect(find.byKey(const Key('planNotSavedNotice')), findsOneWidget);
+      expect(
+        find.textContaining(
+          failure == PlanStorageFailure.noSpace
+              ? 'W telefonie brakuje miejsca'
+              : 'Nie udało się zapisać planu w telefonie',
+        ),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('planMenu')), findsNothing);
+      expect(find.textContaining('Plan zapisany'), findsNothing);
+      expect(env.savedPlans.plansOf('u1'), isEmpty);
+      // The form is not on the stack: back asks, then EK-04.
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('planLeaveUnsavedDialog')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('planLeaveUnsavedConfirm')));
+      await tester.pumpAndSettle();
+      expect(find.byType(HomeScreen), findsOneWidget);
+    });
+  }
 
   testWidgets('ai_unavailable returns to the form with the EK-16 message', (
     tester,

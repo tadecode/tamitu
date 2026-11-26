@@ -9,6 +9,7 @@ import '../../../app/router.dart';
 import '../../../core/ui/components.dart';
 import '../../../core/ui/tokens.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../plan_generation/domain/generated_plan.dart';
 import '../../plan_generation/presentation/plan_screen.dart';
 import '../application/plans_providers.dart';
 import 'delete_plan_dialog.dart';
@@ -87,43 +88,21 @@ class _SavedPlanScreenState extends ConsumerState<SavedPlanScreen> {
   }
 
   void _showSaved() {
-    final quota = _data?.plan.quota;
-    if (!mounted || quota == null) return;
-    final l10n = AppLocalizations.of(context)!;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          key: const Key('planSavedSnack'),
-          content: Text(l10n.planSavedSnack(quota.remainingToday, quota.limit)),
-        ),
-      );
+    final data = _data;
+    if (!mounted || data == null) return;
+    showPlanSavedSnack(context, data.plan);
   }
 
   Future<void> _delete() async {
     final data = _data;
     if (data == null) return;
-    final destination = data.input.destination;
-    final repo = ref.read(planRepositoryProvider);
-    final deleted = await showDeletePlanDialog(
+    await deleteSavedPlan(
       context,
-      destination: destination,
-      delete: () => repo.delete(widget.uid, widget.planId),
+      ref,
+      uid: widget.uid,
+      planId: widget.planId,
+      destination: data.input.destination,
     );
-    if (!deleted || !mounted) return;
-    ref.invalidate(savedPlansProvider(widget.uid));
-    final l10n = AppLocalizations.of(context)!;
-    // The messenger outlives this route: the snackbar shows on EK-04, above the FAB.
-    final messenger = ScaffoldMessenger.of(context);
-    context.go(Routes.home);
-    messenger
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          key: const Key('planDeletedSnack'),
-          content: Text(l10n.planDeletedSnack(destination)),
-        ),
-      );
   }
 
   @override
@@ -145,6 +124,52 @@ class _SavedPlanScreenState extends ConsumerState<SavedPlanScreen> {
       ),
     );
   }
+}
+
+/// "Plan saved. You can create X more of 5 today." (U4) after EK-07 or after a successful
+/// "Try saving again" (EK-08 v0.2). Nothing without the quota.
+void showPlanSavedSnack(BuildContext context, GeneratedPlan plan) {
+  final quota = plan.quota;
+  if (quota == null) return;
+  final l10n = AppLocalizations.of(context)!;
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      SnackBar(
+        key: const Key('planSavedSnack'),
+        content: Text(l10n.planSavedSnack(quota.remainingToday, quota.limit)),
+      ),
+    );
+}
+
+/// "Delete trip" (EK-11): confirmation dialog, then EK-04 with `planDeletedSnack`.
+Future<void> deleteSavedPlan(
+  BuildContext context,
+  WidgetRef ref, {
+  required String uid,
+  required String planId,
+  required String destination,
+}) async {
+  final repo = ref.read(planRepositoryProvider);
+  final deleted = await showDeletePlanDialog(
+    context,
+    destination: destination,
+    delete: () => repo.delete(uid, planId),
+  );
+  if (!deleted || !context.mounted) return;
+  ref.invalidate(savedPlansProvider(uid));
+  final l10n = AppLocalizations.of(context)!;
+  // The messenger outlives this route: the snackbar shows on EK-04, above the FAB.
+  final messenger = ScaffoldMessenger.of(context);
+  context.go(Routes.home);
+  messenger
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      SnackBar(
+        key: const Key('planDeletedSnack'),
+        content: Text(l10n.planDeletedSnack(destination)),
+      ),
+    );
 }
 
 /// CMP-17 skeleton of EK-08: summary card + three items.

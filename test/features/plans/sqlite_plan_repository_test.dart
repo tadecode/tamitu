@@ -1,6 +1,7 @@
 import 'dart:io';
 
-import 'package:drift/drift.dart' show Variable;
+import 'package:drift/drift.dart'
+    show CouldNotRollBackException, DriftWrappedException, Variable;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tamitu/core/db/account_database.dart';
@@ -226,6 +227,125 @@ void main() {
       throwsA(isA<PlanStorageException>()),
     );
     expect(await r.list('u1'), isEmpty);
+  });
+
+  test(
+    'a constraint error is "other", not out of storage (EK-08 v0.2)',
+    () async {
+      final r = repo(dbs());
+      final broken = GeneratedPlan(
+        requestId: 'r',
+        language: 'pl',
+        days: const [
+          PlanDay(dayNumber: 1, title: 'A', items: []),
+          PlanDay(dayNumber: 1, title: 'B', items: []),
+        ],
+      );
+      await expectLater(
+        r.save('u1', tripInput(), broken),
+        throwsA(
+          isA<PlanStorageException>().having(
+            (e) => e.failure,
+            'failure',
+            PlanStorageFailure.other,
+          ),
+        ),
+      );
+    },
+  );
+
+  test(
+    'full database: SQLITE_FULL is out of storage; retry after freeing space '
+    '(EK-08 v0.2, TAM-113)',
+    () async {
+      final d = dbs();
+      final r = repo(d);
+      final db = (await d.open('u1')).db;
+      // Simulate a full disk: the database may not grow past its current size.
+      final pages = await db.customSelect('PRAGMA page_count').getSingle();
+      final count = pages.data.values.first as int;
+      await db.customStatement('PRAGMA max_page_count = $count');
+      final input = tripInput(days: 7);
+      final sample = FakePlanApi.samplePlan(input, requestId: 'r1');
+      final big = GeneratedPlan(
+        requestId: 'r1',
+        language: 'pl',
+        days: [
+          for (final day in sample.days)
+            PlanDay(
+              dayNumber: day.dayNumber,
+              title: day.title,
+              items: [
+                for (var i = 0; i < 8; i++)
+                  PlanItem(
+                    startTime: '10:00',
+                    name: 'Miejsce $i',
+                    locality: 'Lizbona',
+                    description: 'x' * 300,
+                  ),
+              ],
+            ),
+        ],
+      );
+      await expectLater(
+        r.save('u1', input, big),
+        throwsA(
+          isA<PlanStorageException>().having(
+            (e) => e.failure,
+            'failure',
+            PlanStorageFailure.noSpace,
+          ),
+        ),
+      );
+      expect(await r.list('u1'), isEmpty); // no partial plan
+      // "Free up some space and try again": the same save now succeeds.
+      await db.customStatement('PRAGMA max_page_count = 1073741823');
+      final id = await r.save('u1', input, big);
+      expect((await r.load('u1', id))!.plan.days, hasLength(7));
+    },
+  );
+
+  group('isOutOfStorage', () {
+    SqliteException sqlite(int code) =>
+        SqliteException(extendedResultCode: code, message: 'm');
+
+    test('SQLITE_FULL and its extended codes', () {
+      expect(isOutOfStorage(sqlite(13)), isTrue);
+      expect(isOutOfStorage(sqlite(13 | (1 << 8))), isTrue);
+    });
+
+    test('ENOSPC from the file system', () {
+      expect(
+        isOutOfStorage(const FileSystemException('f', 'p', OSError('', 28))),
+        isTrue,
+      );
+      expect(
+        isOutOfStorage(const FileSystemException('f', 'p', OSError('', 13))),
+        isFalse,
+      );
+      expect(isOutOfStorage(const FileSystemException('f')), isFalse);
+    });
+
+    test('unwraps drift wrappers', () {
+      expect(
+        isOutOfStorage(
+          CouldNotRollBackException(sqlite(13), StackTrace.empty, sqlite(1)),
+        ),
+        isTrue,
+      );
+      expect(
+        isOutOfStorage(DriftWrappedException(message: 'm', cause: sqlite(13))),
+        isTrue,
+      );
+    });
+
+    test('other errors are not out of storage', () {
+      expect(isOutOfStorage(sqlite(10)), isFalse); // SQLITE_IOERR
+      expect(isOutOfStorage(sqlite(19)), isFalse); // SQLITE_CONSTRAINT
+      expect(isOutOfStorage(sqlite(26)), isFalse); // SQLITE_NOTADB
+      expect(isOutOfStorage(StateError('x')), isFalse);
+      expect(isOutOfStorage(null), isFalse);
+    });
   });
 
   test('plans survive a restart (new process, same key)', () async {

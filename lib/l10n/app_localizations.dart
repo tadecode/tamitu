@@ -1345,6 +1345,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t open maps. Please try again.'**
   String get routeOpenError;
+
+  /// No description provided for @planNotSavedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This trip isn\'t saved'**
+  String get planNotSavedTitle;
+
+  /// No description provided for @planNotSavedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t save this trip on your phone. If you leave this screen or close the app, the trip will be lost.'**
+  String get planNotSavedBody;
+
+  /// No description provided for @planNotSavedStorageBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your phone is out of storage, so the trip wasn\'t saved. Free up some space and try again. If you leave this screen or close the app, the trip will be lost.'**
+  String get planNotSavedStorageBody;
+
+  /// No description provided for @planSaveRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try saving again'**
+  String get planSaveRetry;
+
+  /// No description provided for @planSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving…'**
+  String get planSaving;
+
+  /// No description provided for @planSaveFailedAgainSnack.
+  ///
+  /// In en, this message translates to:
+  /// **'The trip still couldn\'t be saved.'**
+  String get planSaveFailedAgainSnack;
+
+  /// No description provided for @planLeaveUnsavedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave without saving?'**
+  String get planLeaveUnsavedTitle;
+
+  /// No description provided for @planLeaveUnsavedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The trip will be lost and can\'t be recovered. This generation already counts towards today\'s limit.'**
+  String get planLeaveUnsavedBody;
+
+  /// No description provided for @planLeaveUnsavedConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave without saving'**
+  String get planLeaveUnsavedConfirm;
 }
 
 class _AppLocalizationsDelegate

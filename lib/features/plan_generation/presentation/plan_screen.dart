@@ -31,7 +31,12 @@ class PlanViewData {
 /// EK-08 Plan view (US-005, US-006, US-007, US-008, US-009). "Directions" on every item
 /// opens EK-09 (Google Maps link, TAM-20).
 class PlanScreen extends StatelessWidget {
-  const PlanScreen({super.key, required this.data, this.onDelete});
+  const PlanScreen({
+    super.key,
+    required this.data,
+    this.onDelete,
+    this.notSavedNotice,
+  });
 
   /// Null when the plan cannot be shown (missing, unreadable, or the route was restored
   /// without it): CMP-18 error with "Back to list".
@@ -40,6 +45,10 @@ class PlanScreen extends StatelessWidget {
   /// "Delete trip" in the `more-vertical` menu (EK-11). Null for a plan that is not
   /// saved on the phone: there is nothing to delete, so there is no menu.
   final VoidCallback? onDelete;
+
+  /// EK-08 v0.2 "Plan nie jest zapisany": the CMP-13 error notice above the AI notice
+  /// (`UnsavedPlanScreen`). Null for a saved plan.
+  final Widget? notSavedNotice;
 
   @override
   Widget build(BuildContext context) {
@@ -64,6 +73,10 @@ class PlanScreen extends StatelessWidget {
     }
     final days = d.plan.days;
     final header = <Widget>[
+      if (notSavedNotice != null) ...[
+        notSavedNotice!,
+        const SizedBox(height: Space.s4),
+      ],
       Notice(
         key: const Key('planAiNotice'),
         variant: NoticeVariant.info,

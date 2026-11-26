@@ -20,6 +20,9 @@ class InMemoryPlanRepository implements PlanRepository {
   int failLoad = 0;
   int failDelete = 0;
 
+  /// Cause reported by a failing [save] (EK-08 v0.2: out of storage vs other).
+  PlanStorageFailure saveFailure = PlanStorageFailure.other;
+
   /// When set, every call waits for it (loading states).
   Completer<void>? gate;
 
@@ -35,7 +38,7 @@ class InMemoryPlanRepository implements PlanRepository {
     await _wait();
     if (failSave > 0) {
       failSave--;
-      throw const PlanStorageException();
+      throw PlanStorageException(saveFailure);
     }
     final id = 'trip-${++_ids}';
     (_plans[uid] ??= {})[id] = SavedPlan(

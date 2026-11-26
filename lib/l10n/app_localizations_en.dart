@@ -771,4 +771,34 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get routeOpenError => 'Couldn\'t open maps. Please try again.';
+
+  @override
+  String get planNotSavedTitle => 'This trip isn\'t saved';
+
+  @override
+  String get planNotSavedBody =>
+      'We couldn\'t save this trip on your phone. If you leave this screen or close the app, the trip will be lost.';
+
+  @override
+  String get planNotSavedStorageBody =>
+      'Your phone is out of storage, so the trip wasn\'t saved. Free up some space and try again. If you leave this screen or close the app, the trip will be lost.';
+
+  @override
+  String get planSaveRetry => 'Try saving again';
+
+  @override
+  String get planSaving => 'Saving…';
+
+  @override
+  String get planSaveFailedAgainSnack => 'The trip still couldn\'t be saved.';
+
+  @override
+  String get planLeaveUnsavedTitle => 'Leave without saving?';
+
+  @override
+  String get planLeaveUnsavedBody =>
+      'The trip will be lost and can\'t be recovered. This generation already counts towards today\'s limit.';
+
+  @override
+  String get planLeaveUnsavedConfirm => 'Leave without saving';
 }

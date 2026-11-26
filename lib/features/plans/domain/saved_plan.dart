@@ -41,13 +41,25 @@ class SavedPlan {
   final GeneratedPlan plan;
 }
 
+/// Why the account database could not be written (EK-08 v0.2 "Plan nie jest zapisany":
+/// only the cause that changes the advice for the user is told apart).
+enum PlanStorageFailure {
+  /// The phone is out of storage (SQLITE_FULL, ENOSPC): `planNotSavedStorageBody`.
+  noSpace,
+
+  /// Any other failure: `planNotSavedBody`.
+  other,
+}
+
 /// Read or write failure of the account database (EK-04 / EK-08 / EK-11 error states).
 /// Carries no plan content (nothing personal reaches logs).
 class PlanStorageException implements Exception {
-  const PlanStorageException();
+  const PlanStorageException([this.failure = PlanStorageFailure.other]);
+
+  final PlanStorageFailure failure;
 
   @override
-  String toString() => 'PlanStorageException';
+  String toString() => 'PlanStorageException(${failure.name})';
 }
 
 /// Saved plans of one account. Every method throws [PlanStorageException] when the
