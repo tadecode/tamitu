@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   createPlanModel,
   EMULATOR_FAKE_TOKEN,
+  modelConfigError,
   parseAiEndpointOverride,
   type FetchLike,
 } from "../src/ai.js";
@@ -127,5 +128,33 @@ describe("createPlanModel", () => {
       new Promise((_resolve, reject) => init.signal.addEventListener("abort", () => reject(init.signal.reason)));
     const m = createPlanModel({ ...emu, AI_ATTEMPT_TIMEOUT_MS: "100" }, { fetch: hang, adcToken: async () => "x" });
     await expect(m!.generate(call)).rejects.toMatchObject({ kind: "retryable", code: "timeout" });
+  });
+});
+
+describe("modelConfigError (TAM-115, ADR-0018 pkt 11-12)", () => {
+  const SECRET_URL = "http://10.0.0.7:9999/CANARY-url-Qx3";
+  it("undefined whenever a model is created", () => {
+    for (const env of [deployedDev, deployedProd, emu, { ...emu, AI_ATTEMPT_TIMEOUT_MS: "100" }]) {
+      expect(createPlanModel(env, recordingDeps())).toBeDefined();
+      expect(modelConfigError(env)).toBeUndefined();
+    }
+  });
+  it("valid AI config + rejected override -> ai_endpoint_override_rejected (and no model)", () => {
+    const rejected = [
+      { ...deployedDev, AI_ENDPOINT_OVERRIDE: "http://127.0.0.1:8787" },
+      { ...deployedProd, FUNCTIONS_EMULATOR: "true", AI_ENDPOINT_OVERRIDE: "http://127.0.0.1:8787" },
+      { ...emu, AI_ENDPOINT_OVERRIDE: SECRET_URL },
+      { ...emu, AI_ATTEMPT_TIMEOUT_MS: "5" },
+      { ...deployedDev, AI_ATTEMPT_TIMEOUT_MS: "1000" },
+    ];
+    for (const env of rejected) {
+      expect(createPlanModel(env, recordingDeps())).toBeUndefined();
+      expect(modelConfigError(env)).toBe("ai_endpoint_override_rejected");
+    }
+  });
+  it("missing or not allowed AI config -> ai_config_invalid, also when an override is set", () => {
+    expect(modelConfigError({})).toBe("ai_config_invalid");
+    expect(modelConfigError({ ...deployedDev, AI_MODEL_ID: "gemini-9-pro" })).toBe("ai_config_invalid");
+    expect(modelConfigError({ ...emu, AI_LOCATION: undefined })).toBe("ai_config_invalid");
   });
 });

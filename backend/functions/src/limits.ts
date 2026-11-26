@@ -268,3 +268,49 @@ export function usageFromDoc(data: unknown): UsageDoc | undefined {
   const busyReleased = Number.isInteger(d.busyReleased) ? (d.busyReleased as number) : 0;
   return { day: d.day, count: d.count as number, released, busyReleased };
 }
+
+/**
+ * ADR-0018 pkt 1-2: attempts of every quota transaction (reserve, release, busy release). Retries and
+ * backoff are done by the Firestore SDK (`runTransaction` option `maxAttempts`); no own retry loop.
+ * 3 attempts = at most ~3.75 s of SDK backoff, within the ADR-0016 pkt 4 time budget.
+ */
+export const QUOTA_TX_MAX_ATTEMPTS = 3;
+
+/** gRPC ABORTED (numeric code on errors thrown by the Firestore SDK). */
+const GRPC_ABORTED = 10;
+/** HTTP 409 (REST transport; not enabled, kept for safety). */
+const HTTP_CONFLICT = 409;
+
+/**
+ * ADR-0018 pkt 4-6: true only when the quota transaction was aborted by contention (numeric `code` 10 or
+ * 409). Such a transaction was NOT committed, so no slot was used. Every other error (unknown commit
+ * state) is not contention. Pure; the code never reaches the response.
+ */
+export function isQuotaContention(e: unknown): boolean {
+  if (typeof e !== "object" || e === null) return false;
+  const code = (e as { code?: unknown }).code;
+  return code === GRPC_ABORTED || code === HTTP_CONFLICT;
+}
+
+/** The part of the Firestore client used by quota transactions (index.ts passes getFirestore()). */
+export interface QuotaTxRunner<Tx> {
+  runTransaction<T>(fn: (tx: Tx) => Promise<T>, options: { maxAttempts: number }): Promise<T>;
+}
+
+/**
+ * Runs a quota transaction with QUOTA_TX_MAX_ATTEMPTS. `onTry` is called at the start of every run of
+ * `fn` (the SDK reruns it after ABORTED), so the caller can log `reserveTries` (ADR-0018 pkt 8).
+ */
+export function runQuotaTransaction<Tx, T>(
+  db: QuotaTxRunner<Tx>,
+  fn: (tx: Tx) => Promise<T>,
+  onTry?: () => void,
+): Promise<T> {
+  return db.runTransaction(
+    async (tx) => {
+      onTry?.();
+      return fn(tx);
+    },
+    { maxAttempts: QUOTA_TX_MAX_ATTEMPTS },
+  );
+}

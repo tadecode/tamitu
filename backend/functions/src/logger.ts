@@ -41,8 +41,10 @@ export interface LogFields {
   billable?: boolean;
   /** Model calls in this generation (1-3). */
   calls?: number;
-  /** `ok`, `invalid`, `config`, `busy`, `max_billable`, `max_calls`, `time_budget`. */
+  /** `ok`, `invalid`, `config`, `busy`, `max_billable`, `max_calls`, `time_budget`; `contention` (ADR-0018). */
   stopReason?: string;
+  /** Runs of the quota reservation transaction (1-3, ADR-0018 pkt 8). */
+  reserveTries?: number;
 }
 
 const ALLOWED: ReadonlyArray<keyof LogFields> = [
@@ -73,6 +75,7 @@ const ALLOWED: ReadonlyArray<keyof LogFields> = [
   "billable",
   "calls",
   "stopReason",
+  "reserveTries",
 ];
 
 const MAX_STRING = 64;

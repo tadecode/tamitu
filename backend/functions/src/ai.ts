@@ -241,7 +241,7 @@ export function vertexModel(
 
 /**
  * The model used by generatePlan, from the process environment (index.ts). undefined = fail-closed
- * (generatePlan answers ai_unavailable, configError `ai_config_invalid`, before reserving a slot):
+ * (generatePlan answers ai_unavailable before reserving a slot; configError from modelConfigError):
  * AI config missing/invalid, or an emulator override set where it is not allowed. With a valid emulator
  * override the ADC token provider is never called (no credentials leave the process).
  */
@@ -265,6 +265,19 @@ export function createPlanModel(
     case "rejected":
       return undefined;
   }
+}
+
+/**
+ * ADR-0018 pkt 11-12: fixed `configError` code explaining why createPlanModel returns undefined for this
+ * env: `ai_config_invalid` (AI_MODEL_ID / AI_LOCATION missing or not allowed) or
+ * `ai_endpoint_override_rejected` (valid AI config, but AI_ENDPOINT_OVERRIDE / AI_ATTEMPT_TIMEOUT_MS set
+ * where not allowed). undefined = a model is created. Never returns a value from the env.
+ */
+export function modelConfigError(
+  env: Record<string, string | undefined>,
+): "ai_config_invalid" | "ai_endpoint_override_rejected" | undefined {
+  if (!parseAiConfig(env)) return "ai_config_invalid";
+  return parseAiEndpointOverride(env).mode === "rejected" ? "ai_endpoint_override_rejected" : undefined;
 }
 
 /** Used when AI config is missing or invalid: every call is a configuration error (no network). */

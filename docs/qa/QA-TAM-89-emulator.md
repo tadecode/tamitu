@@ -45,7 +45,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .farm/test-lock.ps1 -Resourc
 | EMU-14 | zgoda przed limitem | tylko zgoda na politykę (bez `ai_processing`) → `consent_required`, limit nieruszony | ✔ |
 | EMU-15 | zgoda przed limitem | limit konta wyczerpany **i** brak zgód → `consent_required` (nie `limit_exceeded`) | ✔ |
 | EMU-16 | transakcja, jedno konto | 7 równoległych wywołań: nigdy > 5 planów; licznik konta = liczba wywołań modelu = `usage_global`; różne `remainingToday`; przy pełnej obsłudze dokładnie 5 × ok i 2 × `limit_exceeded` | ✔ |
-| EMU-17 | transakcja, limit globalny | 3 wolne sloty globalne, 10 równoległych wywołań z 5 kont: nigdy > 3 planów, `usage_global` = start + suma liczników kont = liczba wywołań modelu | ✔ (z F-1) |
+| EMU-17 | transakcja, limit globalny | 3 wolne sloty globalne, 10 równoległych wywołań z 5 kont: nigdy > 3 planów, `usage_global` = start + suma liczników kont = liczba wywołań modelu | ✔ (z F-1; od TAM-115 bez tolerancji, sekcja 6) |
 
 Uwaga do zadania: w treści TAM-89 „26. globalny daje `limit_exceeded`”. Kontrakt mówi inaczej
 (`docs/api/posrednik-api.md`, tabela błędów i reguła 1; `limits.decideQuota`): wyczerpany **limit globalny** to
@@ -53,7 +53,7 @@ Uwaga do zadania: w treści TAM-89 „26. globalny daje `limit_exceeded`”. Kon
 
 ## 3. Znaleziska
 
-### F-1. Przerwana transakcja rezerwacji daje `internal` zamiast kodu kontraktu (średnie)
+### F-1. Przerwana transakcja rezerwacji daje `internal` zamiast kodu kontraktu (średnie) – ZAMKNIĘTE w TAM-115 (zob. sekcję 6)
 
 - **Kroki:** 3 wolne sloty globalne, 10 równoległych `generatePlan` z 5 kont (EMU-17).
 - **Wynik (sporadyczny):** w pierwszym przebiegu kilka, w kolejnym **7/10** odpowiedzi to `internal` po ok. 18–23 s,
@@ -109,3 +109,39 @@ pominięty z diagnostyką, a nie zielony.
   `TEMP_TOLERATE_INTERNAL_UNTIL_TAM_115` i jej użycia, czyli `internal` z dozwolonych kodów w EMU-16/17.
 - Pytania otwarte – nowe: brak (rozbieżność „26. globalny = `limit_exceeded`” w treści zadania rozstrzyga kontrakt:
   `ai_unavailable`).
+
+## 6. Aneks TAM-115 (P3-05-CONTENTION, 2026-11-26): F-1 zamknięte
+
+**W skrócie:** przy kilku równoczesnych prośbach o plan serwer odpowiada już tylko kodami z kontraktu. Testy
+EMU-16 i EMU-17 **nie przyjmują `internal`**: tymczasowa stała `TEMP_TOLERATE_INTERNAL_UNTIL_TAM_115` i jej użycia
+zostały usunięte. Wynik: **3 przebiegi, każdy 17/17 zielone**, 0 × `internal`, 0 × `ai_busy` z kontencji.
+
+**Co się zmieniło w testach** (`tests/firebase-emulator/p3-05-generate-plan.int.mjs`, wg ADR-0018 i dziennika
+architekta `.farm/log/2026-11-26/1254-architect-TAM-115.md`, „Dla QA” pkt 1–5):
+
+- EMU-16 (1 konto, 7 równoległych): dozwolone tylko `ok`, `limit_exceeded`, `ai_busy`, `emu_transport`
+  (brak odpowiedzi emulatora). Każde `ai_busy` musi mieć `retryAfterSec = 60` i `slotReleased = true`. Gdy
+  emulator odpowiedział na wszystko: `ok + limit_exceeded + ai_busy = 7`. Bez `ai_busy` dokładnie 5 × ok
+  i 2 × `limit_exceeded`, a z `ai_busy` najwyżej 2 × `limit_exceeded`.
+- EMU-17 (5 kont, 10 równoległych, 3 wolne sloty): dozwolone `ok`, `ai_unavailable`, `ai_busy`, `emu_transport`;
+  `ai_busy` jak wyżej, bez `ai_busy` dokładnie 3 × ok.
+- Asercja **„kontencja nic nie zużywa”**: konto, które dostało tylko `ai_busy`, ma `count = 0`. Na każdym koncie
+  `busyReleased = 0`. Niezmienniki bezpieczeństwa bez zmian: nigdy > 5 na konto i > 25 globalnie, liczniki =
+  wywołania atrapy modelu = przyznane plany, `usage_global` = start + suma kont.
+- Liczba `ai_busy` jest wypisywana jako diagnostyka (`contention (ADR-0018): n/N requests answered ai_busy`).
+  Test nie wymaga, by kontencja wystąpiła, bo emulator jest niedeterministyczny.
+
+**Przebiegi** (`.farm/test-lock.ps1 -Resource firebase-emulators`, atrapa Vertex, projekt `demo-*`, koszt 0 zł):
+
+| Przebieg | Wynik | EMU-16 (7 żądań) | EMU-17 (10 żądań) | `ai_busy` | `internal` | `reserveTries` w logu |
+|---|---|---|---|---|---|---|
+| 1 | 17/17 ✔ | 5 × ok, 2 × `limit_exceeded` | 3 × ok, 7 × `ai_unavailable` | 0 | 0 | 63 × 1 |
+| 2 | 17/17 ✔ | 5 × ok, 2 × `limit_exceeded` | 3 × ok, 7 × `ai_unavailable` | 0 | 0 | 63 × 1 |
+| 3 | 17/17 ✔ | 5 × ok, 2 × `limit_exceeded` | 3 × ok, 7 × `ai_unavailable` | 0 | 0 | 63 × 1 |
+
+**Czego nie potwierdzono na emulatorze:** w żadnym z 3 przebiegów emulator nie przerwał transakcji (wszystkie
+rezerwacje udały się za 1. razem, brak `stopReason=contention`). Ścieżka `ai_busy` z kontencji nie wystąpiła
+więc na emulatorze. Deterministycznie pokrywają ją testy jednostkowe mobile-dev (`quota.test.ts`,
+`generate-plan-flow.test.ts`: ABORTED 10 i 409 → `ai_busy`, `retryAfterSec = 60`, `slotReleased = true`, bez modelu
+i bez zwrotu). Gdy kontencja wystąpi na emulatorze, EMU-16/17 sprawdzą kontrakt `ai_busy` i to, że nic nie zostało
+zapisane. Powrót `internal` przy kontencji zakończy test błędem.
