@@ -2,7 +2,7 @@
 
 - Status: **zatwierdzony co do decyzji** (właściciel, 2026-11-25, Q1 = C: „wariant C dla MVP”). Szczegóły
   techniczne poniżej obowiązują od merge'u PR-a tego ADR.
-- Data: 2026-11-25
+- Data: 2026-11-25; Aneks 1 (zapamiętany tryb dojazdu): 2026-11-26, TAM-112
 - Autor (rola): architect
 - Zadanie: TAM-107 (P3-07-ADR); podstawa: raport QA `docs/qa/QA-TAM-24-maps-bez-origin.md` (TAM-24, PR #172)
 - **Zastępuje:** ADR-0007 w części „lokalizacja” (tabela opcji, sekcja „Decyzja”, „Specyfikacja opcji A”,
@@ -59,7 +59,7 @@ https://www.google.com/maps/dir/?api=1&destination=<destination>&travelmode=<mod
 |---|---|---|
 | `api` | `1` | zawsze, pierwszy parametr |
 | `destination` | `"{name}, {locality}, {trip.destination}"` z punktu planu | **zawsze tekst z nazwą i miejscowością**; nigdy same współrzędne (test TAM-24: trafiły w sąsiedni obiekt); nigdy URL od modelu (T5); plan nie zawiera współrzędnych (`generate-plan.response.schema.json`) |
-| `travelmode` | `driving` (auto), `transit` (komunikacja), `walking` (pieszo) | wybór użytkownika, niezapisywany |
+| `travelmode` | `driving` (auto), `transit` (komunikacja), `walking` (pieszo) | wybór użytkownika; ~~niezapisywany~~ **zapamiętany lokalnie** (ostatni wybór) – zob. Aneks 1 (2026-11-26) |
 | `origin` | start „Moja lokalizacja”: **parametr pominięty**; „Nocleg”: `"{lodging}, {trip.destination}"`; „Poprzedni punkt dnia”: `"{name}, {locality}, {trip.destination}"` poprzedniego punktu | tylko tekst z planu; **nigdy współrzędne**; brak noclegu w planie → opcja „Nocleg” niedostępna (bez pustego `origin`) |
 
 - Kodowanie: `Uri.https('www.google.com', '/maps/dir/', {...})` (kodowanie procentowe przez `Uri`, nie sklejanie
@@ -134,3 +134,35 @@ aplikacje mapowe, `geo:`) – odłożone po MVP, zadanie TAM-106.
 
 **Zmiana tej decyzji** (np. powrót do odczytu pozycji w Tamitu) wymaga nowego ADR, wpisu D7 w rejestrze i przeglądu
 security.
+
+## Aneks 1 (2026-11-26, TAM-112): zapamiętany tryb dojazdu
+**Co się zmienia:** w pkt 1 (tabela parametrów) `travelmode` był opisany jako „niezapisywany”. To było niespójne
+z decyzją właściciela: tryb dojazdu jest **zapamiętywany**. Start trasy nadal **nie jest** zapamiętywany. Decyzja
+wariantu C i pozostałe punkty tego ADR się nie zmieniają.
+
+**Podstawa:** decyzja właściciela UX11, zatwierdzona w specyfikacji EK-09 v0.4 (`docs/ux/screens/ek-09.md`,
+2026-11-25): „tryb zapamiętany, start nie”, jeden tryb dla całej aplikacji, przy pierwszym użyciu Komunikacja.
+Implementacja z PR #178 (TAM-20) jest z nią zgodna; niezgodność wskazali recenzent (ustalenie 4) i QA (przypadek 10:
+tryb przetrwał restart aplikacji).
+
+**Jak jest przechowywany (stan `main`, PR #178):**
+- `lib/features/maps_link/application/travel_mode.dart`: `TravelModeController` trzyma bieżący tryb; zmiana wyboru
+  zapisuje go przez port `TravelModeStore` (zapis w tle, błąd zapisu nie blokuje otwarcia Map).
+- `lib/app/bootstrap.dart`: implementacja `_PrefsTravelModeStore` zapisuje w `shared_preferences`
+  (`SharedPreferencesAsync`) klucz **`routeTravelMode`** z wartością parametru linku: `driving`, `transit` albo
+  `walking`. Odczyt przy starcie aplikacji (przed pierwszą klatką) w `try/catch`; brak lub nieznana wartość →
+  tryb domyślny (Komunikacja).
+- Jeden wpis na urządzenie, bez UID i bez powiązania z planem; nie trafia do bazy konta, do Firestore, do logów,
+  do analityki ani do modelu AI. Poza urządzenie wychodzi tylko w linku do Google Maps, jak dotąd (pkt 5).
+- Kopia zapasowa wyłączona jak dla całej aplikacji (`allowBackup=false`, `dataExtractionRules`). Wpis znika przy
+  odinstalowaniu lub wyczyszczeniu danych aplikacji; przy usunięciu konta – razem z pozostałymi wpisami
+  `shared_preferences` (kolejność usuwania wg `docs/architecture/przeglad-ekranow-p3-14c.md`).
+- Startu (`origin`) nie zapisujemy: przy każdym otwarciu EK-09 jest „Moja lokalizacja”.
+
+**Dane osobowe:** zapamiętany tryb to ustawienie funkcjonalne interfejsu (jedna z trzech stałych wartości), takie
+jak `uiLanguage`. Nie jest powiązany z kontem ani z planem i nie ujawnia, dokąd i kiedy użytkownik jedzie. Nie jest
+to nowy rodzaj danych osobowych, więc **nie wymaga nowego wpisu w rejestrze**. Tryb w samym linku jest już opisany
+w D8. Dla spójności z D16 (język jako ustawienie aplikacji) security może dopisać „tryb dojazdu” do istniejącego
+opisu ustawień lokalnych; nie jest to warunek.
+
+**Koszty:** 0 (bez zmian). **Kod:** bez zmian (aneks opisuje stan istniejący).

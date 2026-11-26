@@ -12,7 +12,7 @@ https://www.google.com/maps/dir/?api=1&destination=<destination>&travelmode=<mod
 |---|---|---|
 | `destination` | `"{name}, {locality}, {trip.destination}"` z planu | kodowanie procentowe; tylko tekst z planu (nie URL od modelu); zawsze z nazwą i miejscowością, nigdy same współrzędne (TAM-24) |
 | `origin` | start „Moja lokalizacja”: **pominięty** (Mapy ustawiają „Twoja lokalizacja”); „Nocleg”: `"{lodging}, {trip.destination}"`; „Poprzedni punkt”: `"{name}, {locality}, {trip.destination}"` poprzedniego punktu | tylko tekst z planu; nigdy współrzędne; bez pustego `origin=` (ADR-0017) |
-| `travelmode` | `driving` (auto), `transit` (komunikacja), `walking` (pieszo) | wybór użytkownika, niezapisywany |
+| `travelmode` | `driving` (auto), `transit` (komunikacja), `walking` (pieszo) | wybór użytkownika; zapamiętany lokalnie w `shared_preferences` (`routeTravelMode`), start nie (ADR-0017, Aneks 1) |
 Obowiązuje wariant C (ADR-0017, Q1 = C, 2026-11-25): aplikacja nie odczytuje pozycji. Budowa przez `Uri.https(...)`. Otwieranie: wyłącznie `LaunchMode.externalApplication`; test kodowania procentowego (`&`, `#`, `|`, `%`, nawiasy). Ograniczenie: długość URL < 2 048 znaków (obcinanie opisu nie dotyczy, bo w URL tylko nazwy). Testy: brak `origin` przy „Moja lokalizacja”, `origin` jako tekst przy noclegu i poprzednim punkcie, `destination`, każdy `travelmode` (US-007). Google otrzymuje w linku tylko cel, tryb i ewentualnie tekst startu (D8), bez pozycji telefonu.
 
 ## 2. Firebase Auth / Google Sign-In (ADR-0004)
