@@ -4,7 +4,7 @@ import { getFirestore, Timestamp } from "firebase-admin/firestore";
 import { defineSecret } from "firebase-functions/params";
 import { onCall, type CallableRequest } from "firebase-functions/v2/https";
 import { onMessagePublished } from "firebase-functions/v2/pubsub";
-import { createPlanModel, type FetchLike, type PlanModel } from "./ai.js";
+import { createPlanModel, modelConfigError, type FetchLike, type PlanModel } from "./ai.js";
 import {
   assertStartupConfig,
   parseRuntimeConfig,
@@ -173,6 +173,8 @@ const model: PlanModel | undefined = createPlanModel(process.env, {
   // Lazy: created on the first model call, not at module load (deploy analysis, tests).
   adcToken: async () => (await (credential ??= applicationDefault()).getAccessToken()).access_token,
 });
+/** ADR-0018 pkt 12: fixed log code why `model` is undefined (computed once; never a value from the env). */
+const modelError = model ? undefined : modelConfigError(process.env);
 
 function deps(): Deps {
   return {
@@ -184,6 +186,7 @@ function deps(): Deps {
     pepper: UID_PEPPER.value(),
     now: () => new Date(),
     model,
+    modelConfigError: modelError,
     prompt,
     reserveQuota,
     releaseQuota,

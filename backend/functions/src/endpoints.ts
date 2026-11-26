@@ -56,6 +56,8 @@ export interface Deps {
   now: () => Date;
   /** undefined = AI configuration missing/invalid (AI_MODEL_ID, AI_LOCATION): ai_unavailable, no reservation. */
   model: PlanModel | undefined;
+  /** Fixed log code when `model` is undefined (ai.modelConfigError); default `ai_config_invalid`. */
+  modelConfigError?: "ai_config_invalid" | "ai_endpoint_override_rejected" | undefined;
   /** Prompt from AI_PROMPT_VERSION (prompt/index.ts resolvePrompt, fail-closed to plan-v1); undefined = plan-v1. */
   prompt?: PlanPrompt | undefined;
   /**
@@ -146,7 +148,7 @@ export async function generatePlanCore(
   if (!runtime.aiEnabled) throw unavailableNoSlot();
   const model = deps.model;
   if (!model) {
-    ctx.configError = "ai_config_invalid";
+    ctx.configError = deps.modelConfigError ?? "ai_config_invalid"; // ADR-0018 pkt 12
     throw unavailableNoSlot();
   }
 

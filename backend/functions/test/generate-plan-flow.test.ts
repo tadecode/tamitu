@@ -405,3 +405,19 @@ describe("generatePlan - contention on the quota reservation (TAM-115, ADR-0018 
     expect(fields().find((f) => f["fn"] === "generatePlan")).not.toHaveProperty("reserveTries");
   });
 });
+
+describe("generatePlan - configError when there is no model (TAM-115, ADR-0018 pkt 12)", () => {
+  it.each([
+    [undefined, "ai_config_invalid"],
+    ["ai_config_invalid", "ai_config_invalid"],
+    ["ai_endpoint_override_rejected", "ai_endpoint_override_rejected"],
+  ] as const)("deps.modelConfigError=%s -> configError %s, ai_unavailable with slotReleased, no reservation", async (code, logged_) => {
+    const reserveQuota = vi.fn();
+    const { deps } = mkDeps({ model: undefined, modelConfigError: code, reserveQuota });
+    expect(await err(run(body(), deps))).toEqual({ code: "ai_unavailable", slotReleased: true });
+    expect(reserveQuota).not.toHaveBeenCalled();
+    const final = fields().find((f) => f["fn"] === "generatePlan")!;
+    expect(final).toMatchObject({ errorCode: "ai_unavailable", configError: logged_ });
+    expect(JSON.stringify(logged)).not.toMatch(/https?:\/\//);
+  });
+});
