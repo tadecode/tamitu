@@ -350,8 +350,9 @@ Jeden krótki plan (np. 2 dni). Koszt: ok. 1 grosz (`gemini-3.1-flash-lite`); li
 | plan na ekranie (EK-08) | działa |
 | komunikat „Tworzenie planów jest chwilowo niedostępne” + w logu `test_data_only` | konta nie ma w `testUids` (sekcja 5.3) |
 | ten sam komunikat + w logu `ai_unavailable` bez `configError` | `aiEnabled` nie jest `true` (sekcja 5.3) |
-| `ai_unavailable` z `configError` | zmienne AI nie dotarły albo są złe – wróć do kroku 4a |
-| `ai_busy` | przeciążenie modelu (ADR-0016) – spróbować później, to nie błąd wdrożenia |
+| `ai_unavailable` z `configError = ai_config_invalid` | zmienne AI nie dotarły albo są złe – wróć do kroku 4a |
+| `ai_unavailable` z `configError = ai_endpoint_override_rejected` (od TAM-115) | w `.env.<projekt>` jest `AI_ENDPOINT_OVERRIDE` albo `AI_ATTEMPT_TIMEOUT_MS` (przełącznik atrapy, działa tylko w emulatorze) – usuń zmienną i wdróż ponownie |
+| `ai_busy` | przeciążenie modelu (`stopReason = busy`, ADR-0016) albo równoczesne prośby (`stopReason = contention`, ADR-0018) – spróbować później, to nie błąd wdrożenia |
 
 **Krok 7 – logi bez danych osobowych (`fn_event` i `fn_error`)**
 ```powershell

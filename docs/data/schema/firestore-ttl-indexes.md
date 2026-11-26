@@ -1,6 +1,6 @@
 # Firestore – retencja (TTL) i indeksy – Tamitu (MVP)
 
-Stan: 2026-11-21, wersja 0.3, autorzy: dba (v0.1–0.2), architect (v0.3). Zmiany v0.3 (TAM-91, decyzja właściciela O-TAM18-3): pole `usage.released` (najwyżej 2 zwroty slotu na dobę, zerowane w nowej dobie, bez indeksu; pkt 3.1, 3.2); `usage_global` bez zwrotu. Polityki TTL, indeksy i `backend/firestore.indexes.json` bez zmian. Rozstrzyga pytanie **O4** (`docs/open-questions.md`, sekcja „Konfiguracja środowisk (P3-03)").
+Stan: 2026-11-26, wersja 0.4, autorzy: dba (v0.1–0.2), architect (v0.3–0.4). Zmiany v0.4 (TAM-115, ADR-0018): reguła 7 w pkt 3.2 (najwyżej 3 próby transakcji limitu; przerwana transakcja nic nie zapisuje); schemat, TTL i indeksy bez zmian. Zmiany v0.3 (TAM-91, decyzja właściciela O-TAM18-3): pole `usage.released` (najwyżej 2 zwroty slotu na dobę, zerowane w nowej dobie, bez indeksu; pkt 3.1, 3.2); `usage_global` bez zwrotu. Polityki TTL, indeksy i `backend/firestore.indexes.json` bez zmian. Rozstrzyga pytanie **O4** (`docs/open-questions.md`, sekcja „Konfiguracja środowisk (P3-03)").
 Zmiany v0.2 (O4-b, decyzja security SEC-34, zatwierdzona przez właściciela 2026-11-18): retencja `usage/{uid}` skrócona z „czas serwera + 30 dni" do `expireAt = max(resetAt(now) + 2 d, now + 2 d)` (pkt 2.1, 3, 3.1, 3.2, 7). Pole TTL, polityka TTL, indeksy i `backend/firestore.indexes.json` bez zmian. `usage_global.expireAt` bez zmian (+7 dni).
 Źródła: `docs/data/model-danych.md` pkt 3 (v0.4), `docs/data/przechowywanie-i-retencja.md`, ADR-0002 („Limity i bezpieczniki", Aneks A pkt 1), ADR-0003, ADR-0012, `docs/security/personal-data-register.md` (D3, D10, v0.4), `backend/firestore.indexes.json`, `backend/functions/src/limits.ts`, `backend/functions/src/index.ts`, `.farm/runbooks/P3-03-firebase.md` (etap 8).
 
@@ -86,6 +86,7 @@ Dane osobowe: `usage/{uid}` = D10 (UID w ścieżce, `day`, `count`). `expireAt` 
 4. `now` = czas serwera funkcji (`deps.now()`), nie czas klienta.
 5. Stałe retencji jako nazwane stałe w `limits.ts` (np. `USAGE_RETENTION_AFTER_RESET_MS = 2 × 86 400 000`, `GLOBAL_RETENTION_MS = 7 × 86 400 000`) i czyste funkcje: `usageExpireAt(now): Date` = `max(resetAt(now) + 2 d, now + 2 d)`, `globalExpireAt(now): Date` = `now + 7 d`. Testy jednostkowe wg pkt 7. Zapis do Firestore jako `Timestamp.fromDate(usageExpireAt(now))`.
 6. Kolejność istnienia użytkownika i zapisu bez zmian (ADR-0002 Aneks A pkt 1): brak zapisu dla nieistniejącego UID.
+7. **Równoczesne transakcje (v0.4, ADR-0018):** rezerwacja i oba zwroty slotu wywołują `runTransaction` z `maxAttempts = 3` (ponowienia i odczekanie robi SDK). Przerwanie po wszystkich próbach (ABORTED) oznacza, że **nic nie zapisano**: liczniki `usage` i `usage_global` zostają bez zmian, a wynik dla aplikacji opisuje `docs/api/posrednik-api.md` (reguły 1 i 6). Model danych, TTL i indeksy bez zmian; licznik globalny zostaje jednym dokumentem na dobę (bez shardów).
 
 ## 4. Indeksy
 
