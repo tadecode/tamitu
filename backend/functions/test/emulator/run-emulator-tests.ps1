@@ -1,4 +1,4 @@
-# TAM-89: runs node:test files against the Firebase emulators (auth, functions, firestore) with the
+﻿# TAM-89: runs node:test files against the Firebase emulators (auth, functions, firestore) with the
 # Vertex fake. Sets ONLY emulator-time variables in this process; nothing is written to .env files.
 #
 # ALWAYS through the farm lock (fixed ports 8080/5001/9099 and 8787 for the fake), from the repo root:

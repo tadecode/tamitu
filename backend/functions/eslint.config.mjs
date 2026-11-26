@@ -21,4 +21,9 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   { rules: noDirectLogging },
   { files: ["src/logger.ts", "test/**"], rules: { "no-restricted-imports": "off", "no-console": "off" } },
+  // TAM-89: plain-JS emulator helpers (test/emulator/*.mjs) run on Node 22, whose web globals are built in.
+  {
+    files: ["test/**/*.mjs"],
+    languageOptions: { globals: { fetch: "readonly", URL: "readonly", Buffer: "readonly", process: "readonly" } },
+  },
 );
