@@ -19,8 +19,8 @@
 >   testerów w Play to tylko właściciel, a AI działa tylko dla jego konta. **Przed dodaniem jakiegokolwiek innego
 >   testera** obowiązuje bramka z sekcji 2a. O danych z tego okresu właściciel zdecyduje później.
 >   **Uwaga techniczna:** przy obu flagach `true` kod nie sprawdza `testUids` (`assertDataPolicy`), więc warunku
->   „AI tylko dla konta właściciela” nie da się wtedy wymusić listą. Wariant, który go spełnia, opisuje pytanie
->   O-TAM116-8 (sekcja 4.7).
+>   „AI tylko dla konta właściciela” nie da się wtedy wymusić listą. Właściciel wybrał ochronę organizacyjną
+>   (O-TAM116-8 niżej).
 > - **O-TAM116-2:** polityka prywatności **nie jest** opublikowana. To zadanie OWN-9 i warunek 1 bramki 2a; test
 >   z samym właścicielem może się odbyć bez niej.
 > - **O-TAM116-3:** ADR-0019 **zatwierdzony**.
@@ -30,6 +30,12 @@
 >   i `deleteAccount` w tym wydaniu.
 > - **O-TAM116-6:** orkiestrator odczytał stan prod (tylko odczyt, 2026-11-26) – wynik w sekcji 3. Rozbieżność
 >   `globalDailyLimit` (50 zamiast 25) to pytanie **O-TAM116-7**.
+> - **O-TAM116-7 (2026-11-26):** w prod **zostaje `globalDailyLimit = 50`** (rekomendacja: 25). To świadome
+>   odstępstwo od ADR-0014 Aneks A pkt 3. Najgorszy przypadek nadużycia to ok. 164 PLN/mies.; koszt AI zatrzymuje
+>   spend cap 80 PLN, a alarm daje budżet 100 PLN (sekcja 4.7).
+> - **O-TAM116-8 (2026-11-26):** **bez technicznej blokady na liście `testUids`** (wariant D). Obie flagi realnych
+>   danych mają wartość `true`. Ochronę dają: lista testerów w Play = tylko właściciel, limity 5 na konto
+>   i 50 na dobę, spend cap 80 PLN i budżet 100 PLN. To świadomie przyjęte ryzyko (sekcja 4.7).
 
 ## 1. W skrócie
 
@@ -44,7 +50,7 @@ Integrity bez tokenów debug, funkcje i model AI w prod, budżety prod. Nikt spo
 | Etap | Co się dzieje | Kto |
 |---|---|---|
 | A | Przygotowania bez kosztów i bez chmury: klucz przesyłania, podpisywanie w Gradle, plik `.env` prod, odpowiedzi do Data Safety, polityka prywatności | właściciel, mobile-dev, security, Steward |
-| B | Projekt prod: role, TTL, sekret, konto budujące; przegląd security; wdrożenie `recordConsent` i `generatePlan`; AI tylko dla konta właściciela | właściciel, security |
+| B | Projekt prod: role, TTL, sekret, konto budujące; przegląd security; wdrożenie `recordConsent` i `generatePlan`; włączenie AI (realne dane, tester = tylko właściciel) | właściciel, security |
 | C | Play Console: aplikacja, testy wewnętrzne, lista testerów; pierwszy plik AAB | właściciel |
 | D | Po pierwszym przesłaniu: odciski klucza podpisu Google → Firebase prod, App Check (Play Integrity), klucz API | właściciel |
 | E | Test na telefonie z aplikacją zainstalowaną z Play | qa (z właścicielem) |
@@ -54,7 +60,7 @@ w praktyce **0 zł**: AI w prod kosztuje ok. 1 grosz za plan (najwyżej 5 planó
 do ok. 1,50 PLN/mies.), a usługi Firebase/GCP mieszczą się w darmowych pulach. Do ok. 2027-02-15 i tak pokrywa je
 kredyt próbny.
 
-**Kroki właściciela: 8 zadań** (OWN-2…OWN-9, sekcja 10.2) plus odpowiedzi na pytania O-TAM116-7 i O-TAM116-8.
+**Kroki właściciela: 8 zadań** (OWN-2…OWN-9, sekcja 10.2). Wszystkie pytania O-TAM116-1…8 są rozstrzygnięte.
 
 **Czego ten plan nie obejmuje:** publikacji w sklepie (testy zamknięte, otwarte, produkcja), innych testerów niż
 właściciel (bramka 2a), funkcji `deleteAccount` i `budgetGuard` ani wdrożeń prod z CI.
@@ -66,8 +72,8 @@ właściciel (bramka 2a), funkcji `deleteAccount` i `budgetGuard` ani wdrożeń 
 2. **Realne dane od razu, ale tylko właściciela** (decyzja O-TAM116-1, 2026-11-26; pierwotna propozycja „nie”
    zostaje tu jako ślad). `ALLOW_REAL_DATA=true` w `.env` prod. Ryzyko RODO (SEC-15 otwarte, B-2 bez decyzji,
    polityka nieopublikowana, zgoda AI `-v1`) właściciel przyjął świadomie dla własnych danych. Build AAB nadal
-   z `--dart-define=TAMITU_TEST_DATA=true`: przy obu flagach `true` to pole nic nie zmienia, ale pozwala wrócić do
-   trybu z listą `testUids` samą zmianą `config/runtime.allowRealData=false`, bez nowego buildu (O-TAM116-8).
+   z `--dart-define=TAMITU_TEST_DATA=true`. Przy obu flagach `true` (decyzja O-TAM116-8) to pole nic nie zmienia,
+   ale pozwala wrócić do trybu z listą `testUids` samą zmianą `config/runtime.allowRealData=false`, bez nowego buildu.
 
 ### 2a. Bramka przed testami zamkniętymi i przed każdym kolejnym testerem
 
@@ -216,7 +222,7 @@ bez wdrażania – sekcja 4.7.)
 | `recordConsent` | **TAK** | bez zapisu zgody aplikacja nie przejdzie EK-02/EK-03 |
 | `generatePlan` | **TAK** | sedno testu; koszt ograniczony (sekcja 9) |
 | `deleteAccount` | **NIE** | kod zwraca `not_implemented` (P3-08); wdrożenie nic nie daje, a wystawia publiczny punkt z kontem, które może usuwać użytkowników. W aplikacji „Usuń konto” w tym wydaniu kończy się błędem – znane ograniczenie (qa nie zgłasza jako błąd). **Warunek przed testami zamkniętymi/otwartymi**: Google Play wymaga usuwania konta w aplikacji i strony WWW z instrukcją (privacy-checklist pkt 5) |
-| `budgetGuard` | **NIE** | `budgetGuardCore` jeszcze nie wyłącza AI (TODO P3-09), więc wdrożenie nie dałoby ochrony, a wymaga Eventarc i `run.invoker` dla `fn-budget` (SEC-17 N-5). Ochronę w tym wydaniu dają: spend cap 80 PLN, budżet 100 PLN z alertami, `testUids` (tylko konto właściciela woła model), limit 5/dobę na konto i 25/dobę globalnie, `maxInstances: 10`. Odstępstwo od ADR-0003 („`budgetGuard` w prod”) jest **czasowe** (zgoda O-TAM116-5 b) – warunek przed testami zamkniętymi (P3-09, sekcja 2a). Uwaga: przy obu flagach realnych danych `true` lista `testUids` nie ogranicza AI (O-TAM116-8); wtedy ochronę kosztu dają lista testerów w Play, App Check i limity |
+| `budgetGuard` | **NIE** | `budgetGuardCore` jeszcze nie wyłącza AI (TODO P3-09), więc wdrożenie nie dałoby ochrony, a wymaga Eventarc i `run.invoker` dla `fn-budget` (SEC-17 N-5). Ochronę w tym wydaniu dają: spend cap 80 PLN, budżet 100 PLN z alertami, lista testerów w Play (tylko właściciel), limit 5/dobę na konto i 50/dobę globalnie (O-TAM116-7), `maxInstances: 10`. Odstępstwo od ADR-0003 („`budgetGuard` w prod”) jest **czasowe** (zgoda O-TAM116-5 b) – warunek przed testami zamkniętymi (P3-09, sekcja 2a). Uwaga: przy obu flagach realnych danych `true` lista `testUids` nie ogranicza AI – decyzja O-TAM116-8: świadomie bez tej blokady |
 
 Zawsze `firebase deploy --only functions:recordConsent` i osobno `--only functions:generatePlan`. **Nigdy** samo
 `firebase deploy` ani `--only functions` (poszłyby `deleteAccount` i `budgetGuard`).
@@ -229,10 +235,29 @@ Zmienia tylko właściciel w konsoli Firebase (2FA, ADR-0002 Aneks A pkt 7), pro
 | Pole | Wartość na test | Uwaga |
 |---|---|---|
 | `aiEnabled` | `true` (boolean) dopiero przed testem qa; poza testami `false` | wyłącznik kosztów bez wdrażania |
-| `allowRealData` | decyzja O-TAM116-1: `true`; **rekomendacja architekta: `false`, dopóki właściciel jest jedynym testerem** (O-TAM116-8) | realne dane wymagają **obu** flag: `.env` i `config/runtime` (`assertDataPolicy`) |
-| `testUids` | UID konta właściciela **w prod** (inny niż w dev – nowy projekt Auth). Odczyt z 2026-11-26: 1 wpis – właściciel sprawdza, czy to UID z **prod** | dana osobowa: nigdy w repo, Jirze, logu, czacie; w raportach „`testUids` ma N wpisów” |
+| `allowRealData` | **`true`** (decyzje O-TAM116-1 i O-TAM116-8) | realne dane wymagają **obu** flag: `.env` i `config/runtime` (`assertDataPolicy`); przy obu `true` lista `testUids` nie jest sprawdzana – świadomie przyjęte ryzyko (niżej) |
+| `testUids` | UID konta właściciela **w prod** (inny niż w dev – nowy projekt Auth). Odczyt z 2026-11-26: 1 wpis – właściciel sprawdza, czy to UID z **prod** | przy `allowRealData=true` nie ogranicza AI; zostaje na wypadek powrotu do `allowRealData=false`. Dana osobowa: nigdy w repo, Jirze, logu, czacie; w raportach „`testUids` ma N wpisów” |
 | `perUserDailyLimit` | `5` | bez zmian |
-| `globalDailyLimit` | **`25`** – odczyt z 2026-11-26: **50** → pytanie **O-TAM116-7** | ADR-0014 Aneks A pkt 3 |
+| `globalDailyLimit` | **`50`** – decyzja właściciela O-TAM116-7 (bez zmiany w konsoli) | **świadome odstępstwo** od ADR-0014 Aneks A pkt 3 (25) – niżej |
+| `policyVersionCurrent` | `privacy-v1` | = `AppConstants.privacyPolicyVersion` |
+| `aiConsentVersionCurrent` | `ai-consent-v1` | = `AppConstants.aiConsentVersion` |
+
+**Decyzja O-TAM116-7 (właściciel, 2026-11-26): w prod zostaje `globalDailyLimit = 50`** (rekomendacja architekta
+brzmiała 25). To świadome odstępstwo od ADR-0014 Aneks A pkt 3. ADR-0014 nie jest zmieniany po cichu; to, czy
+potrzebny jest aneks, rozstrzyga orkiestrator z właścicielem (wpis w dzienniku). **Przyjęte ryzyko:** pełne nadużycie
+limitu globalnego planami maksymalnymi kosztuje ok. **164 PLN/mies.** Koszt AI zatrzymuje spend cap Vertex
+**80 PLN**, ale z opóźnieniem (ADR-0014 F4), więc możliwa jest nadwyżka ponad 80 PLN. Alarm daje budżet **100 PLN**.
+Dla jednego testera (najwyżej 5 planów na dobę) limit globalny nie ma znaczenia.
+
+**Decyzja O-TAM116-8 (właściciel, 2026-11-26): bez technicznej blokady na liście `testUids`** (wariant D poniżej;
+rekomendacja architekta brzmiała R). W prod `ALLOW_REAL_DATA=true` **i** `config/runtime.allowRealData=true`.
+**Świadomie przyjęte ryzyko:** generować plany może każde konto, które zaloguje się aplikacją przechodzącą App Check,
+czyli w praktyce każdy, kto zainstaluje aplikację z Play. Ochrona: lista testerów w Play = tylko właściciel
+(bramka 2a), limity 5 na konto i 50 na dobę, spend cap 80 PLN, budżet 100 PLN z alertami, `aiEnabled=false` poza
+testami. Szybki powrót do blokady technicznej to jedno pole w konsoli: `allowRealData=false` (build ma
+`TAMITU_TEST_DATA=true`, a właściciel jest w `testUids`).
+
+Analiza przed decyzją (ślad):
 
 **O-TAM116-7 – `globalDailyLimit` 50 czy 25 (rekomendacja: 25).** ADR-0014 Aneks A pkt 3 (zatwierdzony 2026-11-20)
 ustala 25 na dobę w dev **i** prod jako wartość w kodzie i w `config/runtime`. Dev ma 25, w prod zostało 50 sprzed
@@ -253,14 +278,12 @@ dla osób z listy testerów w Play. Dziś to tylko właściciel, ale lista w Pla
 | **R (rekomendowany)** | `true` | **`false`** | tylko konta z `testUids` (właściciel) przy `testData=true` (build z `TAMITU_TEST_DATA=true`) | właściciel nadal wpisuje swoje prawdziwe podróże – kod nie odróżnia treści „testowej” od realnej, więc decyzja O-TAM116-1 jest zachowana w sensie RODO. Lista `testUids` technicznie egzekwuje warunek właściciela. Przełączenie na pełne realne dane = jedna zmiana w konsoli, bez wdrażania i bez nowego buildu |
 | D (decyzja dosłownie) | `true` | `true` | każde konto z aplikacją z Play | warunek „AI ograniczone `testUids`” **nie jest** spełniony technicznie, tylko organizacyjnie (lista testerów) |
 
-Do czasu odpowiedzi: OWN-7 ustawia wariant R (bezpieczniejszy, zmiana na D to jedno pole).
-| `policyVersionCurrent` | `privacy-v1` | = `AppConstants.privacyPolicyVersion` |
-| `aiConsentVersionCurrent` | `ai-consent-v1` | = `AppConstants.aiConsentVersion` |
+Wybrany został **wariant D** (decyzja O-TAM116-8 wyżej).
 
-Kolejność: pierwsze logowanie z aplikacji (zgoda na politykę działa bez `testUids`) → odczyt UID w Authentication →
-sprawdzenie lub dopisanie w `testUids` → `globalDailyLimit` wg O-TAM116-7 → `allowRealData` wg O-TAM116-8 →
-`aiEnabled=true` → pierwszy plan. Przed tym `generatePlan` odpowiada `test_data_only`
-(bez kosztu) – to oczekiwane.
+Kolejność: pierwsze logowanie z aplikacji → odczyt UID w Authentication → sprawdzenie lub dopisanie w `testUids`
+(na wypadek powrotu do blokady) → `allowRealData=true` → `aiEnabled=true` → pierwszy plan. `globalDailyLimit`
+zostaje 50, bez zmian. Dopóki `allowRealData` ma wartość `false`, `generatePlan` odpowiada `test_data_only` dla kont
+spoza `testUids` (bez kosztu).
 
 ### 4.8 Kroki wdrożenia (skrót; pełne polecenia – `deploy-dev-functions.md` 5.1 i 5.2 z `$p` prod)
 
@@ -431,7 +454,7 @@ do wydania publicznego).
 |---|---|---|---|---|---|
 | K1 | ~~Rejestracja konta Google Play Console (25 USD)~~ | **odpada** – konto organizacji istnieje (O-TAM116-4) | 0 w tym wydaniu | – | – |
 | K2 | ~~D-U-N-S~~ | odpada (konto istnieje) | 0 | – | – |
-| K3 | Vertex AI w prod (`generatePlan`) | **[RYZYKO KOSZTU] zmienne** | ok. 0,01 PLN za plan; przy 5 planach/dobę konta właściciela ≈ **do 1,50 PLN/mies.** | od OWN-7 (`aiEnabled=true`) | limit 5/dobę na konto, `globalDailyLimit` (O-TAM116-7: rekomendacja 25), spend cap **80 PLN** (do sprawdzenia w konsoli), budżet 100 PLN z alertami; `aiEnabled=false` poza testami; lista testerów w Play + App Check; `testUids` tylko w wariancie R (O-TAM116-8). 429 nie są rozliczane (ADR-0016) |
+| K3 | Vertex AI w prod (`generatePlan`) | **[RYZYKO KOSZTU] zmienne** | ok. 0,01 PLN za plan; przy 5 planach/dobę konta właściciela ≈ **do 1,50 PLN/mies.** | od OWN-7 (`aiEnabled=true`) | limit 5/dobę na konto i **50/dobę globalnie** (O-TAM116-7), spend cap **80 PLN** (do sprawdzenia w konsoli), budżet 100 PLN z alertami; `aiEnabled=false` poza testami; lista testerów w Play + App Check (bez blokady `testUids`, O-TAM116-8). **Najgorszy przypadek nadużycia: ok. 164 PLN/mies., zatrzymany przez spend cap 80 PLN z opóźnieniem (możliwa nadwyżka)** – świadomie przyjęte. 429 nie są rozliczane (ADR-0016) |
 | K4 | Cloud Build, Cloud Run, Artifact Registry, Secret Manager, Firestore, Logging w prod (w tym włączenie Cloud Run API przy pierwszym wdrożeniu) | **[RYZYKO KOSZTU] zmienne** | **0 zł** w darmowych pulach; najgorzej grosze (np. obrazy > 0,5 GB w Artifact Registry) | OWN-4, OWN-6 | samo włączenie API nic nie kosztuje; darmowe pule są **wspólne dla dev i prod** (jedno konto rozliczeniowe) – przy obecnym ruchu z dużym zapasem; cleanup policy obrazów 1 dzień; `maxInstances: 10`. Spend cap nie obejmuje tych usług (ADR-0014) |
 | K5 | Firebase Auth (logowanie Google), App Check, Play Integrity API, Play App Signing | bezpłatne | 0 | – | Play Integrity: darmowy limit 10 tys. żądań standardowych/dobę; Auth bez Identity Platform |
 | K6 | Okres próbny GCP | **[RYZYKO KOSZTU] po dacie** | do ok. **2027-02-15** koszty K3–K4 pokrywa kredyt; potem płaci firma | przed 2027-02-16 (runbook „Czego nie zrobiono” #8) | decyzja „Przejdź na wersję płatną” – tylko właściciel; bez niej Google zatrzyma zasoby prod i dev |
@@ -439,7 +462,9 @@ do wydania publicznego).
 | K8 | Build release w CI (etap 2 ADR-0019, później) | **[RYZYKO KOSZTU]** | minuty GitHub Actions (repo prywatne): ok. 10–15 min na build Linux; w planie Free 2 000 min/mies. wspólnie z resztą CI | dopiero przy STW-2 | Steward sprawdza zużycie minut przed włączeniem |
 
 **Razem dla tego wydania: ok. 0–2 PLN/mies. (z kredytu próbnego), bez żadnej opłaty jednorazowej.** Plan nie
-zwiększa żadnego limitu ani pułapu kosztu (zasada 10), a rekomendacja O-TAM116-7 go obniża (50 → 25).
+zwiększa żadnego limitu (zasada 10). Prod zostaje przy obecnym `globalDailyLimit=50` (O-TAM116-7), czyli
+z pułapem nadużycia wyższym niż w ADR-0014 (25). To decyzja właściciela; ochroną są spend cap 80 PLN i budżet
+100 PLN.
 
 ## 10. Kolejność, zależności i zadania
 
@@ -508,7 +533,7 @@ organizacji w Play Console istnieje (O-TAM116-4).
 | 9 | MD-3 | mobile-dev (z właścicielem) | MD-1, OWN-3 |
 | 10 | OWN-8 | właściciel | MD-3, OWN-2 |
 | 11 | OWN-5 | właściciel | OWN-8 |
-| 12 | OWN-7 | właściciel | OWN-5, OWN-6, odpowiedzi O-TAM116-7 i O-TAM116-8 |
+| 12 | OWN-7 | właściciel | OWN-5, OWN-6 |
 | 13 | QA-1 | qa | OWN-7 |
 | 14 | OWN-9 | właściciel | dane firmy (S1) – warunek 1 bramki 2a |
 | 15 | SEC-2 | security | – |
@@ -524,7 +549,7 @@ Szczegóły zadań:
 | OWN-4 | Przygotuj projekt produkcyjny: role kont funkcji, TTL, konto budujące, spend cap | właściciel | MD-2 (merge) | P1, P4–P7 z sekcji 4.1 (P2 i P3 spełnione wg odczytu z 2026-11-26); spend cap 80 PLN sprawdzony w konsoli; wyniki (bez e-maili) w runbooku P3-03 |
 | OWN-5 | Dodaj odciski klucza podpisu do Firebase prod i włącz App Check z Play Integrity | właściciel | OWN-8 | sekcja 5 kroki 3–8 i 7.4: odciski, App Check „Registered”, egzekwowanie Firestore, klucz API ograniczony, ekran zgody OAuth sprawdzony |
 | OWN-6 | Wdróż w produkcji funkcje zgody i tworzenia planu | właściciel | SEC-1 | sekcja 4.8; kontrole 4.9 a–e zgodne |
-| OWN-7 | Włącz tworzenie planów w produkcji tylko dla swojego konta | właściciel | OWN-5, OWN-6, O-TAM116-7, O-TAM116-8 | `config/runtime` wg 4.7: `testUids` = UID właściciela z prod, `globalDailyLimit` wg O-TAM116-7, `allowRealData` wg O-TAM116-8, `aiEnabled=true` na czas testu |
+| OWN-7 | Włącz tworzenie planów w produkcji (realne dane, tylko Ty na liście testerów) | właściciel | OWN-5, OWN-6 | `config/runtime` wg 4.7: `allowRealData=true`, `globalDailyLimit=50` (bez zmian), `perUserDailyLimit=5`, `testUids` = UID właściciela z prod (zapas na powrót do blokady), `aiEnabled=true` na czas testu; lista testerów w Play nadal tylko właściciel |
 | OWN-8 | Zbuduj plik AAB i prześlij pierwsze wydanie na testy wewnętrzne | właściciel | MD-3, OWN-2 | wersja `0.1.0 (1)` wdrożona na testy wewnętrzne, `mapping.txt` przesłany, tag w git |
 | OWN-9 | Opublikuj politykę prywatności pod adresem tadecode.pl/tamitu/prywatnosc | właściciel (treść: security, [PRAWNIK]) | dane firmy (S1) | strona PL i EN publicznie dostępna, wersja = `privacy-v1`; warunek 1 bramki 2a (nie blokuje testu z samym właścicielem) |
 | STW-1 | Sprawdź, że skan sekretów i .gitignore blokują klucze podpisu i pliki prod | Steward | – | gitleaks i `.gitignore` obejmują `*.jks`, `*.keystore`, `*.p12`, `key.properties`, `google-services.json`; próba na gałęzi testowej |
@@ -544,8 +569,8 @@ Kolejność pracy: najpierw etap A (wszystko równolegle), potem B i C równoleg
 | Ryzyko | Prawdop. / skutek | Co robimy |
 |---|---|---|
 | Realne dane właściciela w prod przed SEC-15, B-2, polityką i zgodą AI v2 | pewne / ryzyko RODO **przyjęte przez właściciela** (O-TAM116-1), dotyczy tylko jego danych | bramka 2a przed kolejnym testerem; o danych z tego okresu decyzja później (SEC-3) |
-| Przy obu flagach realnych danych `true` AI może wywołać każdy, kto ma aplikację z Play, bo `testUids` nie jest sprawdzane | pewne w wariancie D / mały koszt (limity, cap), ale warunek właściciela spełniony tylko organizacyjnie | wariant R (O-TAM116-8); lista testerów = tylko właściciel |
-| `globalDailyLimit=50` w prod zamiast 25 | pewne do czasu O-TAM116-7 / pułap nadużycia ok. 164 PLN/mies., ponad cap 80 PLN | ustawić 25 w OWN-7 |
+| Przy obu flagach realnych danych `true` AI może wywołać każdy, kto ma aplikację z Play, bo `testUids` nie jest sprawdzane | pewne (decyzja O-TAM116-8, **świadomie przyjęte**) / mały koszt, warunek właściciela spełniony tylko organizacyjnie | lista testerów w Play = tylko właściciel (bramka 2a), limity 5/50, cap 80 PLN, budżet 100 PLN; awaryjnie `allowRealData=false` w konsoli |
+| `globalDailyLimit=50` w prod zamiast 25 z ADR-0014 | pewne (decyzja O-TAM116-7, **świadomie przyjęte**) / pułap nadużycia ok. 164 PLN/mies.; spend cap 80 PLN zatrzymuje z opóźnieniem | spend cap 80 PLN, budżet 100 PLN z alertami, `aiEnabled=false` przy alarmie; możliwy aneks do ADR-0014 (orkiestrator) |
 | Ktoś zostaje dodany do listy testerów przed spełnieniem bramki | niskie / wysoki (realne dane osoby trzeciej bez polityki i zgody v2) | bramka 2a; orkiestrator sprawdza każdą zmianę listy |
 | Logowanie Google nie działa w wersji z Play (brak SHA-1 klucza podpisu Google) | wysokie przy pominięciu kroku / blokuje test | sekcja 5 krok 4; QA-1 zaczyna od logowania |
 | App Check odrzuca aplikację z Play (rejestracja bez SHA-256 klucza Google lub bez połączenia projektu w Play) | średnie / blokuje plany | sekcja 5 kroki 1, 5; nie „naprawiać” tokenem debug ani `ENFORCE_APP_CHECK=false` – zakaz |
@@ -554,11 +579,11 @@ Kolejność pracy: najpierw etap A (wszystko równolegle), potem B i C równoleg
 | Awaria tylko w release (R8) | średnie / blokuje test | MD-3 próba release przed przesłaniem |
 | Pomyłka dev/prod w poleceniu (`--project`) | niskie / średni | `$p` ustawiane na początku sesji; zawsze `--only functions:<nazwa>`; kontrole 4.9 |
 | Wdrożenie za dużo (`deleteAccount`, `budgetGuard`) | niskie / średni | tylko `--only functions:<nazwa>`; kontrola 4.9 b |
-| Koszt AI poza testami | niskie / mały | `aiEnabled=false` poza testami + limity + cap 80 PLN (+ `testUids` w wariancie R) |
+| Koszt AI poza testami | niskie / mały | `aiEnabled=false` poza testami + limity + cap 80 PLN |
 | Koniec okresu próbnego GCP (ok. 2027-02-15) zatrzymuje prod | pewne bez decyzji / wysoki | decyzja właściciela przed datą (K6) |
 | „Usuń konto” w aplikacji kończy się błędem | pewne / mały przy jednym testerze | znane ograniczenie (4.6); P3-08 – warunek 3 bramki 2a |
 | Polityka prywatności pod linkiem nie istnieje (O-TAM116-2: nieopublikowana) | pewne / mały przy samym właścicielu, bloker dla kolejnych testerów | OWN-9, warunek 1 bramki 2a |
-| Tester spoza zespołu dostaje link opt-in | niskie / średni (w wariancie D wygeneruje plan na realnych danych) | link tylko właścicielowi; lista testerów = tylko właściciel; wariant R |
+| Tester spoza zespołu dostaje link opt-in | niskie / średni (bez blokady `testUids` wygeneruje plan na realnych danych) | link tylko właścicielowi; lista testerów = tylko właściciel (bramka 2a) |
 | Ś-1 dla `fn-consent` nie zadziała (brakujące uprawnienie transakcji) | średnie / zapis zgody nie działa | najpierw dev i test qa (sekcja 4.3); dopisywać uprawnienia do roli, nie wracać do `datastore.user` |
 
 ## 12. Pytania (sekcja TAM-116 w `docs/open-questions.md`)
@@ -570,9 +595,10 @@ Kolejność pracy: najpierw etap A (wszystko równolegle), potem B i C równoleg
 - **O-TAM116-5** – role od razu; bez `budgetGuard` i `deleteAccount`: **zgoda**.
 - **O-TAM116-6** – stan prod: **odczyt orkiestratora z 2026-11-26** (sekcja 3); spend cap właściciel sprawdza
   w konsoli (OWN-4).
-- **O-TAM116-7 (nowe)** – `globalDailyLimit` w prod: 50 czy 25? Rekomendacja: **25** (sekcja 4.7).
-- **O-TAM116-8 (nowe)** – `config/runtime.allowRealData`, dopóki jest jeden tester: rekomendacja **`false`**
-  (wariant R, sekcja 4.7), żeby `testUids` technicznie ograniczało AI do konta właściciela.
+- **O-TAM116-7** – `globalDailyLimit` w prod: **odpowiedziane 2026-11-26: zostaje 50** (rekomendacja brzmiała 25).
+  To świadome odstępstwo od ADR-0014 Aneks A pkt 3; ryzyko opisane w sekcji 4.7.
+- **O-TAM116-8** – blokada `testUids`: **odpowiedziane 2026-11-26: bez blokady technicznej** (wariant D,
+  `allowRealData=true`). Ochrona jest organizacyjna i kosztowa; ryzyko przyjęte świadomie (sekcja 4.7).
 
 ## 13. Źródła zewnętrzne (wiedza ogólna, do potwierdzenia w konsoli przy wykonywaniu)
 

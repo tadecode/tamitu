@@ -92,5 +92,6 @@ Kryteria: bezpieczeństwo klucza, prostota, koszt, powtarzalność, zgodność z
 2. Właściciel włączył w prod realne dane od razu (O-TAM116-1). Stała `TAMITU_TEST_DATA=true` z pkt 4 **zostaje**
    w buildzie testów wewnętrznych. Przy obu flagach realnych danych `true` nic nie zmienia, ale pozwala ograniczyć
    generowanie do konta z `testUids` samą zmianą `config/runtime.allowRealData=false`, bez nowego buildu (plan,
-   sekcja 4.7, O-TAM116-8). Build dla testerów spoza bramki 2a planu – bez tej stałej, po spełnieniu bramki.
+   sekcja 4.7). Właściciel wybrał wariant bez tej blokady (O-TAM116-8: `allowRealData=true`), więc stała jest tylko
+   zapasem na szybki powrót. Build dla testerów spoza bramki 2a planu – bez tej stałej, po spełnieniu bramki.
 3. Treść decyzji (pkt 1–8) bez zmian.
