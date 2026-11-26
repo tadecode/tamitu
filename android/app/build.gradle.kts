@@ -37,6 +37,58 @@ gradle.taskGraph.whenReady {
     }
 }
 
+// ADR-0019 (TAM-119, REL-MD-1): prodRelease is signed with the owner's upload key (Play App Signing keeps
+// the app signing key). Nothing about the key is in the repository: the four values come from Gradle
+// properties (owner's %USERPROFILE%\.gradle\gradle.properties, -P, ORG_GRADLE_PROJECT_*) or from
+// environment variables, so a later CI build (ADR-0019 stage 2) can use the same mechanism.
+// Missing or incomplete values = no signing config for prod (never the debug key) and, if a prodRelease
+// packaging task is in the task graph, a build error that lists what is missing (android/RELEASE.md).
+// devRelease keeps the debug key (ADR-0019 pt 3, "devRelease unchanged": QA builds, never uploaded).
+fun uploadSigningValue(property: String, env: String): String? =
+    (providers.gradleProperty(property).orNull ?: providers.environmentVariable(env).orNull)
+        ?.takeIf { it.isNotBlank() }
+
+val uploadStoreFile = uploadSigningValue("tamitu.upload.storeFile", "TAMITU_UPLOAD_STORE_FILE")
+val uploadStorePassword =
+    uploadSigningValue("tamitu.upload.storePassword", "TAMITU_UPLOAD_STORE_PASSWORD")
+val uploadKeyAlias = uploadSigningValue("tamitu.upload.keyAlias", "TAMITU_UPLOAD_KEY_ALIAS")
+val uploadKeyPassword =
+    uploadSigningValue("tamitu.upload.keyPassword", "TAMITU_UPLOAD_KEY_PASSWORD")
+
+// Problems are collected here and reported only when a prodRelease build is requested, so debug,
+// profile and dev builds (and the CI "does it compile" step) work without any signing setup.
+val uploadSigningProblems: List<String> =
+    buildList {
+        if (uploadStoreFile == null) add("tamitu.upload.storeFile / TAMITU_UPLOAD_STORE_FILE is not set")
+        if (uploadStorePassword == null) {
+            add("tamitu.upload.storePassword / TAMITU_UPLOAD_STORE_PASSWORD is not set")
+        }
+        if (uploadKeyAlias == null) add("tamitu.upload.keyAlias / TAMITU_UPLOAD_KEY_ALIAS is not set")
+        if (uploadKeyPassword == null) {
+            add("tamitu.upload.keyPassword / TAMITU_UPLOAD_KEY_PASSWORD is not set")
+        }
+        if (uploadStoreFile != null && !file(uploadStoreFile).isFile) {
+            // The path is the owner's local path; it is not printed (no private paths in build logs).
+            add("the file given in tamitu.upload.storeFile / TAMITU_UPLOAD_STORE_FILE does not exist")
+        }
+    }
+
+val prodReleasePackagingTask = Regex("(assemble|bundle|package|sign)ProdRelease\\w*")
+
+gradle.taskGraph.whenReady {
+    if (uploadSigningProblems.isEmpty()) return@whenReady
+    val prodReleaseTasks =
+        allTasks.filter { it.project == appProject && prodReleasePackagingTask.matches(it.name) }
+    if (prodReleaseTasks.isNotEmpty()) {
+        throw GradleException(
+            "prodRelease must be signed with the upload key (ADR-0019), but the signing config " +
+                "is incomplete:\n - " + uploadSigningProblems.joinToString("\n - ") +
+                "\nSee android/RELEASE.md. The debug key is never used for prodRelease. " +
+                "Release tasks in the graph: " + prodReleaseTasks.joinToString { it.path },
+        )
+    }
+}
+
 googleServices {
     missingGoogleServicesStrategy =
         if (allowMissingGoogleServices) {
@@ -75,24 +127,39 @@ android {
         resValues = true
     }
 
+    signingConfigs {
+        if (uploadSigningProblems.isEmpty()) {
+            create("upload") {
+                storeFile = file(uploadStoreFile!!)
+                storePassword = uploadStorePassword
+                keyAlias = uploadKeyAlias
+                keyPassword = uploadKeyPassword
+            }
+        }
+    }
+
+    // Signing per flavor (TAM-119). AGP takes the build type's signing config first, so debug and
+    // profile builds keep the debug key; the release build type has none, so release variants use
+    // the flavor's: dev = debug key (ADR-0019 pt 3), prod = upload key or nothing (unsigned + the
+    // task-graph error above). Do not add a signingConfig to buildTypes.release.
     flavorDimensions += "env"
     productFlavors {
         create("dev") {
             dimension = "env"
             applicationIdSuffix = ".dev"
             resValue("string", "app_name", "Tamitu Dev")
+            signingConfig = signingConfigs.getByName("debug")
         }
         create("prod") {
             dimension = "env"
             resValue("string", "app_name", "Tamitu")
+            signingConfig = signingConfigs.findByName("upload")
         }
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = null
         }
     }
 }
