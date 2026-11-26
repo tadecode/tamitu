@@ -17,6 +17,7 @@ class Notice extends StatelessWidget {
     required this.text,
     this.title,
     this.liveRegion = false,
+    this.action,
   });
 
   final NoticeVariant variant;
@@ -27,6 +28,10 @@ class Notice extends StatelessWidget {
   /// True for notices that appear after an action (offline, errors).
   final bool liveRegion;
 
+  /// Optional text button under the text, at the end (CMP-13 "0-2 przyciski tekstowe na
+  /// dole po prawej"). It keeps its own semantics node, after the title and text.
+  final Widget? action;
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -35,8 +40,28 @@ class Notice extends StatelessWidget {
       NoticeVariant.error => (scheme.errorContainer, scheme.onErrorContainer),
       _ => (scheme.secondaryContainer, scheme.onSecondaryContainer),
     };
+    Widget message = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (title != null) ...[
+          Text(title!, style: text.titleSmall?.copyWith(color: fg)),
+          const SizedBox(height: Space.s1),
+        ],
+        Text(this.text, style: text.bodyMedium?.copyWith(color: fg)),
+      ],
+    );
+    final action = this.action;
+    if (action != null) {
+      // Next to a button node the texts would split into separate nodes: keep title
+      // and text one element (and the live region's label), then the button.
+      message = Semantics(
+        container: true,
+        liveRegion: liveRegion,
+        child: message,
+      );
+    }
     return Semantics(
-      liveRegion: liveRegion,
+      liveRegion: liveRegion && action == null,
       container: true,
       child: Card.filled(
         color: bg,
@@ -51,14 +76,14 @@ class Notice extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (title != null) ...[
-                      Text(title!, style: text.titleSmall?.copyWith(color: fg)),
-                      const SizedBox(height: Space.s1),
+                    message,
+                    if (action != null) ...[
+                      const SizedBox(height: Space.s2),
+                      Align(
+                        alignment: AlignmentDirectional.centerEnd,
+                        child: action,
+                      ),
                     ],
-                    Text(
-                      this.text,
-                      style: text.bodyMedium?.copyWith(color: fg),
-                    ),
                   ],
                 ),
               ),

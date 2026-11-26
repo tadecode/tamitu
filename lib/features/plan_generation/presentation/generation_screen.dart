@@ -14,6 +14,8 @@ import '../../consent/application/consent_service.dart';
 import '../../generation/application/ai_busy_controller.dart';
 import '../../generation/presentation/ai_busy_view.dart';
 import '../../plans/application/plans_providers.dart';
+import '../../plans/domain/saved_plan.dart';
+import '../../plans/presentation/unsaved_plan_screen.dart';
 import '../../session/session_controller.dart';
 import '../application/generation_result.dart';
 import '../domain/generated_plan.dart';
@@ -133,21 +135,31 @@ class _GenerationScreenState extends ConsumerState<GenerationScreen> {
     _finished = true;
     final data = PlanViewData(input: widget.input, plan: plan, fresh: true);
     String? id;
+    var failure = PlanStorageFailure.other;
     try {
       id = await ref
           .read(planRepositoryProvider)
           .save(widget.uid, widget.input, plan);
       ref.invalidate(savedPlansProvider(widget.uid));
+    } on PlanStorageException catch (e) {
+      failure = e.failure;
     } catch (_) {
-      // Could not write the database: the plan is still shown from memory, without
-      // the "saved" snackbar and the delete menu (TAM-19 log, open question M-TAM19-1).
-      id = null;
+      // Any other error: the generic "not saved" text.
     }
     if (!mounted) return;
-    context.go(
-      id == null ? Routes.plan : Routes.savedPlan(id),
-      extra: id == null ? PlanViewData(input: widget.input, plan: plan) : data,
-    );
+    if (id != null) {
+      context.go(Routes.savedPlan(id), extra: data);
+    } else {
+      // EK-08 v0.2 "Plan nie jest zapisany": the plan from memory with the warning,
+      // "Try saving again" and a dialog on back (TAM-113).
+      context.go(
+        Routes.plan,
+        extra: UnsavedPlan(
+          data: PlanViewData(input: widget.input, plan: plan),
+          failure: failure,
+        ),
+      );
+    }
   }
 
   void _pop(GenerationResult result) {

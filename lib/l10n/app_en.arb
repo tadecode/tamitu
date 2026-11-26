@@ -266,5 +266,14 @@
   "routeModeWalking": "Walk",
   "routeOpenMaps": "Open in Google Maps",
   "routeOpensOtherApp": "opens another app",
-  "routeOpenError": "Couldn't open maps. Please try again."
+  "routeOpenError": "Couldn't open maps. Please try again.",
+  "planNotSavedTitle": "This trip isn't saved",
+  "planNotSavedBody": "We couldn't save this trip on your phone. If you leave this screen or close the app, the trip will be lost.",
+  "planNotSavedStorageBody": "Your phone is out of storage, so the trip wasn't saved. Free up some space and try again. If you leave this screen or close the app, the trip will be lost.",
+  "planSaveRetry": "Try saving again",
+  "planSaving": "Saving…",
+  "planSaveFailedAgainSnack": "The trip still couldn't be saved.",
+  "planLeaveUnsavedTitle": "Leave without saving?",
+  "planLeaveUnsavedBody": "The trip will be lost and can't be recovered. This generation already counts towards today's limit.",
+  "planLeaveUnsavedConfirm": "Leave without saving"
 }

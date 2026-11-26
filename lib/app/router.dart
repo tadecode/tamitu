@@ -7,6 +7,7 @@ import '../features/consent/presentation/reconsent_screen.dart';
 import '../features/consent/presentation/welcome_screen.dart';
 import '../features/plan_generation/presentation/plan_screen.dart';
 import '../features/plans/presentation/saved_plan_screen.dart';
+import '../features/plans/presentation/unsaved_plan_screen.dart';
 import '../features/session/session_controller.dart';
 import '../features/session/session_gate_screen.dart';
 import '../features/trip_form/presentation/trip_form_screen.dart';
@@ -25,8 +26,8 @@ abstract final class Routes {
   /// EK-05 (pushed from the start screen). EK-07 is pushed on top of it by the form.
   static const tripForm = '/home/trip';
 
-  /// EK-08 of a plan that could not be saved (shown from memory); `extra` =
-  /// `PlanViewData`. Child of home, so back returns to EK-04 and the form does not stay
+  /// EK-08 of a plan that could not be saved (shown from memory, EK-08 v0.2); `extra` =
+  /// `UnsavedPlan`. Child of home, so back returns to EK-04 and the form does not stay
   /// on the stack (EK-08 "Wejście i wyjście").
   static const plan = '/home/plan';
 
@@ -95,7 +96,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: 'plan',
             builder: (context, state) {
               final extra = state.extra;
-              return PlanScreen(data: extra is PlanViewData ? extra : null);
+              final status = ref.read(sessionProvider);
+              // Without the plan (process restored, no `extra`): CMP-18 "Back to list".
+              if (extra is! UnsavedPlan || status is! SessionReady) {
+                return const PlanScreen(data: null);
+              }
+              return UnsavedPlanScreen(uid: status.uid, plan: extra);
             },
           ),
           GoRoute(

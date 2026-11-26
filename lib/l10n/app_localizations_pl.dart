@@ -784,4 +784,34 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get routeOpenError => 'Nie udało się otworzyć map. Spróbuj ponownie.';
+
+  @override
+  String get planNotSavedTitle => 'Plan nie jest zapisany';
+
+  @override
+  String get planNotSavedBody =>
+      'Nie udało się zapisać planu w telefonie. Jeśli wyjdziesz z tego ekranu albo zamkniesz aplikację, plan zniknie.';
+
+  @override
+  String get planNotSavedStorageBody =>
+      'W telefonie brakuje miejsca, więc plan się nie zapisał. Zwolnij trochę miejsca i spróbuj ponownie. Jeśli wyjdziesz z tego ekranu albo zamkniesz aplikację, plan zniknie.';
+
+  @override
+  String get planSaveRetry => 'Spróbuj zapisać ponownie';
+
+  @override
+  String get planSaving => 'Zapisywanie…';
+
+  @override
+  String get planSaveFailedAgainSnack => 'Nadal nie udało się zapisać planu.';
+
+  @override
+  String get planLeaveUnsavedTitle => 'Wyjść bez zapisania planu?';
+
+  @override
+  String get planLeaveUnsavedBody =>
+      'Plan zniknie i nie da się go odzyskać. To generowanie jest już wliczone do dzisiejszego limitu.';
+
+  @override
+  String get planLeaveUnsavedConfirm => 'Wyjdź bez zapisu';
 }

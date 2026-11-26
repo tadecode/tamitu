@@ -1,6 +1,9 @@
 import 'dart:convert';
 
+import 'dart:io';
+
 import 'package:drift/drift.dart';
+import 'package:drift/native.dart' show SqliteException;
 
 import '../../../core/db/account_databases.dart';
 import '../../plan_generation/domain/generated_plan.dart';
@@ -206,8 +209,12 @@ class SqlitePlanRepository implements PlanRepository {
   static Future<T> _guard<T>(Future<T> Function() body) async {
     try {
       return await body();
-    } catch (_) {
-      throw const PlanStorageException();
+    } catch (e) {
+      throw PlanStorageException(
+        isOutOfStorage(e)
+            ? PlanStorageFailure.noSpace
+            : PlanStorageFailure.other,
+      );
     }
   }
 
@@ -226,4 +233,27 @@ class SqlitePlanRepository implements PlanRepository {
     final p = hhmm.split(':').map(int.parse).toList();
     return LocalTime(p[0], p[1]);
   }
+}
+
+/// SQLite primary result code SQLITE_FULL ("database or disk is full"). SQLite's unix
+/// VFS (Android) reports a write that fails with ENOSPC as SQLITE_FULL, not as an I/O
+/// error, so this code alone covers a full disk during a transaction.
+const _sqliteFull = 13;
+
+/// `errno` ENOSPC ("No space left on device") on Android and Linux.
+const _enospc = 28;
+
+/// True when [error] means the phone is out of storage (EK-08 v0.2,
+/// `planNotSavedStorageBody`): SQLITE_FULL from SQLite, or ENOSPC from the file system
+/// (e.g. creating the database file). Drift wrappers are unwrapped. Looks only at
+/// codes, never at the message (it could quote plan content).
+bool isOutOfStorage(Object? error, [int depth = 0]) {
+  if (error == null || depth > 4) return false;
+  return switch (error) {
+    SqliteException(:final resultCode) => resultCode == _sqliteFull,
+    FileSystemException(:final osError) => osError?.errorCode == _enospc,
+    CouldNotRollBackException(:final cause) => isOutOfStorage(cause, depth + 1),
+    DriftWrappedException(:final cause) => isOutOfStorage(cause, depth + 1),
+    _ => false,
+  };
 }
