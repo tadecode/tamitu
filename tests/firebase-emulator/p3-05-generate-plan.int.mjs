@@ -415,12 +415,20 @@ const PARALLEL_CALL_TIMEOUT_MS = 60_000;
 /** Function timeout (index.ts timeoutSeconds: 120): a request cut off by the client may run this long. */
 const FUNCTION_TIMEOUT_MS = 120_000;
 
-// TEMPORARY (TAM-115, P3-05-CONTENTION) – finding F-1 in docs/qa/QA-TAM-89-emulator.md: under contention the
-// reservation transaction can end with ABORTED and generatePlan answers `internal` instead of a contract code.
-// Until TAM-115 maps that to a contract code (with slotReleased), EMU-16/17 accept `internal`. The safety
-// assertions (no overshoot; an aborted transaction writes nothing: counters = model calls = granted plans)
-// stay in force regardless. REMOVE this constant and its uses when TAM-115 is done (TAM-115 acceptance criterion).
-const TEMP_TOLERATE_INTERNAL_UNTIL_TAM_115 = ["internal"];
+// Contention (ADR-0018, TAM-115; finding F-1 in docs/qa/QA-TAM-89-emulator.md): when the reservation transaction
+// is aborted 3 times, generatePlan answers `ai_busy` with retryAfterSec = 60 and slotReleased = true, without
+// a model call and without writing anything. `internal` is NEVER an allowed answer here. Contention is random on
+// the emulator, so its occurrence is only reported (t.diagnostic); the deterministic mapping is unit-tested.
+// In EMU-16/17 the Vertex fake answers `valid`, so every `ai_busy` here comes from contention.
+const AI_BUSY_RETRY_AFTER_SEC = 60;
+
+/** Every `ai_busy` must carry the contract details (ADR-0018 / posrednik-api.md). */
+function assertAiBusyContract(rs, codes) {
+  for (const r of rs.filter((x) => x.code === "ai_busy")) {
+    assert.equal(r.details?.retryAfterSec, AI_BUSY_RETRY_AFTER_SEC, `ai_busy retryAfterSec: ${JSON.stringify(r.details)} ${codes}`);
+    assert.equal(r.details?.slotReleased, true, `ai_busy slotReleased: ${JSON.stringify(r.details)} ${codes}`);
+  }
+}
 
 async function generateBounded(u) {
   try {
@@ -453,28 +461,33 @@ async function settle(maxMs = 30_000) {
 
 function summarize(t, rs) {
   const codes = JSON.stringify(rs.map((r) => (r.ok ? "ok" : r.code)));
-  const internal = rs.filter((r) => TEMP_TOLERATE_INTERNAL_UNTIL_TAM_115.includes(r.code)).length; // TEMPORARY (TAM-115)
+  const busy = rs.filter((r) => r.code === "ai_busy").length;
   const transport = rs.filter((r) => r.code === "emu_transport").length;
-  if (internal > 0) t.diagnostic(`F-1, tolerated TEMPORARILY until TAM-115: ${internal}/${rs.length} requests ended with internal (transaction ABORTED): ${codes}`);
+  t.diagnostic(`contention (ADR-0018): ${busy}/${rs.length} requests answered ai_busy: ${codes}`);
   if (transport > 0) t.diagnostic(`emulator: ${transport}/${rs.length} requests got no answer (worker failed to load): ${codes}`);
-  return { codes, internal, transport, ok: rs.filter((r) => r.ok) };
+  return { codes, busy, transport, ok: rs.filter((r) => r.ok) };
 }
 
 test("EMU-16 parallel calls of one account never overshoot the limit (Firestore transaction)", { timeout: 240_000 }, async (t) => {
   const u = await readyUser();
   const N = 7; // 5 slots + 2 over the limit
   const rs = await Promise.all(Array.from({ length: N }, () => generateBounded(u)));
-  const { codes, internal, transport, ok } = summarize(t, rs);
+  const { codes, busy, transport, ok } = summarize(t, rs);
   await settle();
 
-  // Safety invariants (always): never above the limit; every reserved slot = exactly one model call.
-  const count = (await usage(u.uid))?.count ?? 0;
+  // Contract codes only (never `internal`); emu_transport = emulator gave no answer (see above).
+  assert.ok(rs.every((r) => r.ok || ["limit_exceeded", "ai_busy", "emu_transport"].includes(r.code)), codes);
+  assertAiBusyContract(rs, codes);
+
+  // Safety invariants (always): never above the limit; every reserved slot = exactly one model call;
+  // contention writes nothing (busyReleased untouched – ai_busy from contention does not release a slot).
+  const us = await usage(u.uid);
+  const count = us?.count ?? 0;
   assert.ok(count <= USER_LIMIT, `usage/{uid}.count ${count} > ${USER_LIMIT}: ${codes}`);
   assert.ok(ok.length <= USER_LIMIT, `more than ${USER_LIMIT} plans granted: ${codes}`);
   assert.equal(fake.calls.length, count, "model calls = reserved slots");
   assert.equal(await globalCount() ?? 0, count, "usage_global = account counter");
-  // `internal` only TEMPORARILY (TAM-115); emu_transport = emulator gave no answer (see above).
-  assert.ok(rs.every((r) => r.ok || ["limit_exceeded", ...TEMP_TOLERATE_INTERNAL_UNTIL_TAM_115, "emu_transport"].includes(r.code)), codes);
+  assert.equal(us?.busyReleased ?? 0, 0, `contention must not touch busyReleased: ${codes}`);
   const rem = ok.map((r) => r.result.quota.remainingToday);
   assert.equal(new Set(rem).size, rem.length, `remainingToday not distinct: ${rem}`);
 
@@ -485,9 +498,13 @@ test("EMU-16 parallel calls of one account never overshoot the limit (Firestore 
     return t.skip("emulator did not answer every request – exact counts not verified (invariants passed)");
   }
   assert.equal(count, ok.length, "every granted plan is counted once");
-  if (internal === 0) {
+  const exceeded = rs.filter((r) => r.code === "limit_exceeded").length;
+  assert.equal(ok.length + exceeded + busy, N, codes);
+  if (busy === 0) {
     assert.equal(ok.length, USER_LIMIT, codes);
-    assert.equal(rs.filter((r) => r.code === "limit_exceeded").length, N - USER_LIMIT, codes);
+    assert.equal(exceeded, N - USER_LIMIT, codes);
+  } else {
+    assert.ok(exceeded <= N - USER_LIMIT, `more limit_exceeded than requests over the limit: ${codes}`);
   }
 });
 
@@ -496,21 +513,32 @@ test("EMU-17 parallel calls of several accounts never overshoot the global limit
   const FREE = 3;
   await setDoc(`usage_global/${today()}`, { count: GLOBAL_LIMIT - FREE });
   const rs = await Promise.all(users.flatMap((u) => [generateBounded(u), generateBounded(u)])); // 10 concurrent
-  const { codes, internal, transport, ok } = summarize(t, rs);
+  const { codes, busy, transport, ok } = summarize(t, rs);
   await settle();
+
+  // Global limit exhausted = ai_unavailable (contract); contention = ai_busy; never `internal`;
+  // emu_transport = emulator gave no answer (see above).
+  assert.ok(rs.every((r) => r.ok || ["ai_unavailable", "ai_busy", "emu_transport"].includes(r.code)), codes);
+  assertAiBusyContract(rs, codes);
 
   const global = await globalCount();
   let sum = 0;
-  for (const u of users) sum += (await usage(u.uid))?.count ?? 0;
+  for (const [i, u] of users.entries()) {
+    const us = await usage(u.uid);
+    sum += us?.count ?? 0;
+    // Contention writes nothing: an account whose every answer was ai_busy has no reserved slot.
+    const mine = [rs[2 * i], rs[2 * i + 1]]; // flatMap order: two requests per account
+    if (mine.every((r) => r.code === "ai_busy")) {
+      assert.equal(us?.count ?? 0, 0, `account with only ai_busy has a reserved slot: ${codes}`);
+    }
+    assert.equal(us?.busyReleased ?? 0, 0, `contention must not touch busyReleased: ${codes}`);
+  }
   assert.ok(global <= GLOBAL_LIMIT, `usage_global ${global} > ${GLOBAL_LIMIT}: ${codes}`);
   assert.ok(ok.length <= FREE, `more than ${FREE} plans granted: ${codes}`);
   assert.equal(global, GLOBAL_LIMIT - FREE + sum, "usage_global = seed + account counters");
   assert.equal(fake.calls.length, sum, "model calls = reserved slots");
-  // Global limit exhausted = ai_unavailable (contract); `internal` only TEMPORARILY (TAM-115); emu_transport =
-  // emulator gave no answer (see above).
-  assert.ok(rs.every((r) => r.ok || ["ai_unavailable", ...TEMP_TOLERATE_INTERNAL_UNTIL_TAM_115, "emu_transport"].includes(r.code)), codes);
 
   if (transport > 0) return t.skip("emulator did not answer every request – exact counts not verified (invariants passed)");
   assert.equal(sum, ok.length, "every granted plan is counted once");
-  if (internal === 0) assert.equal(ok.length, FREE, codes);
+  if (busy === 0) assert.equal(ok.length, FREE, codes);
 });
