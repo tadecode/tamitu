@@ -54,11 +54,16 @@ async function googleUser() {
   return { uid: j.localId, idToken: j.idToken };
 }
 
+/** Upper bound of one sequential call (cold start ~16 s, ai_busy with backoff ~12 s): a hung emulator worker
+ * fails the test instead of blocking the run and the shared `firebase-emulators` lock (review PR #184 #3). */
+const CALL_TIMEOUT_MS = 90_000;
+
 async function call(fn, data, idToken) {
   const r = await fetch(`${FN}/${fn}`, {
     method: "POST",
     headers: { "content-type": "application/json", authorization: `Bearer ${idToken}` },
     body: JSON.stringify({ data }),
+    signal: AbortSignal.timeout(CALL_TIMEOUT_MS),
   });
   const j = await r.json();
   return j.error ? { ok: false, code: j.error.details?.code, details: j.error.details ?? {}, status: j.error.status } : { ok: true, result: j.result };
@@ -265,7 +270,10 @@ test("EMU-05 global limit is checked before the account limit (both exhausted ->
   await setDoc(`usage_global/${today()}`, { count: GLOBAL_LIMIT });
   const r = await generate(u);
   assert.equal(r.code, "ai_unavailable", JSON.stringify(r));
+  assert.equal(r.details.slotReleased, true);
   assert.equal(fake.calls.length, 0);
+  assert.equal((await usage(u.uid)).count, USER_LIMIT, "usage/{uid} unchanged");
+  assert.equal(await globalCount(), GLOBAL_LIMIT, "usage_global unchanged");
 });
 
 // ---------- release after errors ----------
@@ -404,6 +412,15 @@ test("EMU-15 exhausted account limit AND no consent -> consent_required (consent
 // `emu_transport` (client timeout). The SAFETY invariants are asserted in every case; the exact counts only
 // when the emulator answered every request (otherwise the test is reported as skipped with a diagnostic).
 const PARALLEL_CALL_TIMEOUT_MS = 60_000;
+/** Function timeout (index.ts timeoutSeconds: 120): a request cut off by the client may run this long. */
+const FUNCTION_TIMEOUT_MS = 120_000;
+
+// TEMPORARY (TAM-115, P3-05-CONTENTION) – finding F-1 in docs/qa/QA-TAM-89-emulator.md: under contention the
+// reservation transaction can end with ABORTED and generatePlan answers `internal` instead of a contract code.
+// Until TAM-115 maps that to a contract code (with slotReleased), EMU-16/17 accept `internal`. The safety
+// assertions (no overshoot; an aborted transaction writes nothing: counters = model calls = granted plans)
+// stay in force regardless. REMOVE this constant and its uses when TAM-115 is done (TAM-115 acceptance criterion).
+const TEMP_TOLERATE_INTERNAL_UNTIL_TAM_115 = ["internal"];
 
 async function generateBounded(u) {
   try {
@@ -436,14 +453,14 @@ async function settle(maxMs = 30_000) {
 
 function summarize(t, rs) {
   const codes = JSON.stringify(rs.map((r) => (r.ok ? "ok" : r.code)));
-  const internal = rs.filter((r) => r.code === "internal").length; // F-1 (transaction ABORTED)
+  const internal = rs.filter((r) => TEMP_TOLERATE_INTERNAL_UNTIL_TAM_115.includes(r.code)).length; // TEMPORARY (TAM-115)
   const transport = rs.filter((r) => r.code === "emu_transport").length;
-  if (internal > 0) t.diagnostic(`F-1: ${internal}/${rs.length} requests ended with internal (transaction ABORTED): ${codes}`);
+  if (internal > 0) t.diagnostic(`F-1, tolerated TEMPORARILY until TAM-115: ${internal}/${rs.length} requests ended with internal (transaction ABORTED): ${codes}`);
   if (transport > 0) t.diagnostic(`emulator: ${transport}/${rs.length} requests got no answer (worker failed to load): ${codes}`);
   return { codes, internal, transport, ok: rs.filter((r) => r.ok) };
 }
 
-test("EMU-16 parallel calls of one account never overshoot the limit (Firestore transaction)", { timeout: 150_000 }, async (t) => {
+test("EMU-16 parallel calls of one account never overshoot the limit (Firestore transaction)", { timeout: 240_000 }, async (t) => {
   const u = await readyUser();
   const N = 7; // 5 slots + 2 over the limit
   const rs = await Promise.all(Array.from({ length: N }, () => generateBounded(u)));
@@ -456,11 +473,17 @@ test("EMU-16 parallel calls of one account never overshoot the limit (Firestore 
   assert.ok(ok.length <= USER_LIMIT, `more than ${USER_LIMIT} plans granted: ${codes}`);
   assert.equal(fake.calls.length, count, "model calls = reserved slots");
   assert.equal(await globalCount() ?? 0, count, "usage_global = account counter");
-  assert.ok(rs.every((r) => r.ok || ["limit_exceeded", "internal", "emu_transport"].includes(r.code)), codes);
+  // `internal` only TEMPORARILY (TAM-115); emu_transport = emulator gave no answer (see above).
+  assert.ok(rs.every((r) => r.ok || ["limit_exceeded", ...TEMP_TOLERATE_INTERNAL_UNTIL_TAM_115, "emu_transport"].includes(r.code)), codes);
   const rem = ok.map((r) => r.result.quota.remainingToday);
   assert.equal(new Set(rem).size, rem.length, `remainingToday not distinct: ${rem}`);
 
-  if (transport > 0) return t.skip("emulator did not answer every request – exact counts not verified (invariants passed)");
+  if (transport > 0) {
+    // A request cut off by the client may still finish later and write usage_global/{today}, which EMU-17
+    // reuses (review PR #184 #4b): wait out the function timeout before the next test.
+    await new Promise((r) => setTimeout(r, FUNCTION_TIMEOUT_MS - PARALLEL_CALL_TIMEOUT_MS + 5_000));
+    return t.skip("emulator did not answer every request – exact counts not verified (invariants passed)");
+  }
   assert.equal(count, ok.length, "every granted plan is counted once");
   if (internal === 0) {
     assert.equal(ok.length, USER_LIMIT, codes);
@@ -483,8 +506,9 @@ test("EMU-17 parallel calls of several accounts never overshoot the global limit
   assert.ok(ok.length <= FREE, `more than ${FREE} plans granted: ${codes}`);
   assert.equal(global, GLOBAL_LIMIT - FREE + sum, "usage_global = seed + account counters");
   assert.equal(fake.calls.length, sum, "model calls = reserved slots");
-  // Global limit exhausted = ai_unavailable (contract); F-1 internal and emulator transport errors tolerated.
-  assert.ok(rs.every((r) => r.ok || ["ai_unavailable", "internal", "emu_transport"].includes(r.code)), codes);
+  // Global limit exhausted = ai_unavailable (contract); `internal` only TEMPORARILY (TAM-115); emu_transport =
+  // emulator gave no answer (see above).
+  assert.ok(rs.every((r) => r.ok || ["ai_unavailable", ...TEMP_TOLERATE_INTERNAL_UNTIL_TAM_115, "emu_transport"].includes(r.code)), codes);
 
   if (transport > 0) return t.skip("emulator did not answer every request – exact counts not verified (invariants passed)");
   assert.equal(sum, ok.length, "every granted plan is counted once");

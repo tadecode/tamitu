@@ -33,7 +33,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .farm/test-lock.ps1 -Resourc
 | EMU-02 | dokument z wczoraj = 0 | wczorajszy dokument z `count=5`, `released=2`, `busyReleased=10` → plan przechodzi, wszystkie liczniki od zera | ✔ |
 | EMU-03 | limit konta 5/dobę | plany 1–5 (malejące `remainingToday`), 6. → `limit_exceeded` (`resource-exhausted`, `details.limit=5`, `resetAt` w przyszłości), bez wywołania modelu, `usage_global` bez zmiany | ✔ |
 | EMU-04 | limit globalny 25/dobę | 5 kont × 5 planów = 25 prawdziwych rezerwacji, 26. (6. konto) → odrzucony, bez wywołania modelu i bez dokumentu `usage` | ✔ |
-| EMU-05 | kolejność limitów | oba limity wyczerpane → wygrywa globalny (`ai_unavailable`) | ✔ |
+| EMU-05 | kolejność limitów | oba limity wyczerpane → wygrywa globalny (`ai_unavailable`, `slotReleased=true`), liczniki `usage/{uid}` i `usage_global` bez zmian | ✔ |
 | EMU-06 | zwrot po `ai_invalid_response` | 2 wywołania modelu, `slotReleased=true`, `count=0`, `released=1`, `usage_global=1` (bez zwrotu) | ✔ |
 | EMU-07 | zwrot po `ai_unavailable` | 503 × 2 (prawdziwy backoff), `slotReleased=true`, `released=1`, `usage_global=1` | ✔ |
 | EMU-08 | najwyżej 2 zwroty na dobę | trzy błędy: `slotReleased` = true, true, false; `count=1`, `released=2`, `usage_global=3`; potem udany plan z `remainingToday=3` | ✔ |
@@ -66,14 +66,23 @@ Uwaga do zadania: w treści TAM-89 „26. globalny daje `limit_exceeded`”. Kon
   dostaje ogólny błąd i nie wie, że slot nie przepadł. Emulator blokuje pesymistycznie i przerywa częściej niż
   produkcja, ale ten sam kod ABORTED może wystąpić w produkcji przy kilku jednoczesnych generowaniach
   (`maxInstances=10`).
-- **Propozycja:** nowe zadanie (architect → mobile-dev): przechwycić ABORTED/kontencję w `reserveQuota` i zwrócić
-  kod kontraktu ze `slotReleased=true`; ewentualnie wpis w `posrednik-api.md`. Do tego czasu EMU-16/17 tolerują
-  `internal` i wypisują diagnostykę `F-1`; po poprawce wystarczy usunąć `internal` z listy dozwolonych kodów.
+- **Naprawa:** zadanie **TAM-115 (P3-05-CONTENTION)**, architect → mobile-dev. W `reserveQuota` trzeba przechwycić
+  ABORTED (kontencję) i zwrócić kod kontraktu ze `slotReleased=true`; ewentualnie dopisać to w `posrednik-api.md`.
+- **Tolerancja w testach jest TYMCZASOWA (do TAM-115).** EMU-16 i EMU-17 przyjmują `internal` tylko przez stałą
+  `TEMP_TOLERATE_INTERNAL_UNTIL_TAM_115` w `tests/firebase-emulator/p3-05-generate-plan.int.mjs` (komentarz
+  `TEMPORARY (TAM-115)` przy każdym użyciu). Gdy przyjmą `internal`, wypisują diagnostykę `F-1, tolerated TEMPORARILY until TAM-115`.
+  Asercje bezpieczeństwa działają zawsze: limit nie jest przekroczony, a przerwana transakcja nic nie zapisuje
+  (liczniki = wywołania modelu = przyznane plany).
+- **Kryterium akceptacji TAM-115:** usunąć stałą i jej użycia, czyli `internal` z listy dozwolonych kodów w EMU-16/17.
+  Po tej zmianie test złapie regresję, czyli powrót ogólnego błędu zamiast kodu z kontraktu.
 
 ### Uwaga o emulatorze (nie błąd aplikacji)
 
 W jednym przebiegu emulator Functions nie uruchomił procesów roboczych dla części równoległych żądań
-(„Failed to load function”) i nie odpowiedział. EMU-16/17 mają więc limit czasu 60 s na żądanie: niezmienniki
+(„Failed to load function”) i nie odpowiedział. Każde wywołanie w testach ma więc limit czasu: 90 s dla wywołań
+kolejnych, 60 s dla równoległych. Zawieszony proces kończy test błędem i nie blokuje przebiegu ani wspólnej blokady
+`firebase-emulators`. Gdy EMU-16 nie dostanie odpowiedzi, czeka do końca limitu czasu funkcji (120 s). Dzięki temu
+spóźnione żądanie nie zmieni `usage_global` w EMU-17. W EMU-16/17 niezmienniki
 bezpieczeństwa (liczniki nigdy ponad limit, liczba wywołań modelu = zarezerwowane sloty) sprawdzają zawsze,
 a dokładne liczby tylko wtedy, gdy emulator odpowiedział na wszystko. W przeciwnym razie test jest oznaczany jako
 pominięty z diagnostyką, a nie zielony.
@@ -96,7 +105,7 @@ pominięty z diagnostyką, a nie zielony.
 ## 5. Dla orkiestratora
 
 - Zadania – status: TAM-89 – testy gotowe w PR #184 (17/17 zielone lokalnie), PR gotowy do recenzji.
-- Zadania – nowe: „F-1: kontencja transakcji rezerwacji → kod kontraktu zamiast `internal`” (architect → mobile-dev;
-  po poprawce QA usuwa tolerancję `internal` w EMU-16/17).
+- Zadania – zmiany: TAM-115 (P3-05-CONTENTION), F-1. Kryterium akceptacji: usunąć
+  `TEMP_TOLERATE_INTERNAL_UNTIL_TAM_115` i jej użycia, czyli `internal` z dozwolonych kodów w EMU-16/17.
 - Pytania otwarte – nowe: brak (rozbieżność „26. globalny = `limit_exceeded`” w treści zadania rozstrzyga kontrakt:
   `ai_unavailable`).
