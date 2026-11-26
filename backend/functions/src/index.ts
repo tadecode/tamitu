@@ -4,7 +4,7 @@ import { getFirestore, Timestamp } from "firebase-admin/firestore";
 import { defineSecret } from "firebase-functions/params";
 import { onCall, type CallableRequest } from "firebase-functions/v2/https";
 import { onMessagePublished } from "firebase-functions/v2/pubsub";
-import { parseAiConfig, vertexModel, type FetchLike, type PlanModel } from "./ai.js";
+import { createPlanModel, type FetchLike, type PlanModel } from "./ai.js";
 import {
   assertStartupConfig,
   parseRuntimeConfig,
@@ -159,18 +159,17 @@ async function releaseBusyQuota(uid: string, reservationDay: string, now: Date):
  * Vertex model from AI_MODEL_ID / AI_LOCATION (.env.<project>); undefined when missing or not allowed
  * (fail-closed: generatePlan answers ai_unavailable before reserving a slot). Token: the function's
  * own service account (fn-ai-plan) via Application Default Credentials - no keys.
+ * TAM-89: AI_ENDPOINT_OVERRIDE redirects calls to a local fake ONLY in the Functions emulator with a
+ * demo-* project and a loopback URL (ai.ts parseAiEndpointOverride); anywhere else it disables the model.
  */
-const aiConfig = parseAiConfig(process.env);
 /** AI_PROMPT_VERSION (.env.<project>, optional): plan-v1 unless exactly a known version (TAM-95, fail-closed). */
 const prompt = resolvePrompt(process.env["AI_PROMPT_VERSION"]);
 let credential: ReturnType<typeof applicationDefault> | undefined;
-const model: PlanModel | undefined = aiConfig
-  ? vertexModel(aiConfig, {
-      fetch: fetch as unknown as FetchLike,
-      // Lazy: created on the first model call, not at module load (deploy analysis, tests).
-      token: async () => (await (credential ??= applicationDefault()).getAccessToken()).access_token,
-    })
-  : undefined;
+const model: PlanModel | undefined = createPlanModel(process.env, {
+  fetch: fetch as unknown as FetchLike,
+  // Lazy: created on the first model call, not at module load (deploy analysis, tests).
+  adcToken: async () => (await (credential ??= applicationDefault()).getAccessToken()).access_token,
+});
 
 function deps(): Deps {
   return {
