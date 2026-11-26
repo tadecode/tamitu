@@ -56,4 +56,4 @@ Komunikat o braku sieci pojawia się po nieudanej próbie akcji sieciowej i znik
 Teksty komunikatów o AI i o planach na urządzeniu – do potwierdzenia przez security (wzorce z privacy-checklist).
 
 ## Użycie
-EK-04, EK-05, EK-08, EK-13, EK-15, EK-16; wzorce brak sieci, zgody, błąd.
+EK-04, EK-05, EK-08 (informacja o AI; od v0.2 także wariant „Błąd” – plan nie jest zapisany, z działaniem „Spróbuj zapisać ponownie”), EK-13, EK-15, EK-16; wzorce brak sieci, zgody, błąd.

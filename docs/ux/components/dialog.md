@@ -13,7 +13,7 @@ anulowania generowania (EK-07). Nie służy do: długich treści (zgody – peł
 | Wariant | Kiedy użyć | Uwagi |
 |---|---|---|
 | Potwierdzenie | wylogowanie, anulowanie generowania | tytuł-pytanie, treść ze skutkiem, przyciski tekstowe: „Anuluj" + działanie |
-| Destrukcyjne | usunięcie planu | działanie potwierdzające w kolorze `error` (tekst), ikona `delete-02` nad tytułem |
+| Destrukcyjne | usunięcie planu; wyjście z niezapisanym planem (EK-08 v0.2) | działanie potwierdzające w kolorze `error` (tekst), ikona nad tytułem wg skutku: `delete-02` (usunięcie), `alert-02` (utrata niezapisanego planu) |
 
 ## Stany
 | Stan | Wygląd i zachowanie |
@@ -50,4 +50,4 @@ Wejście medium2 (emphasized decelerate).
 Teksty dialogów – w `screens/` (krok 2).
 
 ## Użycie
-EK-07, EK-11, EK-14; wzorzec potwierdzenie działania destrukcyjnego.
+EK-07, EK-08 (wyjście z niezapisanym planem, v0.2), EK-11, EK-14; wzorzec potwierdzenie działania destrukcyjnego.

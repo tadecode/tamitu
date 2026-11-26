@@ -367,7 +367,7 @@ body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:colu
 <header class="pg-head"><h1>EK-08 Widok planu</h1><span class="meta">US-005, US-006, US-008, US-009 · spec: <a href="../screens/ek-08.md">screens/ek-08.md</a></span></header>
 <main class="pg-main">
 <nav class="pg-nav"></nav>
-<p class="pg-note">Treść planu jest w <b>języku planu</b> (tu: polski) i nie zmienia się z przełącznikiem „Język UI” – zmieniają się tylko etykiety interfejsu (pokazuje rozdzielenie języków). Dane wymyślone. Komponenty: CMP-01, CMP-13, CMP-12, CMP-19, CMP-20, CMP-14, CMP-17, CMP-18.</p>
+<p class="pg-note">Treść planu jest w <b>języku planu</b> (tu: polski) i nie zmienia się z przełącznikiem „Język UI” – zmieniają się tylko etykiety interfejsu (pokazuje rozdzielenie języków). Dane wymyślone. Komponenty: CMP-01, CMP-13, CMP-12, CMP-19, CMP-20, CMP-14, CMP-15, CMP-17, CMP-18. <b>v0.2 (TAM-104):</b> cztery ostatnie telefony to stan „Plan nie jest zapisany”.</p>
 <div class="states">
 
 <figure class="state"><div class="phone">
@@ -470,6 +470,86 @@ body[data-scale="150"] .row2, body[data-scale="200"] .row2 { flex-direction:colu
   </div>
   <div class="navbar"></div>
 </div><figcaption><b><t-x pl="Błąd" en="Error"></t-x></b> – błąd odczytu planu. Brak sieci nie zmienia widoku (patrz EK-09).</figcaption></figure>
+
+<!-- v0.2 (TAM-104): stan „Plan nie jest zapisany” -->
+<figure class="state"><div class="phone">
+  <div class="sysbar"><span>9:41</span><span>100%</span></div>
+  <div class="appbar"><span class="icbtn"><i-c n="back"></i-c></span><span class="title">Lizbona</span></div>
+  <div class="scroll pad">
+    <div class="notice err" role="status" aria-live="polite"><i-c n="error"></i-c><div class="body">
+      <p class="nt"><t-x pl="Plan nie jest zapisany" en="This trip isn't saved"></t-x></p>
+      <p><t-x pl="Nie udało się zapisać planu w telefonie. Jeśli wyjdziesz z tego ekranu albo zamkniesz aplikację, plan zniknie." en="We couldn't save this trip on your phone. If you leave this screen or close the app, the trip will be lost."></t-x></p>
+      <div class="btn-row"><span class="btn text" role="button"><t-x pl="Spróbuj zapisać ponownie" en="Try saving again"></t-x></span></div>
+    </div></div>
+    <div class="notice"><i-c n="ai"></i-c><div class="body"><p><t-x pl="Plan stworzyła AI i może zawierać błędy. Sprawdź godziny otwarcia przed wyjściem." en="This plan was created by AI and may contain mistakes. Check opening hours before you go."></t-x></p></div></div>
+    <div class="card">
+      <div class="meta"><i-c n="hotel"></i-c><span><t-x pl="Nocleg:" en="Stay:"></t-x> <span lang="pl">Pensjonat Przykładowy, Alfama</span></span></div>
+      <div class="meta"><i-c n="flight"></i-c><span><t-x pl="Przylot 12 maja 2027," en="Arrival May 12, 2027,"></t-x> <span class="c-tertiary">14:30</span> · LIS</span></div>
+    </div>
+    <div class="tabs" style="margin:0 -16px 16px"><div class="tab on"><t-x pl="Dzień 1" en="Day 1"></t-x></div><div class="tab"><t-x pl="Dzień 2" en="Day 2"></t-x></div><div class="tab"><t-x pl="Dzień 3" en="Day 3"></t-x></div><div class="tab"><t-x pl="Dzień 4" en="Day 4"></t-x></div></div>
+    <p class="title-m" lang="pl" style="margin:0 0 12px">Przyjazd i spokojny wieczór</p>
+    <div class="pi"><div class="rail"><div class="dot"></div><div class="line"></div></div><div class="pc" lang="pl">
+      <span class="badge"><t-x pl="ok. 17:30" en="approx. 17:30"></t-x></span>
+      <p class="title-m">Punkt widokowy na wzgórzu</p><p class="body-m muted">Lizbona</p>
+      <div class="route"><span class="btn text"><i-c n="directions"></i-c><t-x pl="Trasa" en="Directions"></t-x></span></div></div></div>
+  </div>
+  <div class="navbar"></div>
+</div><figcaption><b><t-x pl="Plan nie jest zapisany (v0.2)" en="Trip not saved (v0.2)"></t-x></b> – <t-x pl="po EK-07 zapis w telefonie się nie udał. Ostrzeżenie CMP-13 „Błąd” nad planem, niezamykane; bez menu „Usuń plan” i bez snackbara „zapisano”. Plan i „Trasa” działają. TalkBack ogłasza ostrzeżenie raz." en="after EK-07 saving on the phone failed. CMP-13 “Error” notice above the trip, can't be dismissed; no “Delete trip” menu, no “saved” snackbar. The trip and “Directions” work. TalkBack announces the notice once."></t-x></figcaption></figure>
+
+<figure class="state"><div class="phone">
+  <div class="sysbar"><span>9:41</span><span>100%</span></div>
+  <div class="appbar"><span class="icbtn"><i-c n="back"></i-c></span><span class="title">Lizbona</span></div>
+  <div class="scroll pad">
+    <div class="notice err" role="status" aria-live="polite"><i-c n="error"></i-c><div class="body">
+      <p class="nt"><t-x pl="Plan nie jest zapisany" en="This trip isn't saved"></t-x></p>
+      <p><t-x pl="W telefonie brakuje miejsca, więc plan się nie zapisał. Zwolnij trochę miejsca i spróbuj ponownie. Jeśli wyjdziesz z tego ekranu albo zamkniesz aplikację, plan zniknie." en="Your phone is out of storage, so the trip wasn't saved. Free up some space and try again. If you leave this screen or close the app, the trip will be lost."></t-x></p>
+      <div class="btn-row"><span class="btn text disabled" aria-disabled="true" style="opacity:.38;text-decoration:none" title="M3: treść nieaktywna 38%"><span class="spinner" style="width:16px;height:16px"></span><t-x pl="Zapisywanie…" en="Saving…"></t-x></span></div>
+    </div></div>
+    <div class="notice"><i-c n="ai"></i-c><div class="body"><p><t-x pl="Plan stworzyła AI i może zawierać błędy. Sprawdź godziny otwarcia przed wyjściem." en="This plan was created by AI and may contain mistakes. Check opening hours before you go."></t-x></p></div></div>
+    <div class="card">
+      <div class="meta"><i-c n="hotel"></i-c><span><t-x pl="Nocleg:" en="Stay:"></t-x> <span lang="pl">Pensjonat Przykładowy, Alfama</span></span></div>
+      <div class="meta"><i-c n="flight"></i-c><span><t-x pl="Przylot 12 maja 2027," en="Arrival May 12, 2027,"></t-x> <span class="c-tertiary">14:30</span> · LIS</span></div>
+    </div>
+  </div>
+  <div class="navbar"></div>
+</div><figcaption><b><t-x pl="Brak miejsca – zapisywanie" en="Out of storage – saving"></t-x></b> – <t-x pl="tekst dla braku miejsca (jedyna przyczyna z osobnym tekstem). Po dotknięciu „Spróbuj zapisać ponownie” przycisk ładuje się i jest nieaktywny (TalkBack: „Zapisywanie, trwa…”). Sukces → zwykły EK-08: ostrzeżenie znika, wraca menu, snackbar „Plan zapisany…” jak w stanie Sukces." en="text for out-of-storage (the only cause with its own text). After “Try saving again” the button shows progress and is disabled (TalkBack: “Saving, in progress…”). Success → regular EK-08: the notice disappears, the menu returns, “Plan saved…” snackbar as in Success."></t-x></figcaption></figure>
+
+<figure class="state"><div class="phone">
+  <div class="sysbar"><span>9:41</span><span>100%</span></div>
+  <div class="appbar"><span class="icbtn"><i-c n="back"></i-c></span><span class="title">Lizbona</span></div>
+  <div class="scroll pad">
+    <div class="notice err" role="status" aria-live="polite"><i-c n="error"></i-c><div class="body">
+      <p class="nt"><t-x pl="Plan nie jest zapisany" en="This trip isn't saved"></t-x></p>
+      <p><t-x pl="Nie udało się zapisać planu w telefonie. Jeśli wyjdziesz z tego ekranu albo zamkniesz aplikację, plan zniknie." en="We couldn't save this trip on your phone. If you leave this screen or close the app, the trip will be lost."></t-x></p>
+      <div class="btn-row"><span class="btn text" role="button"><t-x pl="Spróbuj zapisać ponownie" en="Try saving again"></t-x></span></div>
+    </div></div>
+    <div class="notice"><i-c n="ai"></i-c><div class="body"><p><t-x pl="Plan stworzyła AI i może zawierać błędy. Sprawdź godziny otwarcia przed wyjściem." en="This plan was created by AI and may contain mistakes. Check opening hours before you go."></t-x></p></div></div>
+    <div class="card">
+      <div class="meta"><i-c n="hotel"></i-c><span><t-x pl="Nocleg:" en="Stay:"></t-x> <span lang="pl">Pensjonat Przykładowy, Alfama</span></span></div>
+      <div class="meta"><i-c n="flight"></i-c><span><t-x pl="Przylot 12 maja 2027," en="Arrival May 12, 2027,"></t-x> <span class="c-tertiary">14:30</span> · LIS</span></div>
+    </div>
+  </div>
+  <div class="snack" role="status"><span><t-x pl="Nadal nie udało się zapisać planu." en="The trip still couldn't be saved."></t-x></span></div>
+  <div class="navbar"></div>
+</div><figcaption><b><t-x pl="Kolejny błąd zapisu" en="Saving failed again"></t-x></b> – <t-x pl="ostrzeżenie zostaje (tekst wg przyczyny), przycisk wraca; snackbar potwierdza, że próba się odbyła. Liczba prób bez limitu, bez ponowień w tle." en="the notice stays (text by cause), the button is back; the snackbar confirms the attempt happened. No retry limit, no background retries."></t-x></figcaption></figure>
+
+<figure class="state"><div class="phone">
+  <div class="sysbar"><span>9:41</span><span>100%</span></div>
+  <div class="appbar"><span class="icbtn"><i-c n="back"></i-c></span><span class="title">Lizbona</span></div>
+  <div class="scroll pad">
+    <div class="notice err"><i-c n="error"></i-c><div class="body">
+      <p class="nt"><t-x pl="Plan nie jest zapisany" en="This trip isn't saved"></t-x></p>
+      <p><t-x pl="Nie udało się zapisać planu w telefonie. Jeśli wyjdziesz z tego ekranu albo zamkniesz aplikację, plan zniknie." en="We couldn't save this trip on your phone. If you leave this screen or close the app, the trip will be lost."></t-x></p>
+    </div></div>
+  </div>
+  <div class="scrim"><div class="dialog" role="dialog">
+    <div class="dic err"><i-c n="warning"></i-c></div>
+    <p class="dt"><t-x pl="Wyjść bez zapisania planu?" en="Leave without saving?"></t-x></p>
+    <div class="dc"><p><t-x pl="Plan zniknie i nie da się go odzyskać. To generowanie jest już wliczone do dzisiejszego limitu." en="The trip will be lost and can't be recovered. This generation already counts towards today's limit."></t-x></p></div>
+    <div class="btn-row"><span class="btn text"><t-x pl="Anuluj" en="Cancel"></t-x></span><span class="btn text err"><t-x pl="Wyjdź bez zapisu" en="Leave without saving"></t-x></span></div>
+  </div></div>
+  <div class="navbar"></div>
+</div><figcaption><b><t-x pl="Wyjście bez zapisu" en="Leaving without saving"></t-x></b> – <t-x pl="wstecz (strzałka, systemowe, gest) przy niezapisanym planie. CMP-15 „Destrukcyjne” z ikoną alert-02. „Anuluj”, poza dialogiem, wstecz → zostaje; „Wyjdź bez zapisu” → EK-04, plan przepada. „Trasa” → EK-09 nie pyta." en="back (arrow, system, gesture) with an unsaved trip. CMP-15 “Destructive” with the alert-02 icon. “Cancel”, tap outside, back → stays; “Leave without saving” → EK-04, the trip is lost. “Directions” → EK-09 doesn't ask."></t-x></figcaption></figure>
 
 </div>
 </main>
