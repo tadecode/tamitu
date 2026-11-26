@@ -17,6 +17,8 @@ export interface HandlerContext {
   /** generatePlan: model calls (1-3) and why the generation loop ended (ADR-0016 pkt 15). */
   calls?: number | undefined;
   stopReason?: string | undefined;
+  /** generatePlan: runs of the quota reservation transaction (1-3, ADR-0018 pkt 8). */
+  reserveTries?: number | undefined;
 }
 
 /**
@@ -53,5 +55,6 @@ function pick(ctx: HandlerContext) {
     ...(ctx.quotaRelease !== undefined ? { quotaRelease: ctx.quotaRelease } : {}),
     ...(ctx.calls !== undefined ? { calls: ctx.calls } : {}),
     ...(ctx.stopReason !== undefined ? { stopReason: ctx.stopReason } : {}),
+    ...(ctx.reserveTries !== undefined ? { reserveTries: ctx.reserveTries } : {}),
   };
 }

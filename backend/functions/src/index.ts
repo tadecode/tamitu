@@ -27,6 +27,7 @@ import {
   planBusyReleaseOutcome,
   planReleaseOutcome,
   planReservation,
+  runQuotaTransaction,
   usageFromDoc,
   warsawDay,
   type BusyReleaseOutcome,
@@ -92,16 +93,18 @@ const writeConsent: ConsentWriter = async (uid, consentId, doc) => {
 /**
  * P3-05 quota reservation: ONE transaction reads usage/{uid} and usage_global/{today} and writes both
  * (firestore-ttl-indexes.md pkt 3.2, rules 1-2). Concurrent calls retry the transaction, so the
- * counters cannot be overshot. Decision logic: limits.planReservation (unit-tested).
+ * counters cannot be overshot. ADR-0018: at most QUOTA_TX_MAX_ATTEMPTS runs (retries by the SDK);
+ * `onTry` counts them for the `reserveTries` log field. Decision logic: limits.planReservation (unit-tested).
  */
 async function reserveQuota(
   uid: string,
   limits: { userLimit: number; globalLimit: number },
   now: Date,
+  onTry?: () => void,
 ): Promise<ReservationPlan> {
   const db = getFirestore();
   const usageRef = db.doc(`usage/${uid}`);
-  return db.runTransaction(async (tx) => {
+  return runQuotaTransaction(db, async (tx) => {
     const globalRef = db.doc(`usage_global/${warsawDay(now)}`);
     const [u, g] = await Promise.all([tx.get(usageRef), tx.get(globalRef)]);
     const gc = g.get("count");
@@ -117,14 +120,14 @@ async function reserveQuota(
       tx.set(globalRef, { count: w.global.count, expireAt: Timestamp.fromDate(w.global.expireAt) });
     }
     return plan;
-  });
+  }, onTry);
 }
 
 /** Rule 3: separate transaction; decrements only when the stored day is still the reservation day. */
 async function releaseQuota(uid: string, reservationDay: string, now: Date): Promise<ReleaseOutcome> {
   const db = getFirestore();
   const ref = db.doc(`usage/${uid}`);
-  return db.runTransaction(async (tx) => {
+  return runQuotaTransaction(db, async (tx) => {
     const r = planReleaseOutcome(usageFromDoc((await tx.get(ref)).data()), reservationDay, now);
     if (r.outcome === "released") {
       const w = r.write;
@@ -142,7 +145,7 @@ async function releaseBusyQuota(uid: string, reservationDay: string, now: Date):
   const db = getFirestore();
   const usageRef = db.doc(`usage/${uid}`);
   const globalRef = db.doc(`usage_global/${reservationDay}`);
-  return db.runTransaction(async (tx) => {
+  return runQuotaTransaction(db, async (tx) => {
     const [u, g] = await Promise.all([tx.get(usageRef), tx.get(globalRef)]);
     const gc = g.get("count");
     const r = planBusyReleaseOutcome(usageFromDoc(u.data()), Number.isInteger(gc) ? (gc as number) : 0, reservationDay, now);

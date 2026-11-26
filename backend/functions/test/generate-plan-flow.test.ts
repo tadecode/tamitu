@@ -12,6 +12,7 @@ import { ModelError } from "../src/ai.js";
 import { SAFE_RUNTIME_DEFAULTS, type RuntimeConfig } from "../src/config.js";
 import { generatePlanCore, type Deps } from "../src/endpoints.js";
 import { runGuarded } from "../src/handler.js";
+import { QUOTA_TX_MAX_ATTEMPTS, runQuotaTransaction, type QuotaTxRunner, type ReservationPlan } from "../src/limits.js";
 import { resolvePrompt } from "../src/prompt/index.js";
 import { echoValidModel, memoryQuota, ok, scriptedModel } from "./helpers/fakes.js";
 
@@ -302,5 +303,105 @@ describe("generatePlan - logs (sekcja 6)", () => {
     expect(attempts.map((a) => a["outcome"])).toEqual(["invalid", "ok"]);
     expect(attempts[0]).toMatchObject({ attempt: 1, validationErrors: "days_count", aiModel: "gemini-3.1-flash-lite", aiLocation: "eu" });
     expect(fields().find((f) => f["fn"] === "generatePlan")).toMatchObject({ result: "ok", attempts: 2, days: 4 });
+  });
+});
+
+describe("generatePlan - contention on the quota reservation (TAM-115, ADR-0018 pkt 4-9)", () => {
+  /** reserveQuota after exhausted SDK attempts: `runs` transaction runs, then the SDK error. */
+  const exhausted = (error: unknown, runs = QUOTA_TX_MAX_ATTEMPTS) =>
+    vi.fn(async (_u: string, _l: unknown, _n: Date, onTry?: () => void): Promise<ReservationPlan> => {
+      for (let i = 0; i < runs; i++) onTry?.();
+      throw error;
+    });
+  const aborted = () => Object.assign(new Error(`10 ABORTED ${CANARY}`), { code: 10 });
+
+  it.each([
+    ["gRPC ABORTED (10)", aborted()],
+    ["HTTP 409", { code: 409 }],
+  ])("%s -> ai_busy, retryAfterSec=60, slotReleased=true; no model call, no release", async (_n, error) => {
+    const model = echoValidModel();
+    const releaseQuota = vi.fn();
+    const releaseBusyQuota = vi.fn();
+    const { deps, quota } = mkDeps({ model, reserveQuota: exhausted(error), releaseQuota, releaseBusyQuota });
+    expect(await err(run(body(), deps))).toEqual({ code: "ai_busy", retryAfterSec: 60, slotReleased: true });
+    expect(model.calls).toHaveLength(0);
+    expect(releaseQuota).not.toHaveBeenCalled();
+    expect(releaseBusyQuota).not.toHaveBeenCalled();
+    expect(quota.usage.size).toBe(0);
+    const final = fields().find((f) => f["fn"] === "generatePlan")!;
+    expect(final).toMatchObject({ result: "error", errorCode: "ai_busy", stopReason: "contention", reserveTries: 3 });
+    expect(final).not.toHaveProperty("quotaRelease");
+    expect(final).not.toHaveProperty("calls");
+    expect(JSON.stringify(logged)).not.toContain(CANARY);
+  });
+
+  it("any other reservation error (UNAVAILABLE 14) stays internal, without stopReason", async () => {
+    const { deps } = mkDeps({ reserveQuota: exhausted({ code: 14 }) });
+    expect(await err(run(body(), deps))).toEqual({ code: "internal" });
+    const final = fields().find((f) => f["fn"] === "generatePlan")!;
+    expect(final).toMatchObject({ errorCode: "14", reserveTries: 3 }); // classifyError logs the code only
+    expect(final).not.toHaveProperty("stopReason");
+  });
+
+  it.each([1, 2])("success after %i aborted run(s): plan returned, one slot used, reserveTries counts every run", async (abortedRuns) => {
+    const { deps, quota } = mkDeps();
+    let runs = 0;
+    // SDK-like: every run executes fn; the first `abortedRuns` commits fail with ABORTED and are rolled back.
+    const runner: QuotaTxRunner<null> = {
+      async runTransaction<T>(fn: (tx: null) => Promise<T>, options: { maxAttempts: number }): Promise<T> {
+        for (let i = 1; ; i++) {
+          runs++;
+          const usage = new Map(quota.usage);
+          const global = new Map(quota.global);
+          const result = await fn(null);
+          if (i > abortedRuns) return result;
+          quota.usage.clear();
+          usage.forEach((v, k) => quota.usage.set(k, v));
+          quota.global.clear();
+          global.forEach((v, k) => quota.global.set(k, v));
+          if (i >= options.maxAttempts) throw aborted();
+        }
+      },
+    };
+    deps.reserveQuota = (uid, limits, now, onTry) =>
+      runQuotaTransaction(runner, async () => quota.reserveQuota(uid, limits, now), onTry);
+    const r = await run(body(), deps);
+    expect(r.quota.remainingToday).toBe(4);
+    expect(quota.usage.get("owner")).toMatchObject({ count: 1 });
+    expect(quota.global.get("2026-11-21")).toBe(1);
+    expect(runs).toBe(abortedRuns + 1);
+    expect(fields().find((f) => f["fn"] === "generatePlan")).toMatchObject({ result: "ok", reserveTries: abortedRuns + 1 });
+  });
+
+  it("3 aborted runs through the SDK-like runner -> ai_busy after exactly 3 runs", async () => {
+    let runs = 0;
+    const runner: QuotaTxRunner<null> = {
+      async runTransaction<T>(fn: (tx: null) => Promise<T>, options: { maxAttempts: number }): Promise<T> {
+        for (let i = 1; i <= options.maxAttempts; i++) {
+          runs++;
+          await fn(null);
+        }
+        throw aborted();
+      },
+    };
+    const model = echoValidModel();
+    const { deps } = mkDeps({ model });
+    deps.reserveQuota = (_u, _l, _n, onTry) => runQuotaTransaction(runner, async () => ({}) as ReservationPlan, onTry);
+    expect(await err(run(body(), deps))).toEqual({ code: "ai_busy", retryAfterSec: 60, slotReleased: true });
+    expect(runs).toBe(3);
+    expect(model.calls).toHaveLength(0);
+    expect(fields().find((f) => f["fn"] === "generatePlan")).toMatchObject({ stopReason: "contention", reserveTries: 3 });
+  });
+
+  it("ordinary reservation logs reserveTries = 1", async () => {
+    const { deps } = mkDeps();
+    await run(body(), deps);
+    expect(fields().find((f) => f["fn"] === "generatePlan")).toMatchObject({ result: "ok", reserveTries: 1 });
+  });
+
+  it("refusals before the reservation (aiEnabled=false) have no reserveTries", async () => {
+    const { deps } = mkDeps({}, { aiEnabled: false });
+    await err(run(body(), deps));
+    expect(fields().find((f) => f["fn"] === "generatePlan")).not.toHaveProperty("reserveTries");
   });
 });

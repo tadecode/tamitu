@@ -350,6 +350,7 @@ describe("no content in logs (ADR-0002 Aneks A pkt 2)", () => {
       "fn", "result", "uidHash", "durationMs", "attempts", "days", "requestBytes", "errorClass", "errorCode", "configError",
       "attempt", "aiModel", "aiLocation", "modelVersion", "promptVersion", "tokensIn", "tokensOut", "tokensThought",
       "outcome", "validationErrors", "qualityWarnings", "modelError", "quotaRelease", "waitMs", "billable", "calls", "stopReason",
+      "reserveTries", // ADR-0018 pkt 8
     ]);
     for (const f of fields) for (const k of Object.keys(f)) expect(allowed.has(k)).toBe(true);
     expect(fields[0]).toMatchObject({ fn: "generatePlan.attempt", result: "ok", attempt: 1, aiModel: "gemini-3.1-flash-lite", promptVersion: "plan-v1" });

@@ -11,7 +11,12 @@ import {
   resetAt,
   usageExpireAt,
   usageFromDoc,
+  isQuotaContention,
+  QUOTA_TX_MAX_ATTEMPTS,
+  runQuotaTransaction,
+  type QuotaTxRunner,
 } from "../src/limits.js";
+import { AppError } from "../src/errors.js";
 
 const H = 3_600_000;
 
@@ -148,5 +153,62 @@ describe("usageFromDoc (stored usage/{uid})", () => {
     expect(usageFromDoc({ day: "2026-11-21", count: 1.5 })).toBeUndefined();
     expect(usageFromDoc(undefined)).toBeUndefined();
     expect(usageFromDoc(null)).toBeUndefined();
+  });
+});
+
+describe("quota transaction contention (ADR-0018 pkt 1-6)", () => {
+  it("isQuotaContention: only numeric code 10 (gRPC ABORTED) or 409", () => {
+    expect(isQuotaContention({ code: 10 })).toBe(true);
+    expect(isQuotaContention(Object.assign(new Error("x"), { code: 10 }))).toBe(true);
+    expect(isQuotaContention({ code: 409 })).toBe(true);
+    for (const e of [{ code: 14 }, { code: 4 }, { code: 13 }, { code: 8 }, { code: "aborted" }, { code: "10" }, undefined, null, 10, new Error("x"), new AppError("ai_busy")]) {
+      expect(isQuotaContention(e)).toBe(false);
+    }
+  });
+
+  /** Mimics Transaction.runTransaction of the SDK: reruns fn after ABORTED up to options.maxAttempts. */
+  function sdkLike(abortedRuns: number) {
+    const seen: Array<{ maxAttempts: number }> = [];
+    let runs = 0;
+    const runner: QuotaTxRunner<string> = {
+      async runTransaction<T>(fn: (tx: string) => Promise<T>, options: { maxAttempts: number }): Promise<T> {
+        seen.push(options);
+        let last: unknown;
+        for (let i = 0; i < options.maxAttempts; i++) {
+          runs++;
+          const result = await fn("tx");
+          if (runs <= abortedRuns) {
+            last = Object.assign(new Error("ABORTED"), { code: 10 });
+            continue;
+          }
+          return result;
+        }
+        throw last;
+      },
+    };
+    return { runner, seen, runs: () => runs };
+  }
+
+  it(`passes maxAttempts = QUOTA_TX_MAX_ATTEMPTS (${QUOTA_TX_MAX_ATTEMPTS})`, async () => {
+    expect(QUOTA_TX_MAX_ATTEMPTS).toBe(3);
+    const sdk = sdkLike(0);
+    let tries = 0;
+    expect(await runQuotaTransaction(sdk.runner, async () => "ok", () => tries++)).toBe("ok");
+    expect(sdk.seen).toEqual([{ maxAttempts: 3 }]);
+    expect(tries).toBe(1);
+  });
+  it.each([1, 2])("succeeds after %i aborted run(s); onTry counts every run", async (aborted) => {
+    const sdk = sdkLike(aborted);
+    let tries = 0;
+    expect(await runQuotaTransaction(sdk.runner, async () => "ok", () => tries++)).toBe("ok");
+    expect(tries).toBe(aborted + 1);
+  });
+  it("exhausted: never more than 3 runs, rejects with a contention error", async () => {
+    const sdk = sdkLike(99);
+    let tries = 0;
+    const e = await runQuotaTransaction(sdk.runner, async () => "ok", () => tries++).catch((x: unknown) => x);
+    expect(isQuotaContention(e)).toBe(true);
+    expect(tries).toBe(3);
+    expect(sdk.runs()).toBe(3);
   });
 });

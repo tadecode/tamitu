@@ -89,7 +89,13 @@ export function memoryQuota() {
   return {
     usage,
     global,
-    reserveQuota: async (uid: string, limits: { userLimit: number; globalLimit: number }, now: Date): Promise<ReservationPlan> => {
+    reserveQuota: async (
+      uid: string,
+      limits: { userLimit: number; globalLimit: number },
+      now: Date,
+      onTry?: () => void,
+    ): Promise<ReservationPlan> => {
+      onTry?.(); // one transaction run, no contention in memory
       const real = planReservation({ usage: usage.get(uid), globalCount: global.get(warsawDay(now)), ...limits, now });
       if (real.allowed) {
         const w = real.writes.usage;

@@ -24,8 +24,9 @@ import {
 } from "./consents.js";
 import { AppError } from "./errors.js";
 import type { HandlerContext } from "./handler.js";
-import { generateValidPlan, type AttemptLog, type GenerationSummary } from "./generate.js";
+import { AI_BUSY_RETRY_AFTER_SEC, generateValidPlan, type AttemptLog, type GenerationSummary } from "./generate.js";
 import {
+  isQuotaContention,
   shouldDisableAi,
   type BusyReleaseOutcome,
   type QuotaInfo,
@@ -59,9 +60,16 @@ export interface Deps {
   prompt?: PlanPrompt | undefined;
   /**
    * Quota reservation in ONE Firestore transaction (usage/{uid}, usage_global/{today});
-   * decision and written shape: limits.planReservation.
+   * decision and written shape: limits.planReservation. At most QUOTA_TX_MAX_ATTEMPTS runs; `onTry` is
+   * called at the start of each run (ADR-0018 `reserveTries`). After exhausted attempts on contention it
+   * rejects with an error that limits.isQuotaContention recognises.
    */
-  reserveQuota: (uid: string, limits: { userLimit: number; globalLimit: number }, now: Date) => Promise<ReservationPlan>;
+  reserveQuota: (
+    uid: string,
+    limits: { userLimit: number; globalLimit: number },
+    now: Date,
+    onTry?: () => void,
+  ) => Promise<ReservationPlan>;
   /** Slot release after a system error (separate transaction; limits.planReleaseOutcome). */
   releaseQuota: (uid: string, reservationDay: string, now: Date) => Promise<ReleaseOutcome>;
   /**
@@ -143,11 +151,24 @@ export async function generatePlanCore(
   }
 
   // ADR-0002 step 5: reserve BEFORE calling the model.
-  const reservation = await deps.reserveQuota(
-    caller.uid,
-    { userLimit: runtime.perUserDailyLimit, globalLimit: runtime.globalDailyLimit },
-    deps.now(),
-  );
+  ctx.reserveTries = 0;
+  let reservation: ReservationPlan;
+  try {
+    reservation = await deps.reserveQuota(
+      caller.uid,
+      { userLimit: runtime.perUserDailyLimit, globalLimit: runtime.globalDailyLimit },
+      deps.now(),
+      () => {
+        ctx.reserveTries = (ctx.reserveTries ?? 0) + 1;
+      },
+    );
+  } catch (e) {
+    // ADR-0018 pkt 4: attempts exhausted on contention -> the transaction was not committed, nothing to
+    // release (no releaseQuota/releaseBusyQuota, busyReleased untouched). Any other error stays internal.
+    if (!isQuotaContention(e)) throw e;
+    ctx.stopReason = "contention";
+    throw new AppError("ai_busy", { retryAfterSec: AI_BUSY_RETRY_AFTER_SEC, slotReleased: true });
+  }
   if (!reservation.allowed) {
     if (reservation.appCode === "limit_exceeded") {
       throw new AppError("limit_exceeded", { limit: reservation.quota.limit, resetAt: reservation.quota.resetAt });
