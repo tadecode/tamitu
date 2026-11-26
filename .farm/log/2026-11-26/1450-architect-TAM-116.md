@@ -1,4 +1,5 @@
 # 14:50  architect → owner, orchestrator, steward, security, mobile-dev, qa  |  TAM-116
+> **Lista zadań i pytań zastąpiona** wpisem `1600-architect-TAM-116-decyzje.md` (decyzje właściciela 2026-11-26).
 - Zrobione: plan pierwszego wydania produkcyjnego na Google Play: testy wewnętrzne (projekt `tamitu-prod-tadecode`,
   App Check z Play Integrity bez tokenów debug). Stan prod opisany tylko z dokumentów (bez odczytów chmury); różnice
   „według przekazania” (spend cap 80 PLN, `disableCache`, `globalDailyLimit=25`) – do potwierdzenia odczytem (O-TAM116-6).

@@ -1,6 +1,6 @@
 # ADR-0019: Budowanie i podpisywanie wydań Androida (Play App Signing, klucz przesyłania poza repo, build lokalny)
 
-- Status: **proponowany** (do zatwierdzenia przez właściciela – O-TAM116-3)
+- Status: **zatwierdzony** (właściciel, 2026-11-26; O-TAM116-3, przekazał orkiestrator)
 - Data: 2026-11-26
 - Autor (rola): architect
 - Zadanie: TAM-116 (REL-INT-PLAN); plan: `docs/architecture/plan-wydania-testy-wewnetrzne.md`
@@ -84,3 +84,13 @@ Kryteria: bezpieczeństwo klucza, prostota, koszt, powtarzalność, zgodność z
   Fluttera niż CI (kontrola w instrukcji).
 - **Dane osobowe:** decyzja nie dodaje nowych danych. Lista testerów w Play Console (rejestr D13) jest poza repo.
 - **Zmiana decyzji** (np. przejście na etap 2 lub B3) – nowym ADR albo aneksem przy zatwierdzeniu, nie po cichu.
+
+## Aneks A (2026-11-26, przy zatwierdzeniu)
+
+1. Konto organizacji TadeCode w Google Play Console już istnieje (O-TAM116-4), więc opłata rejestracyjna nie jest
+   kosztem tego wydania.
+2. Właściciel włączył w prod realne dane od razu (O-TAM116-1). Stała `TAMITU_TEST_DATA=true` z pkt 4 **zostaje**
+   w buildzie testów wewnętrznych. Przy obu flagach realnych danych `true` nic nie zmienia, ale pozwala ograniczyć
+   generowanie do konta z `testUids` samą zmianą `config/runtime.allowRealData=false`, bez nowego buildu (plan,
+   sekcja 4.7, O-TAM116-8). Build dla testerów spoza bramki 2a planu – bez tej stałej, po spełnieniu bramki.
+3. Treść decyzji (pkt 1–8) bez zmian.
