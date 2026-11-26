@@ -15,7 +15,7 @@ Identyfikatory stabilne, angielskie; etykiety w ARB (ADR-0006). **Wartości domy
 | `partySize` | liczba całkowita 1–10 | 2 | Zatwierdzone (Q6) |
 | `planLanguage` | `pl`, `en` | język UI | ADR-0006 |
 | `days` | 1–14 | – (wymagane) | N2 |
-| `travelMode` (link) | `driving`, `transit`, `walking` | wybór użytkownika | nie zapisywane |
+| `travelMode` (link) | `driving`, `transit`, `walking` | ostatni wybór; przy pierwszym użyciu `transit` | zapamiętany lokalnie (`shared_preferences.routeTravelMode`, ADR-0017 Aneks 1); nie trafia do bazy konta ani na serwer |
 
 Pola tekstowe (po oczyszczeniu: normalizacja Unicode NFC, usunięcie znaków sterujących i skrajnych spacji, zwinięcie białych znaków; dozwolone litery, cyfry, spacja i znaki `, . - ' ( ) / &`): `destination` ≤ 80 zn., `lodging` ≤ 80 zn. (etykieta/pomoc w UI, bez blokady: „Nazwa obiektu lub dzielnica (nie wpisuj pełnego adresu prywatnego)" – wymaganie dla Analityka/UI, przegląd Security 1-3; D4), `airport` ≤ 60 zn., `flightNumber` ≤ 10 zn. (tylko lokalnie).
 
@@ -25,7 +25,7 @@ Pola tekstowe (po oczyszczeniu: normalizacja Unicode NFC, usunięcie znaków ste
 |---|---|---|---|
 | Baza konta `tamitu_<sha256(uid)[0..16]>.db` (Drift + SQLCipher) | plany, dane podróży, preferencje, zgody lokalne | tak, AES-256, klucz w Keystore | wyłączona (`allowBackup=false`, `dataExtractionRules`) |
 | `flutter_secure_storage` | klucz bazy; znacznik „usuwanie w toku" (skrót UID) | Keystore | wyłączona |
-| `shared_preferences` | `uiLanguage` (`pl`/`en`/system), tymczasowa zgoda na politykę przed logowaniem (`version`, `lang`, `acceptedAt`, `consentId` – UUID dla idempotentnych ponowień `recordConsent`, ADR-0011 pkt 10), flagi UI | nie (brak danych podróży) | wyłączona |
+| `shared_preferences` | `uiLanguage` (`pl`/`en`/system), tymczasowa zgoda na politykę przed logowaniem (`version`, `lang`, `acceptedAt`, `consentId` – UUID dla idempotentnych ponowień `recordConsent`, ADR-0011 pkt 10), `routeTravelMode` (ostatni tryb dojazdu EK-09: `driving`/`transit`/`walking`, ADR-0017 Aneks 1), flagi UI | nie (brak danych podróży) | wyłączona |
 | Firebase SDK (Auth) | token odświeżający, stan sesji (D2) | wg SDK | wyłączona |
 | **Nigdzie** | lokalizacja, współrzędne, URL trasy ze współrzędnymi, prompty/odpowiedzi surowe | – | – |
 
