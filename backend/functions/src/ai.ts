@@ -88,6 +88,54 @@ export function parseAiConfig(env: Record<string, string | undefined>): AiConfig
   return { modelId, location: location as AiLocation, projectId };
 }
 
+/**
+ * TAM-89: emulator-only redirection of model calls to a local fake (test/emulator/vertex-fake.mjs).
+ * - `none`: AI_ENDPOINT_OVERRIDE and AI_ATTEMPT_TIMEOUT_MS not set - real Vertex (normal path);
+ * - `emulator`: every guard passed - calls go to `url` with a fixed dummy token (ADC is never used);
+ * - `rejected`: a variable is set but a guard failed - fail-closed, the model is treated as unconfigured
+ *   (ai_unavailable before any slot is reserved). Never falls back to real Vertex.
+ */
+export type AiEndpointOverride =
+  | { mode: "none" }
+  | { mode: "emulator"; url: string; timeoutMs: number | undefined }
+  | { mode: "rejected" };
+
+/** Token sent to the fake; a fixed public string, never a credential. */
+export const EMULATOR_FAKE_TOKEN = "emulator-fake-token";
+const LOOPBACK_HOSTS = new Set(["127.0.0.1", "localhost"]);
+/** AI_ATTEMPT_TIMEOUT_MS bounds (emulator only): lets QA test the timeout path without 45 s waits. */
+export const EMULATOR_TIMEOUT_BOUNDS = { min: 100, max: ATTEMPT_TIMEOUT_MS } as const;
+
+/**
+ * Accepts AI_ENDPOINT_OVERRIDE (and the optional AI_ATTEMPT_TIMEOUT_MS) only when ALL hold:
+ * FUNCTIONS_EMULATOR is exactly "true" (set by the Functions emulator), the project is a `demo-*`
+ * project (such a project can never exist in Google Cloud, so a deployed function never matches),
+ * and the URL is plain http on 127.0.0.1 or localhost with no credentials, query or fragment.
+ * Anything else with a variable set -> `rejected` (fail-closed).
+ */
+export function parseAiEndpointOverride(env: Record<string, string | undefined>): AiEndpointOverride {
+  const raw = env["AI_ENDPOINT_OVERRIDE"];
+  const rawTimeout = env["AI_ATTEMPT_TIMEOUT_MS"];
+  if (raw === undefined && rawTimeout === undefined) return { mode: "none" };
+  if (raw === undefined || raw === "") return { mode: "rejected" };
+  if (env["FUNCTIONS_EMULATOR"] !== "true") return { mode: "rejected" };
+  if (!(env["GCLOUD_PROJECT"] ?? "").startsWith("demo-")) return { mode: "rejected" };
+  let u: URL;
+  try {
+    u = new URL(raw);
+  } catch {
+    return { mode: "rejected" };
+  }
+  if (u.protocol !== "http:" || !LOOPBACK_HOSTS.has(u.hostname)) return { mode: "rejected" };
+  if (u.username || u.password || u.search || u.hash) return { mode: "rejected" };
+  let timeoutMs: number | undefined;
+  if (rawTimeout !== undefined) {
+    timeoutMs = /^\d{1,6}$/.test(rawTimeout) ? Number(rawTimeout) : NaN;
+    if (!(timeoutMs >= EMULATOR_TIMEOUT_BOUNDS.min && timeoutMs <= EMULATOR_TIMEOUT_BOUNDS.max)) return { mode: "rejected" };
+  }
+  return { mode: "emulator", url: u.origin + u.pathname.replace(/\/+$/, ""), timeoutMs };
+}
+
 /** generateContent URL; `eu` uses the multi-region host (ADR-0001 Aneks C pkt 3). */
 export function vertexUrl(cfg: AiConfig): string {
   const host = cfg.location === "eu" ? "aiplatform.eu.rep.googleapis.com" : `${cfg.location}-aiplatform.googleapis.com`;
@@ -148,8 +196,19 @@ export type FetchLike = (url: string, init: { method: string; headers: Record<st
 /** Access token of the function's service account (fn-ai-plan), e.g. from firebase-admin credentials. */
 export type TokenProvider = () => Promise<string>;
 
-export function vertexModel(cfg: AiConfig, deps: { fetch: FetchLike; token: TokenProvider; timeoutMs?: number }): PlanModel {
-  const url = vertexUrl(cfg);
+/**
+ * Emulator-only target URL: the fake gets the same path as Vertex, so it can check the model id.
+ * Callers obtain `baseUrl` only from parseAiEndpointOverride (`emulator` mode).
+ */
+export function emulatorVertexUrl(cfg: AiConfig, baseUrl: string): string {
+  return baseUrl + new URL(vertexUrl(cfg)).pathname;
+}
+
+export function vertexModel(
+  cfg: AiConfig,
+  deps: { fetch: FetchLike; token: TokenProvider; timeoutMs?: number | undefined; url?: string },
+): PlanModel {
+  const url = deps.url ?? vertexUrl(cfg);
   return {
     modelId: cfg.modelId,
     location: cfg.location,
@@ -178,6 +237,34 @@ export function vertexModel(cfg: AiConfig, deps: { fetch: FetchLike; token: Toke
       return parseVertexResponse(body);
     },
   };
+}
+
+/**
+ * The model used by generatePlan, from the process environment (index.ts). undefined = fail-closed
+ * (generatePlan answers ai_unavailable, configError `ai_config_invalid`, before reserving a slot):
+ * AI config missing/invalid, or an emulator override set where it is not allowed. With a valid emulator
+ * override the ADC token provider is never called (no credentials leave the process).
+ */
+export function createPlanModel(
+  env: Record<string, string | undefined>,
+  deps: { fetch: FetchLike; adcToken: TokenProvider },
+): PlanModel | undefined {
+  const cfg = parseAiConfig(env);
+  if (!cfg) return undefined;
+  const override = parseAiEndpointOverride(env);
+  switch (override.mode) {
+    case "none":
+      return vertexModel(cfg, { fetch: deps.fetch, token: deps.adcToken });
+    case "emulator":
+      return vertexModel(cfg, {
+        fetch: deps.fetch,
+        token: async () => EMULATOR_FAKE_TOKEN,
+        timeoutMs: override.timeoutMs,
+        url: emulatorVertexUrl(cfg, override.url),
+      });
+    case "rejected":
+      return undefined;
+  }
 }
 
 /** Used when AI config is missing or invalid: every call is a configuration error (no network). */

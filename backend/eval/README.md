@@ -97,3 +97,59 @@ Prompt `plan-v2` jawnie tego zabrania, a walidator (przy każdym prompcie) wyła
   Vergogna”). To wymagałoby wiedzy o miejscach; tu działa tylko prompt i ocena ręczna.
 - **Koszt promptu:** reguła w `plan-v2` to ok. 70 tokenów wejścia więcej na wywołanie, czyli ułamek grosza na 40
   generowań; szacunek w tabeli wyżej się nie zmienia (zasada 10).
+
+## Atrapa modelu dla emulatora Firebase (TAM-89)
+
+**Co i po co:** testy `generatePlan` na emulatorach (rezerwacja i zwrot limitu na prawdziwym Firestore) potrzebują
+modelu. Prawdziwego Vertex w emulatorze nie ma, więc funkcja wywołuje lokalną atrapę
+`backend/functions/test/emulator/vertex-fake.mjs`. Atrapa odpowiada zawsze tak samo, bez sieci zewnętrznej,
+bez kluczy i bez kosztów.
+
+**Bezpieczeństwo (fail-closed):** zmienną `AI_ENDPOINT_OVERRIDE` funkcja przyjmuje tylko wtedy, gdy spełnione są
+wszystkie warunki: `FUNCTIONS_EMULATOR=true`, projekt `demo-*` (taki projekt nie istnieje w Google Cloud) i adres
+`http://127.0.0.1:<port>` albo `http://localhost:<port>`. W każdym innym przypadku (wdrożone dev i prod, inny host,
+https, dane logowania w adresie) funkcja odpowiada `ai_unavailable` przed rezerwacją limitu. Nigdy nie przełącza
+się wtedy po cichu na prawdziwy Vertex. W trybie atrapy funkcja nie pobiera tokenu konta usługi, tylko wysyła
+stały napis `emulator-fake-token`. Opcjonalne `AI_ATTEMPT_TIMEOUT_MS` (100–45000, też tylko w emulatorze) skraca
+czas oczekiwania na odpowiedź, żeby scenariusz przekroczenia czasu nie trwał 90 s. Testy: `ai-endpoint-override.test.ts`.
+
+**Uruchomienie** (z katalogu głównego repozytorium, zawsze przez kolejkę farmy):
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .farm/test-lock.ps1 -Resource firebase-emulators -Command "powershell -NoProfile -ExecutionPolicy Bypass -File backend/functions/test/emulator/run-emulator-tests.ps1"
+```
+
+Bez parametrów uruchamia test dymny `smoke.int.mjs`. Własne pliki podajesz przez `-Tests` (ścieżki względem
+katalogu głównego, np. `-Tests tests/firebase-emulator/p3-05-generate-plan.int.mjs`). Skrypt ustawia zmienne
+tylko w swoim procesie (`ENVIRONMENT=dev`, `ENFORCE_APP_CHECK=false`, `AI_MODEL_ID`, `AI_LOCATION=eu`,
+`AI_ENDPOINT_OVERRIDE=http://127.0.0.1:8787`, `AI_ATTEMPT_TIMEOUT_MS=2000`). Gdy brakuje `.secret.local`, zapisuje
+tam losowy testowy `UID_HASH_PEPPER` (plik ignorowany przez git). Buduje funkcje i uruchamia
+`firebase emulators:exec --project demo-tamitu-qa --only auth,functions,firestore`. Java: jeśli `JAVA_HOME` nie
+jest ustawione, skrypt bierze JBR z Android Studio.
+
+**Sterowanie atrapą z testu.** Test sam uruchamia atrapę na porcie z `AI_ENDPOINT_OVERRIDE` (domyślnie 8787):
+
+```js
+import { startVertexFake } from "../../backend/functions/test/emulator/vertex-fake.mjs";
+const fake = await startVertexFake({ port: 8787 }); // domyślnie "valid"
+fake.enqueue("busy", "valid");  // kolejne wywołania: 429, potem poprawny plan, potem znowu domyślny
+fake.setDefault("invalid");     // każde wywołanie bez scenariusza w kolejce
+fake.calls;                     // [{ n, scenario, status, model, location, hints }]
+fake.reset(); await fake.close();
+```
+
+Z innego procesu: `POST /__fake/control` z `{"reset":true,"default":"valid","queue":["busy"]}` i `GET /__fake/calls`.
+
+| Scenariusz | Odpowiedź atrapy | Wynik `generatePlan` (domyślny scenariusz dla wszystkich wywołań) |
+|---|---|---|
+| `valid` | poprawny plan dla `dayTargets` z zapytania | sukces, 1 wywołanie |
+| `invalid` | plan bez dni (błąd walidacji) | `ai_invalid_response`, 2 wywołania (drugie z listą błędów, `hints=true`) |
+| `blocked` | `finishReason: SAFETY`, bez tekstu | `ai_invalid_response`, 1 wywołanie (bez ponowienia) |
+| `busy` | HTTP 429 | `ai_busy` (`retryAfterSec: 60`), 3 wywołania, zwrot slotu ADR-0016 |
+| `server_error` | HTTP 503 | `ai_unavailable`, 2 wywołania (przerwa 2–4 s) |
+| `bad_body` | HTTP 200, treść nie jest JSON | `ai_unavailable`, 2 wywołania |
+| `timeout` | brak odpowiedzi | `ai_unavailable`, 2 wywołania po `AI_ATTEMPT_TIMEOUT_MS` |
+| `config_error` | HTTP 403 | `ai_unavailable`, 1 wywołanie (bez ponowienia) |
+
+Wyniki w kolumnie po prawej sprawdza bez emulatora test `backend/functions/test/vertex-fake.test.ts`
+(prawdziwy dostawca i prawdziwa pętla generowania, połączenie tylko przez 127.0.0.1).
