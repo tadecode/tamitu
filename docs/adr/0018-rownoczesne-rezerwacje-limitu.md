@@ -1,6 +1,6 @@
 # ADR-0018: Równoczesne rezerwacje limitu (kontencja na `usage_global`)
 
-- Status: **proponowany** (zatwierdza właściciel przy merge'u PR-a TAM-115)
+- Status: **zatwierdzony** (właściciel, 2026-11-26; komentarz w PR #185)
 - Data: 2026-11-26
 - Autor (rola): architect
 - Zadanie: TAM-115 (P3-05-CONTENTION), na podstawie znaleziska F-1 z `docs/qa/QA-TAM-89-emulator.md` (PR #184)
@@ -165,3 +165,5 @@ liczba `quotaRelease = release_failed`. Jeśli w ciągu 7 dni **więcej niż 2%*
 ## Historia
 
 - 2026-11-26 (TAM-115, architect): propozycja.
+- 2026-11-26: zatwierdzony przez właściciela (komentarz w PR #185). Wdrożenie: mobile-dev, testy emulatora: QA
+  (ten sam PR). Treść decyzji bez zmian.
